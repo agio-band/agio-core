@@ -1,0 +1,30 @@
+name: 'agio-core'
+version: '0.0.1'
+label: 'agio Core'
+description: 'Agio Core Package'
+icon: 'core/agio-logo.png'
+author: 'paulwinex'
+author_email: 'paulwinex@gmail.com'
+home_page: 'https://store.agio.services/package/core'
+license: 'MIT'
+
+python_libs_requirements: []
+agio_packages_requirements: []
+
+
+plugins:
+  - name: info_command
+    label: Info Command
+    implementations:
+      - module: builtin/plugins/commands/info_cmd.py
+
+  - name: workspace_command
+    label: Workspace Command
+    implementations:
+      - module: builtin/plugins/commands/workspace_cmd.py
+
+  - name: run_command
+    label: Run Command
+    implementations:
+      - module: builtin/plugins/commands/run_cmd.py
+
