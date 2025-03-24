@@ -23,15 +23,14 @@ def start_process(
         new_console: bool = False,
         non_blocking: bool = False,
         output_file=None,
-        workdir: str = None
+        workdir: str = None,
+        get_output: bool = False,
 ):
     """
     Universal function to start a process with different modes.
 
     Automatically terminates child process if parent is killed (when not detached).
     Propagates exit code from child to parent if the child crashes.
-
-    poetry/src/poetry/utils/env/base_env.py:438
     """
     new_env = os.environ.copy()
     if envs:
@@ -61,16 +60,23 @@ def start_process(
     stdin = None
     start_new_session = False
     use_shell = False
-    wait_for_process = not detached and not non_blocking  # Wait only if not detached or non-blocking
+    wait_for_process = not detached and not non_blocking
 
     stdout = None
     stderr = None
-    if detached and output_file:
+
+    if get_output:
+        if detached or non_blocking:
+            raise ValueError("get_output can only be used when detached=False and non_blocking=False")
+        stdout = subprocess.PIPE
+        stderr = subprocess.PIPE
+    elif detached and output_file:
         stdout = open(output_file, "a")
         stderr = subprocess.STDOUT
     elif detached:
         stdout = open(os.devnull, "w")
         stderr = subprocess.STDOUT
+
 
     if sys.platform == "win32":
         if detached:
@@ -100,10 +106,10 @@ def start_process(
         start_new_session=start_new_session,
         creationflags=creationflags,
         shell=use_shell,
-        cwd=workdir  # Set the working directory
+        cwd=workdir
     )
 
-    if detached and output_file:
+    if detached and output_file and not get_output:
         stdout.close()
 
     if not detached:
@@ -122,12 +128,24 @@ def start_process(
 
     if wait_for_process:
         try:
-            process.wait()
-            logging.debug(f'Exit Code: {process.returncode}')
-            sys.exit(process.returncode)
+            if get_output:
+                output, error = process.communicate()
+                logging.debug(f'Exit Code: {process.returncode}')
+                if process.returncode != 0:
+                  print(error.decode(), file=sys.stderr)
+                return output.decode()
+            else:
+                process.wait()
+                logging.debug(f'Exit Code: {process.returncode}')
+                sys.exit(process.returncode)
+
         except KeyboardInterrupt:
             terminate_child(process)
             sys.exit(1)
+    elif non_blocking or detached:
+        # Return the Popen object if non-blocking or detached.
+        return process
+    return None
 
 
 if __name__ == "__main__":
@@ -150,10 +168,14 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--detached", action="store_true", help="Run the process in the background")
     parser.add_argument("-n", "--new-console", action="store_true", help="Run the process in a new terminal window")
     parser.add_argument("-r", "--replace", action="store_true", help="replace current process. Other flags will be ignores")
-    parser.add_argument("-b", "--non-blocking", action="store_true", help="Run the process as a child without blocking the parent")
-    parser.add_argument("-e", "--env", action=ParseEnvVariables, help="Environment variables (KEY=VALUE).", metavar="KEY=VALUE")
+    parser.add_argument("-b", "--non-blocking", action="store_true",
+                        help="Run the process as a child without blocking the parent")
+    parser.add_argument("-e", "--env", action=ParseEnvVariables, help="Environment variables (KEY=VALUE).",
+                        metavar="KEY=VALUE")
     parser.add_argument("-o", "--output-file", help="File to redirect output of a detached process")
     parser.add_argument("-w", "--workdir", help="Working directory for the command")
+    parser.add_argument("-g", "--get-output", action="store_true",
+                        help="Get output from the process (only when not detached and not non-blocking)")
     parser.add_argument("command", nargs=argparse.REMAINDER, help="Command to execute")
 
     args = parser.parse_args()
@@ -161,7 +183,7 @@ if __name__ == "__main__":
     if not args.command:
         parser.error("No command provided for execution")
 
-    start_process(
+    result = start_process(
         args.command,
         envs=args.env,
         detached=args.detached,
@@ -169,5 +191,8 @@ if __name__ == "__main__":
         non_blocking=args.non_blocking,
         output_file=args.output_file,
         replace=args.replace,
-        workdir=args.workdir
+        workdir=args.workdir,
+        get_output=args.get_output
     )
+    if args.get_output:
+        print(result)

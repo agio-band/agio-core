@@ -1,11 +1,13 @@
+from pathlib import Path
 from uuid import UUID
+
+from agio.core.workspace import ws_utils
 
 
 class AWorkspace:
-    def __init__(self, workspace_id: UUID):
+    def __init__(self, workspace_id: UUID|str, data: dict = None):
         self.id = workspace_id
-        self._data = {}
-        self._installation_root = '' # from config
+        self._data = data or ws_utils.load_workspace_data(workspace_id)
 
     def __str__(self):
         return self.name or self.id
@@ -15,29 +17,11 @@ class AWorkspace:
 
     @property
     def name(self):
-        return
+        return self._data.get('name')
 
-    @classmethod
-    def create(cls, name: str):
-        pass
-
-    def install(self):
-        pass
-
-    def is_installed(self):
-        pass
-
-    def is_up_to_date(self):
-        pass
-
-    def update(self):
-        pass
-
-    def delete(self):
-        pass
-
-    def get_root(self):
-        pass
+    @property
+    def root(self):
+        return ws_utils.get_workspaces_installation_root() / str(self.id)
 
     def get_package_list(self):
         pass
@@ -51,7 +35,7 @@ class AWorkspace:
     def get_pyexecutable(self):
         pass
 
-    def collect_info(self):
+    def collect_stat(self):
         """
         File sizes
         Creation date
