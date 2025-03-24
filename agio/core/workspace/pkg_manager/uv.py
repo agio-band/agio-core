@@ -1,10 +1,28 @@
 import json
+import os
+import platform
+import shutil
+import stat
+import tarfile
+import tempfile
+import zipfile
+import logging
+from pathlib import Path
+
+import requests
 from agio.core.workspace.pkg_manager.base_pkgm import PackageManagerBase
+
+logger = logging.getLogger(__name__)
 
 
 class UVPackageManager(PackageManagerBase):
     def install_package(self, package_name):
         cmd = ['pip', 'install', '--prefix', self.path, package_name]
+        self.call_cmd(cmd)
+
+    def install_packages(self, **package_names):
+        cmd = ['pip', 'install', '--prefix', self.path]
+        cmd.extend(package_names)
         self.call_cmd(cmd)
 
     def uninstall_package(self, package_name):
@@ -28,9 +46,128 @@ class UVPackageManager(PackageManagerBase):
     def create_venv(self):
         self.call_cmd(['venv', self.path])
 
+    def venv_exists(self):
+        return Path(self.path, 'pyvenv.cfg').exists()
+
     def get_executable(self):
-        return 'uv'
+        executable = Path(self.get_package_manager_installation_path(), 'uv', 'uv' + ('.exe' if os.name == 'nt' else ''))
+        if not executable.exists():
+            return self.install_executable()
+        return executable.as_posix()
+
 
     @classmethod
     def install_executable(cls):
-        pass
+        install_path = Path(cls.get_package_manager_installation_path(), 'uv').as_posix()
+        return _install_uv(install_path)
+
+
+def _install_uv(install_dir: str, version: str = "latest") -> str:
+    system = platform.system().lower()
+    architecture = platform.machine().lower()
+    executable_name = "uv.exe" if system == "windows" else "uv"
+    install_path = os.path.join(install_dir, executable_name)
+
+    os.makedirs(install_dir, exist_ok=True)
+
+    # Check if uv is already installed
+    if os.path.exists(install_path):
+        os.remove(install_path)
+
+    # Determine the correct artifact name (same as before)
+    if system == "windows":
+        if architecture == "x86_64" or architecture == "amd64":
+            artifact_name = "uv-x86_64-pc-windows-msvc.zip"
+        elif architecture == "i686" or architecture == "i386":
+            artifact_name = "uv-i686-pc-windows-msvc.zip"
+        elif architecture.startswith("arm"):
+            artifact_name = "uv-aarch64-pc-windows-msvc.zip"
+        else:
+            raise RuntimeError(f"Unsupported Windows architecture: {architecture}")
+    elif system == "linux":
+        if architecture == "x86_64" or architecture == "amd64":
+            artifact_name = "uv-x86_64-unknown-linux-gnu.tar.gz"
+        elif architecture == "i686" or architecture == "i386":
+            artifact_name = "uv-i686-unknown-linux-gnu.tar.gz"
+        elif architecture.startswith("arm"):
+            if architecture.endswith("hf") or "v7" in architecture:
+                artifact_name = "uv-armv7-unknown-linux-gnueabihf.tar.gz"
+            else:
+                artifact_name = "uv-aarch64-unknown-linux-gnu.tar.gz"
+        elif architecture.startswith("riscv64"):
+            artifact_name = "uv-riscv64gc-unknown-linux-gnu.tar.gz"
+        else:
+            raise RuntimeError(f"Unsupported Linux architecture: {architecture}")
+    elif system == "darwin":
+        if architecture == "x86_64" or architecture == "amd64":
+            artifact_name = "uv-x86_64-apple-darwin.tar.gz"
+        elif architecture.startswith("arm"):
+            artifact_name = "uv-aarch64-apple-darwin.tar.gz"
+        else:
+            raise RuntimeError(f"Unsupported macOS architecture: {architecture}")
+    else:
+        raise RuntimeError(f"Unsupported operating system: {system}")
+
+    # Construct the download URL (same as before)
+    if version == "latest":
+        releases_url = "https://api.github.com/repos/astral-sh/uv/releases/latest"
+        try:
+            response = requests.get(releases_url)
+            response.raise_for_status()
+            release_info = response.json()
+            tag_name = release_info["tag_name"]
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(f"Failed to fetch latest release information: {e}") from e
+    else:
+        tag_name = f"v{version}"
+
+    download_url = f"https://github.com/astral-sh/uv/releases/download/{tag_name}/{artifact_name}"
+    logger.debug(f"Downloading {download_url}...")
+
+    os.makedirs(install_dir, exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_file = os.path.join(temp_dir, artifact_name)
+
+        try:
+            response = requests.get(download_url, stream=True)
+            response.raise_for_status()
+            with open(temp_file, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(f"Failed to download uv: {e}") from e
+
+        logger.debug(f"Extracting to {install_dir}...")
+        try:
+            if artifact_name.endswith(".zip"):
+                with zipfile.ZipFile(temp_file, "r") as zip_ref:
+                    zip_ref.extractall(temp_dir)
+            elif artifact_name.endswith(".tar.gz"):
+                with tarfile.open(temp_file, "r:gz") as tar_ref:
+                    tar_ref.extractall(temp_dir)
+            else:
+                raise RuntimeError(f"Unsupported archive format: {artifact_name}")
+        except Exception as e:
+            raise RuntimeError(f"Failed to extract uv: {e}") from e
+
+        # Find the executable (using the new function)
+        def find_executable(directory: str, executable_name: str) -> str | None:
+            for root, _, files in os.walk(directory):
+                if executable_name in files:
+                    return os.path.join(root, executable_name)
+            return None
+
+        extracted_executable = find_executable(temp_dir, executable_name)
+
+        if extracted_executable is None:  # More robust check
+            raise RuntimeError(f"Extracted executable not found in {temp_dir}")
+
+        shutil.move(extracted_executable, install_path)
+
+        if system != "windows":
+            os.chmod(install_path,
+                     stat.S_IXUSR | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
+
+    logger.info(f"uv ({tag_name}) installed to {install_path}")
+    return install_path

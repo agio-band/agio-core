@@ -8,7 +8,7 @@ from agio.core.utils.process_utils import start_process
 class PackageManagerBase:
 
     def __init__(self, venv_path: str):
-        self.path = venv_path
+        self.path = Path(venv_path).expanduser().as_posix()
 
     @property
     def python_executable(self):
@@ -47,6 +47,14 @@ class PackageManagerBase:
     def call_cmd(self, cmd):
         cmd = [self.get_executable(), *cmd]
         return start_process(cmd, get_output=True)
+
+    @classmethod
+    def get_venvs_installation_path(cls):
+        return Path('~.agio/venvs').expanduser().as_posix() # TODO grom config
+
+    @classmethod
+    def get_package_manager_installation_path(cls):
+        return Path('~/.agio/pkg-mng').expanduser().as_posix()
 
     @classmethod
     def install_executable(cls):
