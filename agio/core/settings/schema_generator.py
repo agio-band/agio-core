@@ -29,7 +29,6 @@ class SchemaGeneratorWithOptions(GenerateJsonSchema):
             custom_fields_class = getattr(cls, 'Options')
             type_hints = get_type_hints(custom_fields_class)
             for name, value in custom_fields_class.__dict__.items():
-                print(name)
                 if not name.startswith('__') and not callable(value):
                     custom_fields[name] = value
         return custom_fields

@@ -1,16 +1,16 @@
 import os
 import sys
 
-from agio.core import cli
+from  agio.core.cli.tools import Env
 import click
-from agio.core.cli.base_command_plugin import ACommand
-from agio.core.utils.process_utils import start_process
+from agio.core.plugins.plugin_cmd_base import ACommand
+from agio.core.utils.process import start_process
 
 
 class InfoCommand(ACommand):
     command_name = 'run'
     arguments = [
-        click.option("-e", "--env", help='Custom Environments', type=cli.Env(), multiple=True),
+        click.option("-e", "--env", help='Custom Environments', type=Env(), multiple=True),
         click.option("-w", "--cwd", help='Workdir', type=click.Path(exists=True, dir_okay=True, resolve_path=True)),
         click.argument('command', nargs=-1, type=click.UNPROCESSED),
     ]

@@ -1,30 +1,52 @@
+label: 'agio Core'
 name: 'agio-core'
 version: '0.0.1'
-label: 'agio Core'
-description: 'Agio Core Package'
-icon: 'core/agio-logo.png'
-author: 'paulwinex'
-author_email: 'paulwinex@gmail.com'
-home_page: 'https://store.agio.services/package/core'
-license: 'MIT'
+short_description: 'Agio Core Package'
+long_description: |
+  Long help description of package
 
-python_libs_requirements: []
-agio_packages_requirements: []
+license: 'MIT'
+author: 'paulwinex'
+authors_email:
+  - 'paulwinex@gmail.com'
+documentation:
+  # first url is home page
+  - 'https://store.agio.services/package/agio-core/{version}'
+
+# for clone
+source_url: 'https://github.com/agio/agio-core'
+# OR, but not AND
+# for install from file (private or hwl release or zip)
+download_url: 'https://github.com/agio-platform/agio-core/releases/download/{version}/'
+
+resources_dir: "custom/resources" # default "/resources"
+icon: 'core/agio-logo.png'  # inside resources path
+
+
+python_requirements:
+  requests: "^2.32.3"
+
+agio_packages_requirements:
 
 
 plugins:
-  - name: info_command
-    label: Info Command
-    implementations:
-      - module: builtin/plugins/commands/info_cmd.py
+#  - name: info_command
+#    label: Info Command
+#    implementations:
+#      - module: core_plugins/commands/info_cmd.py
 
   - name: workspace_command
     label: Workspace Command
     implementations:
-      - module: builtin/plugins/commands/workspace_cmd.py
+      - module: core_plugins/commands/workspace_cmd.py
 
   - name: run_command
     label: Run Command
     implementations:
-      - module: builtin/plugins/commands/run_cmd.py
+      - module: core_plugins/commands/run_cmd.py
+
+  - name: package_command
+    label: Manage agio Packages Command
+    implementations:
+      - module: core_plugins/commands/package_cmd.py
 

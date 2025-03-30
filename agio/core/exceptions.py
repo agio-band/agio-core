@@ -4,5 +4,13 @@ class AppError(Exception):
     pass
 
 
-class WorkspaceNotExists(AppError):
+class WorkspaceError(AppError):
+    pass
+
+
+class WorkspaceNotExists(WorkspaceError):
+    pass
+
+
+class PackageError(AppError):
     pass

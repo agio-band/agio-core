@@ -3,27 +3,35 @@ import os
 import platform
 import shutil
 import stat
+import subprocess
 import tarfile
 import tempfile
 import zipfile
 import logging
 from pathlib import Path
-
 import requests
-from agio.core.workspace.pkg_manager.base_pkgm import PackageManagerBase
+from .base_venv_manager import VenvManagerBase
 
 logger = logging.getLogger(__name__)
 
 
-class UVPackageManager(PackageManagerBase):
+class UVVenvManager(VenvManagerBase):
     def install_package(self, package_name):
-        cmd = ['pip', 'install', '--prefix', self.path, package_name]
+        cmd = ['pip', 'install', '--python', self.python_executable, package_name]
         self.call_cmd(cmd)
 
     def install_packages(self, **package_names):
-        cmd = ['pip', 'install', '--prefix', self.path]
+        cmd = ['pip', 'install', '--python', self.python_executable]
         cmd.extend(package_names)
         self.call_cmd(cmd)
+
+    def get_python_version(self, full=False):
+        cmd = [self.python_executable, '--version']
+        result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
+        version = result.split(' ')[-1]
+        if full:
+            return version
+        return '.'.join(version.split('.')[:2])
 
     def uninstall_package(self, package_name):
         cmd = ['pip', 'install', '--python', self.python_executable, package_name]
@@ -54,7 +62,6 @@ class UVPackageManager(PackageManagerBase):
         if not executable.exists():
             return self.install_executable()
         return executable.as_posix()
-
 
     @classmethod
     def install_executable(cls):

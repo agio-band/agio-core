@@ -49,7 +49,7 @@ class APackageHub(metaclass=Singleton):
                             if APackage.is_package_root(_path):
                                 if _path in loaded:
                                     continue
-                                yield APackage(_path)
+                                yield APackage.from_path(_path)
                                 loaded.add(_path)
                                 _dirs.clear()
 

@@ -1,5 +1,4 @@
-import requests
-from . import ws_utils
+from . import request_data
 from agio.core.workspace.workspace import AWorkspace
 from ..exceptions import WorkspaceNotExists
 
@@ -11,8 +10,8 @@ class WSManager:
         ...
 
     def install(self, workspace_id: str):
-        data = ws_utils.load_workspace_data(workspace_id)
-        ws_id = ws_utils.create_workspace(workspace_id, data['packages'])
+        data = request_data.load_workspace_data(workspace_id)
+        ws_id = request_data.create_workspace(workspace_id, data['packages'])
         return AWorkspace(ws_id, data)
 
     def is_installed(self, workspace_id: str):
@@ -26,16 +25,16 @@ class WSManager:
         pass
 
     def update(self, workspace_id: str, data: dict):
-        return ws_utils.update_workspace(workspace_id, data)
+        return request_data.update_workspace(workspace_id, data)
 
     def delete(self, workspace_id: str):
-        return ws_utils.delete_workspace(workspace_id)
+        return request_data.delete_workspace(workspace_id)
 
     def get_workspace(self, workspace_id: str):
         return AWorkspace(workspace_id)
 
     def list_workspaces(self):
-        return ws_utils.list_workspaces()
+        return request_data.list_workspaces()
 
     def load_workspace_data(self, workspace_id: str):
-        return ws_utils.load_workspace_data(workspace_id)
+        return request_data.load_workspace_data(workspace_id)

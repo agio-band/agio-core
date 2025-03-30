@@ -1,11 +1,16 @@
 import os
 import shutil
+import logging
 from pathlib import Path
 
-from agio.core.utils.process_utils import start_process
+from agio.core.packages.package_base import APackage
+from agio.core.utils.process import start_process
+from agio.core.workspace import venv_utils
+
+logger = logging.getLogger(__name__)
 
 
-class PackageManagerBase:
+class VenvManagerBase:
 
     def __init__(self, venv_path: str):
         self.path = Path(venv_path).expanduser().as_posix()
@@ -32,11 +37,20 @@ class PackageManagerBase:
     def get_package_version(self, package_name):
         raise NotImplementedError
 
+    def iter_packages(self):
+        site_packages_path = venv_utils.get_site_packages_path(self.python_executable)
+        if not site_packages_path:
+            return
+        site_packages_path = Path(site_packages_path)
+        for package in site_packages_path.glob(f'*/{APackage.manifest_file_name}'):
+            yield APackage.from_path(package.as_posix())
+
+
     def create_venv(self, venv_name):
         raise NotImplementedError
 
-    def delete_venv(self, venv_path: str):
-        shutil.rmtree(venv_path)
+    def delete_venv(self):
+        shutil.rmtree(self.path)
 
     def list_venvs(self):
         raise NotImplementedError
@@ -46,6 +60,7 @@ class PackageManagerBase:
 
     def call_cmd(self, cmd):
         cmd = [self.get_executable(), *cmd]
+        logger.debug(f'Running command: {" ".join(cmd)}')
         return start_process(cmd, get_output=True)
 
     @classmethod
