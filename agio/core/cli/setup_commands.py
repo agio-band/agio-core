@@ -15,8 +15,7 @@ from agio.core.init_core import plugin_hub
               help='Execute in workspace (ID)')
 @click.pass_context
 def agio_group(ctx, workspace_id, debug):
-    if workspace_id:
-        click.echo(f"Execute in workspace: {workspace_id}")
+    if workspace_id and not 'AGIO_CURRENT_WORKSPACE' in os.environ:
         command_args = clear_args(sys.argv)
         start_in_workspace(command_args, workspace_id)
         ctx.exit()

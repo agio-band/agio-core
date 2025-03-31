@@ -14,6 +14,10 @@ class InfoCommand(ACommand):
     help = 'Show info about current workspace'
 
     def execute(self, core, packages, plugins):
+        from agio.core.workspace.workspace import AWorkspace
+        ws = AWorkspace.current()
+        print('='*30)
+        print('Workspace:', ws)
         print('='*30)
         if any([core, packages, plugins]):
             if core:

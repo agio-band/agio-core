@@ -1,3 +1,5 @@
+import sys
+
 from agio.core.cli.setup_commands import agio_group
 
 if __name__ == '__main__':

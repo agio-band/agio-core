@@ -1,3 +1,4 @@
+import os
 from functools import cached_property
 from uuid import UUID
 
@@ -16,6 +17,13 @@ class AWorkspace:
 
     def __repr__(self):
         return f'<Workspace "{str(self)}">'
+
+    @classmethod
+    def current(cls):
+        current_workspace_id = os.getenv('AGIO_CURRENT_WORKSPACE')
+        if not current_workspace_id:
+            return
+        return cls(current_workspace_id)
 
     @property
     def name(self):
