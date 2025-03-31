@@ -11,6 +11,7 @@ class InfoCommand(ACommand):
         click.option('-g', '--packages', is_flag=True, help='Show packages info', type=bool),
         click.option("-p", "--plugins", is_flag=True, help='Show plugins info.', type=bool),
     ]
+    help = 'Show info about current workspace'
 
     def execute(self, core, packages, plugins):
         print('='*30)

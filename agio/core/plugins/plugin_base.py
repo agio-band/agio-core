@@ -20,9 +20,11 @@ class APlugin(_APluginAbstract):
     plugin_type = None
     name = None
 
-    def __init__(self, manifest_data: dict, package: APackage):
+    def __init__(self, package: APackage):
         self.before_load()
-        self.name = manifest_data.get('name')
+        # self.manifest_data = manifest_data
+        # self.name = manifest_data.get('name')
+        self.name = self.__class__.__name__
         self._package = package
         self.on_load()
 
@@ -55,10 +57,10 @@ class APlugin(_APluginAbstract):
             if not full_path.exists():
                 raise ValueError(f"Module file not found: {full_path}")
             try:
-                plugin = import_module_by_path(full_path)
+                plugin_module = import_module_by_path(full_path)
             except Exception as e:
                 raise ValueError(f"Error loading plugin: {full_path}") from e
-            for obj in plugin.__dict__.values():
+            for obj in plugin_module.__dict__.values():
                 if inspect.isclass(obj):
                     if issubclass(obj, APlugin) and not obj.__name__ == APlugin.__name__:
                         if not getattr(obj, 'is_base_class', True):

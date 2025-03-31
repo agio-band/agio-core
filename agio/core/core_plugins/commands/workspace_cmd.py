@@ -1,42 +1,50 @@
 import click
-from agio.core.plugins.plugin_cmd_base import ACommand
+from agio.core.plugins.plugin_cmd_base import ACommand, AGroupCommand
 
 
-class WorkspaceCommand(ACommand):
-    command_name = 'ws'
+class InstallWorkspaceCommand(ACommand):
+    command_name = 'install'
     arguments = [
-        click.argument('action'),
-        click.option("-id", "--workspace_id", help='Workspace ID'),
+        click.argument('workspace_id'),
     ]
+    help = 'Install workspace by ID'
 
-    def execute(self, action: str, workspace_id: str):
-        match action:
-            case 'install':
-                self.install(workspace_id)
-            case 'uninstall':
-                self.uninstall(workspace_id)
-            case 'list':
-                self.list()
-            case 'show':
-                self.show(workspace_id)
-            case _:
-                print(f"Unknown action: {action}")
-
-    def install(self, workspace_id: str):
-        if not workspace_id:
-            raise Exception('ID is required')
+    def execute(self, workspace_id: str):
         print('Install Workspace', workspace_id)
 
-    def uninstall(self, workspace_id: str):
-        if not workspace_id:
-            raise Exception('ID is required')
+
+class UninstallWorkspaceCommand(ACommand):
+    command_name = 'uninstall'
+    arguments = [
+        click.argument('workspace_id'),
+    ]
+    help = 'Uninstall workspace'
+
+    def execute(self, workspace_id: str):
         print('Uninstall Workspace', workspace_id)
 
-    def list(self):
+
+class ListWorkspaceCommand(ACommand):
+    command_name = 'ls'
+    help = 'List workspaces'
+
+    def execute(self):
         print('List Workspaces')
 
-    def show(self, workspace_id: str):
-        if not workspace_id:
-            raise Exception('ID is required')
+
+class ShowWorkspaceDetailCommand(ACommand):
+    command_name = 'show'
+    arguments = [
+        click.argument('workspace_id'),
+    ]
+    help = 'Show workspace details'
+
+    def execute(self, workspace_id: str):
         print('Show workspace details:', workspace_id)
+
+
+class WorkspaceCommandGroup(AGroupCommand):
+    command_name = "ws"
+    commands = [InstallWorkspaceCommand, UninstallWorkspaceCommand, ListWorkspaceCommand, ShowWorkspaceDetailCommand]
+    help = 'Manage workspaces'
 

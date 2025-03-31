@@ -24,7 +24,6 @@ class APackageBase:
 
     @property
     def name(self) -> str:
-        # print(self._manifest_data)
         return self._manifest_data['name']
 
     @property
@@ -69,7 +68,6 @@ class APackageBase:
 
     @property
     def installation_name(self):
-        # return f'{self.name}=={self.version}'
         return f'{self.name}=={self.version}'
 
     def get_resource_dir(self):
@@ -78,7 +76,7 @@ class APackageBase:
     def collect_plugins(self):
         plugin_info: dict
         for plugin_info, plugin_class in self.iterate_plugin_classes():
-            instance = plugin_class(plugin_info, self)
+            instance = plugin_class(self)
             yield instance
 
     def iterate_plugin_classes(self) -> Generator[tuple[dict, Type[APlugin]], None, None]:

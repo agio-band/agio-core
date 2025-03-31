@@ -7,7 +7,7 @@ from agio.core.plugins.plugin_cmd_base import ACommand
 from agio.core.utils.process import start_process
 
 
-class InfoCommand(ACommand):
+class RunCommand(ACommand):
     command_name = 'run'
     arguments = [
         click.option("-e", "--env", help='Custom Environments', type=Env(), multiple=True),
@@ -19,6 +19,7 @@ class InfoCommand(ACommand):
         ignore_unknown_options=True,
         allow_extra_args=True,
     )
+    help = 'Run command in current workspace context'
 
     def execute(self, env: list = None, cwd: str = None, command: tuple = None):
         if env or cwd:

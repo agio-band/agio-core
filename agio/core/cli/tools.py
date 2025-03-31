@@ -1,3 +1,4 @@
+import os.path
 import re
 import shlex
 import sys
@@ -13,7 +14,7 @@ def clear_args(args):
 
 
 def start_in_workspace(cmd: list[str], workspace_id: str, envs: dict = None, workdir: str = None):
-    main_script = Path(__file__).joinpath('../../../__main__.py').absolute().as_posix()
+    main_script = os.path.abspath(Path(__file__).joinpath('../__main__.py'))
     workspace_cli_exec = [sys.executable, main_script]
     workspace_envs = (envs or {}) | {'AGIO_WORKSPACE_ID': workspace_id}
     cmd = workspace_cli_exec + cmd
