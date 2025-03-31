@@ -26,6 +26,10 @@ class APluginHub(metaclass=Singleton):
     def plugin_exists(self, name: str) -> bool:
         return name in self.plugins
 
+    def iter_loaded_plugins(self):
+        for plugin in self.plugins.values():
+            yield plugin
+
     def get_plugins_info(self) -> dict:
         pass
 

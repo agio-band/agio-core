@@ -2,7 +2,7 @@ import click
 from agio.core.plugins.plugin_cmd_base import ACommand
 
 
-class InfoCommand(ACommand):
+class WorkspaceCommand(ACommand):
     command_name = 'ws'
     arguments = [
         click.argument('action'),
