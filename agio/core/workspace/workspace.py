@@ -1,22 +1,45 @@
+import json
 import os
 from functools import cached_property
+from pathlib import Path
 from uuid import UUID
 
-from agio.core.exceptions import WorkspaceNotExists
-from agio.core.packages.package_base import APackage
+from agio.core.exceptions import WorkspaceNotExists, WorkspaceNotInstalled
+from agio.core.packages.package import APackage
 from agio.core.workspace import pkg_manager, request_data
 
 
 class AWorkspace:
-    def __init__(self, workspace_id: str|UUID, data: dict = None):
+    _meta_file_name = '__agio_ws__.json'
+
+    def __init__(self, workspace_id: str | UUID):
         self.id = workspace_id
-        self._data = data or request_data.load_workspace_data(workspace_id)
+        self._root = Path.home().joinpath('.agio', 'workspaces', str(self.id))
+        try:
+            self._data = self._load_local_data()
+        except WorkspaceNotInstalled:
+            self._data = self._load_remote_data()
 
     def __str__(self):
         return self.name or self.id
 
     def __repr__(self):
         return f'<Workspace "{str(self)}">'
+
+    @property
+    def local_meta_file(self):
+        return self.root / self._meta_file_name
+
+    def _load_local_data(self):
+        meta_file = self.local_meta_file
+        if not meta_file.exists():
+            raise WorkspaceNotInstalled('Workspace not installed locally')
+        with open(meta_file) as f:
+            return json.load(f)
+
+    def _load_remote_data(self):
+        data = request_data.get_workspace_data(self.id)
+        return data
 
     @classmethod
     def current(cls):
@@ -40,14 +63,15 @@ class AWorkspace:
     def get_package_list_to_install(self) -> list:
         packages = []
         for pkg in self._data.get('packages', []):
-            package = APackage(**pkg)
-            packages.append(package.installation_name)
+            packages.append(pkg)
         return packages
 
     def iter_installed_packages(self):
         yield from self.venv_manager.iter_packages()
 
     def iter_packages(self):
+        if not self.is_installed():
+            raise WorkspaceNotInstalled
         for pkg in self._data.get('packages', []):
             yield APackage(**pkg)
 
@@ -76,15 +100,20 @@ class AWorkspace:
     def exists(self):
         return self.root.exists()
 
+    def is_installed(self):
+        return self.local_meta_file.exists()
+
     def install(self, force: bool = False):
-        if self.exists():
+        if self.exists() and next(self.root.iterdir()):
             if force:
                 self.venv_manager.delete_venv()
             else:
                 return False
         self.venv_manager.create_venv()
         packages = self.get_package_list_to_install()
-        self.venv_manager.install_packages(packages)
+        self.venv_manager.install_packages(*packages)
+        with open(self.local_meta_file, 'w') as f:
+            json.dump(self._data, f, indent=4)
 
 
     def remove(self) -> bool:
@@ -100,5 +129,5 @@ class AWorkspace:
     def update(self):
         if not self.exists():
             raise WorkspaceNotExists('Workspace not installed')
-        packages = self.get_package_list()
-        self.venv_manager.install_packages(packages)
+        packages = self.iter_packages()
+        self.venv_manager.install_packages(*packages)

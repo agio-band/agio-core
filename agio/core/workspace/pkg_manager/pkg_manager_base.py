@@ -1,19 +1,20 @@
+import inspect
 import os
 import shutil
 import logging
 from pathlib import Path
 
-from agio.core.packages.package_base import APackage
-from agio.core.utils.process import start_process
+from agio.core.packages.package import APackage
+from agio.core.utils.process_tools import start_process
 from agio.core.workspace import venv_utils
 
 logger = logging.getLogger(__name__)
 
 
-class VenvManagerBase:
+class PackageManagerBase:
 
-    def __init__(self, venv_path: str):
-        self.path = Path(venv_path).expanduser().as_posix()
+    def __init__(self, package_root: str|Path):
+        self.path = Path(package_root)
 
     @property
     def python_executable(self):
@@ -43,29 +44,35 @@ class VenvManagerBase:
             return
         site_packages_path = Path(site_packages_path)
         for package in site_packages_path.glob(f'*/{APackage.manifest_file_name}'):
-            yield APackage.from_path(package.as_posix())
+            yield APackage(package.parent.as_posix())
 
+    def create_venv(self):
+        raise NotImplementedError
 
-    def create_venv(self, venv_name):
+    def venv_exists(self):
         raise NotImplementedError
 
     def delete_venv(self):
-        shutil.rmtree(self.path)
-
-    def list_venvs(self):
         raise NotImplementedError
 
     def get_executable(self):
         raise NotImplementedError
 
-    def call_cmd(self, cmd):
-        cmd = [self.get_executable(), *cmd]
-        logger.debug(f'Running command: {" ".join(cmd)}')
-        return start_process(cmd, get_output=True)
+    def run(self, cmd, workdir=None, **kwargs):
+        if not self.venv_exists():
+            caller_name = inspect.stack()[1].function
+            if caller_name != 'create_venv':
+                self.create_venv()
+        cmd = list(map(str, [self.get_executable(), *cmd]))
+        workdir = workdir or str(self.path)
+        logger.info(f'Running command: {" ".join(cmd)}')
+        logger.info(f'In directory: {workdir}')
+        kwargs.setdefault('get_output', True)
+        return start_process(cmd, workdir=workdir, **kwargs)
 
     @classmethod
     def get_venvs_installation_path(cls):
-        return Path('~.agio/venvs').expanduser().as_posix() # TODO grom config
+        return Path('~.agio/venvs').expanduser().as_posix() # TODO from config
 
     @classmethod
     def get_package_manager_installation_path(cls):
@@ -74,3 +81,7 @@ class VenvManagerBase:
     @classmethod
     def install_executable(cls):
         pass
+
+    def build_package(self):
+        """Use package repository root instead venv root"""
+        raise NotImplementedError

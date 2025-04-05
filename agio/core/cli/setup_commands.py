@@ -20,7 +20,6 @@ def agio_group(ctx, workspace_id, debug):
         start_in_workspace(command_args, workspace_id)
         ctx.exit()
     if debug:
-        click.echo("Debug mode is on")
         os.environ['DEBUG'] = 'true'
 
 

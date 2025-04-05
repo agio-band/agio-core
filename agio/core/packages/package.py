@@ -1,20 +1,28 @@
 import os
+import shutil
 from pathlib import Path
-from typing import Generator, Type, Any, reveal_type, Self
+from typing import Generator, Type, Any
 
 from agio.core.exceptions import PackageError
 from agio.core.plugins.plugin_base import APlugin
-from agio.core.workspace.request_data import get_package
+from agio.core.utils import process_tools
+from agio.core.workspace.pkg_manager import get_package_manager_class
 
 
-class APackageBase:
+class APackage:
+    """
+    Local package description
+    """
     manifest_file_name = '__agio__.yml'
 
-    def __init__(self, package_name: str, package_version: str, package_root: str|Path = None):
-        self._name = package_name
-        self._version = package_version
-        self._root = Path(package_root) if package_root else None   # used when workspace iterate packages
-        self._manifest_data = get_package(package_name, package_version)['manifest']
+    def __init__(self, package_root: str | Path):
+        self._root = Path(package_root)
+        self._manifest_file = Path(package_root, self.manifest_file_name)
+        self._manifest_data = self.__check_manifest_data(
+            self.__load_manifest_file(
+                self.__get_manifest_file(package_root)
+            )
+        )
 
     def __str__(self) -> str:
         return f"{self.label} v{self.version}"
@@ -62,8 +70,6 @@ class APackageBase:
 
     @property
     def manifest_file(self):
-        if not self.root:
-            return
         return self.root / self.manifest_file_name
 
     @property
@@ -71,7 +77,7 @@ class APackageBase:
         return f'{self.name}=={self.version}'
 
     def get_resource_dir(self):
-        return self._manifest_data.get('resources_dir', 'resources')
+        return self.root / self._manifest_data.get('resources_dir', 'resources')
 
     def collect_plugins(self):
         plugin_info: dict
@@ -110,36 +116,39 @@ class APackageBase:
     def is_package_root(cls, path: str) -> bool:
         return os.path.exists(path + "/__agio__.yml")
 
-    @classmethod
-    def _load_manifest(cls, manifest_file: str|Path) -> dict:
-        import yaml
-        with open(manifest_file, 'r') as f:
-            return yaml.safe_load(f)
+    def __get_manifest_file(self, path: str | Path) -> Path:
+        if not self.is_package_root(path):
+            raise PackageError(f"Path is not a package root: {path}")
+        manifest_file = Path(path, self.manifest_file_name)
+        if not manifest_file.exists():
+            raise PackageError(f"Manifest file not found: {manifest_file}")
+        return manifest_file
 
-    @classmethod
-    def _check_manifest_data(cls, manifest_data: dict, manifest_file_path: str|Path) -> dict:
+    def __load_manifest_file(self, manifest_file: str | Path) -> dict:
+        import yaml
+        try:
+            with open(manifest_file, 'r') as f:
+                return yaml.safe_load(f)
+        except FileNotFoundError:
+            raise PackageError(f"Manifest file not found: {manifest_file}")
+        except yaml.YAMLError as e:
+            raise PackageError(f"Error parsing manifest file: {e}")
+        except Exception as e:
+            raise PackageError(f"Error loading manifest file: {e}")
+
+    def __check_manifest_data(self, manifest_data: dict) -> dict:
         # manifest is not empty
         if not manifest_data:
-            raise ValueError(f"Manifest file is empty [{manifest_file_path}]")
+            raise ValueError(f"Manifest file is empty [{self._manifest_file}]")
         # manifest data is dict
         if not isinstance(manifest_data, dict):
-            raise ValueError(f"Manifest file is not a dictionary [{manifest_file_path}]")
+            raise ValueError(f"Manifest file is not a dictionary [{self._manifest_file}]")
         # required fields exists and not empty
-        required_fields = ('name', 'label', 'version')
+        required_fields = ('name', 'label', 'version', 'repository_url')
         for field in required_fields:
             if field not in manifest_data:
-                raise ValueError(f"Manifest file is missing required field: {field} [{manifest_file_path}]")
+                raise ValueError(f"Manifest file is missing required field: {field} [{self._manifest_file}]")
             if not manifest_data[field]:
-                raise ValueError(f"Manifest field {field} is empty [{manifest_file_path}]")
+                raise ValueError(f"Manifest field {field} is empty [{self._manifest_file}]")
         return manifest_data
 
-
-class APackage(APackageBase):
-
-    @classmethod
-    def from_path(cls, path: str) -> Self:
-        if not cls.is_package_root(path):
-            raise PackageError(f"Path is not a package root: {path}")
-        manifest_file = Path(path, cls.manifest_file_name)
-        manifest_data = cls._check_manifest_data(cls._load_manifest(manifest_file), manifest_file)
-        return cls(manifest_data['name'], manifest_data['version'], path)

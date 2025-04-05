@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Generator
 import logging
 from agio.core.utils.import_tools import import_module_by_path
 if TYPE_CHECKING:
-    from agio.core.packages.package_base import APackage
+    from agio.core.packages.package import APackage
 
 
 logger = logging.getLogger(__name__)

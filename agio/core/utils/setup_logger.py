@@ -1,10 +1,20 @@
+import re
+import shlex
 from pathlib import Path
 from logging import *
 from logging.config import dictConfig
 import os
+import sys
 
 
-DEBUG_MODE = bool(os.getenv("DEBUG"))
+def debug_flag_is_set():
+    first_cmd = shlex.split(' '.join(sys.argv).split('--')[0])
+    return '-d' in first_cmd or '--debug' in first_cmd
+
+
+DEBUG_MODE = bool(os.getenv("DEBUG")) or debug_flag_is_set()
+if DEBUG_MODE:
+    print(" Debug mode is on ".center(40, '='), flush=True)
 USER_PREF_DIR = Path(os.getenv("USER_PREF_DIR", "~/.agio")).expanduser().resolve()
 DEFAULT_LOG_DIR = Path(USER_PREF_DIR, "logs").expanduser().resolve()
 # default level

@@ -1,4 +1,4 @@
-from agio.core.packages.package_base import APackage
+from agio.core.packages.package import APackage
 from agio.core.plugins.plugin_base import APlugin
 from agio.core.utils.singleton import Singleton
 
@@ -7,6 +7,10 @@ class APluginHub(metaclass=Singleton):
     def __init__(self, package_hub):
         self.plugins = {}
         self.collect_plugins(package_hub.get_package_list())
+
+    @property
+    def plugins_count(self):
+        return len(self.plugins)
 
     def collect_plugins(self, packages: list[APackage]) -> None:
         for pkg in packages:

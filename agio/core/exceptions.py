@@ -12,5 +12,9 @@ class WorkspaceNotExists(WorkspaceError):
     pass
 
 
+class WorkspaceNotInstalled(WorkspaceError):
+    pass
+
+
 class PackageError(AppError):
     pass

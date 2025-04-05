@@ -1,7 +1,7 @@
 import click
 
 
-from agio.core.plugins.plugin_cmd_base import ACommand
+from agio.core.plugins.base.command_base_plugin import ACommand
 
 
 class InfoCommand(ACommand):

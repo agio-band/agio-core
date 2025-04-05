@@ -14,10 +14,7 @@ documentation:
   - 'https://store.agio.services/package/agio-core/{version}'
 
 # for clone
-source_url: 'https://github.com/agio/agio-core'
-# OR, but not AND
-# for install from file (private or hwl release or zip)
-download_url: 'https://github.com/agio-platform/agio-core/releases/download/{version}/'
+repository_url: 'https://github.com/agio/agio-core'
 
 resources_dir: "custom/resources" # default "/resources"
 icon: 'core/agio-logo.png'  # inside resources path
@@ -30,10 +27,11 @@ agio_packages_requirements:
 
 
 plugins:
-#  - name: info_command
-#    label: Info Command
-#    implementations:
-#      - module: core_plugins/commands/info_cmd.py
+  # commands
+  - name: info_command
+    label: Info Command
+    implementations:
+      - module: core_plugins/commands/info_cmd.py
 
   - name: workspace_command
     label: Workspace Command
@@ -50,3 +48,13 @@ plugins:
     implementations:
       - module: core_plugins/commands/package_cmd.py
 
+  # release repository
+  - name: github_release_repository
+    label: GitHub Release repository
+    implementations:
+      - module: core_plugins/release_repository/github_release_repository.py
+
+  - name: gitlab_release_repository
+    label: GitLab Release repository
+    implementations:
+      - module: core_plugins/release_repository/gitlab_release_repository.py

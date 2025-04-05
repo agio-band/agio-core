@@ -1,9 +1,12 @@
+import shutil
+from pathlib import Path
 from typing import Generator
 import os
 import sys
-from .package_base import APackage
+from .package import APackage
 from ..utils.platform_info import detect_platform, get_platform_variables
 from ..utils.network import download_file
+from ..workspace.pkg_manager import get_package_manager_class
 
 
 def find_packages_roots() -> Generator:
@@ -37,9 +40,12 @@ def generate_wheel_filenames(package_name, package_version):
     return wheel_filenames
 
 
-def download_release(url: str, version: str, dest_dir: str = ".") -> str:
-    """
-    Основная функция: скачивает наиболее подходящий whl-файл релиза с GitHub.
-    """
-    platform_variables = get_platform_variables()
+def make_release(package_path: str, version: str, token: str = None):
+    pass
 
+
+def build_package(package_root: str):
+    path = Path(package_root)
+    pkg_manager = get_package_manager_class()
+    m = pkg_manager(path)
+    return m.build_package()

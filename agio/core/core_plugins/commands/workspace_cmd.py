@@ -1,5 +1,5 @@
 import click
-from agio.core.plugins.plugin_cmd_base import ACommand, AGroupCommand
+from agio.core.plugins.base.command_base_plugin import ACommand, AGroupCommand
 
 
 class InstallWorkspaceCommand(ACommand):

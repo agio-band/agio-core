@@ -6,6 +6,7 @@ import signal
 import subprocess
 import argparse
 import ctypes
+from typing import Iterable
 
 
 def terminate_child(proc):
@@ -40,7 +41,8 @@ def start_process(
         if not os.path.isdir(workdir):
             print(f"Error: Working directory '{workdir}' does not exist.")
             sys.exit(1)
-
+    if isinstance(command, Iterable):
+        command = list(map(str, command))
     if replace:
         if isinstance(command, str):
             command = shlex.split(command)

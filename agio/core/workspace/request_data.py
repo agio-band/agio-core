@@ -15,7 +15,7 @@ def create_workspace(name: str, packages: list):
     pass
 
 
-def load_workspace_data(workspace_id: str):
+def get_workspace_data(workspace_id: str):
     return requests.get(f'{ws_api_url}/{workspace_id}').json()
 
 

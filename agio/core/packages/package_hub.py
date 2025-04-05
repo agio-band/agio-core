@@ -1,7 +1,8 @@
 import os
 import sys
-from agio.core.packages.package_base import APackage
+from agio.core.packages.package import APackage
 from agio.core.utils.singleton import Singleton
+from agio.core.workspace.workspace import AWorkspace
 
 
 class APackageHub(metaclass=Singleton):
@@ -13,6 +14,10 @@ class APackageHub(metaclass=Singleton):
         if package.name in self._packages:
             raise ValueError(f"Package {package.name} already registered")
         self._packages[package.name] = package
+
+    @property
+    def packages_count(self):
+        return len(self._packages)
 
     def get_package(self, name: str) -> APackage:
         return self._packages.get(name)
@@ -34,6 +39,7 @@ class APackageHub(metaclass=Singleton):
 
     def collect_packages(self) -> None:
         self._packages.clear()
+        # if AWorkspace.current():
         for package in self.iter_packages():
             self.add_package(package)
 
@@ -45,12 +51,11 @@ class APackageHub(metaclass=Singleton):
             if os.path.exists(path):
                 if os.path.isdir(path):
                     for _path, _dirs, _files in os.walk(path):
-                        if APackage.manifest_file_name in _files:
-                            if APackage.is_package_root(_path):
-                                if _path in loaded:
-                                    continue
-                                yield APackage.from_path(_path)
-                                loaded.add(_path)
-                                _dirs.clear()
+                        if APackage.is_package_root(_path):
+                            if _path in loaded:
+                                continue
+                            yield APackage(_path)
+                            loaded.add(_path)
+                            _dirs.clear()
 
 

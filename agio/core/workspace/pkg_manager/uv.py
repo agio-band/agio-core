@@ -10,20 +10,37 @@ import zipfile
 import logging
 from pathlib import Path
 import requests
-from .base_venv_manager import VenvManagerBase
+from .pkg_manager_base import PackageManagerBase
+from ...packages.package import APackage
 
 logger = logging.getLogger(__name__)
 
 
-class UVVenvManager(VenvManagerBase):
-    def install_package(self, package_name):
-        cmd = ['pip', 'install', '--python', self.python_executable, package_name]
-        self.call_cmd(cmd)
+class UVPackageManager(PackageManagerBase):
 
-    def install_packages(self, **package_names):
-        cmd = ['pip', 'install', '--python', self.python_executable]
+    @property
+    def venv_path(self):
+        return Path(self.path, '.venv')
+
+    def install_package(self, package_name):
+        cmd = ['pip', 'install', package_name]
+        self.run(cmd)
+
+    def install_packages(self, *packages: str):
+        package_names = []
+        for pkg in packages:
+            if isinstance(pkg, str):
+                package_names.append(pkg)
+            elif isinstance(pkg, dict):
+                package_names.append(f"{pkg['name']}=={pkg['version']}")
+            elif isinstance(pkg, APackage):
+                package_names.extend(pkg.installation_name)
+            else:
+                raise ValueError(f"Invalid package type: {type(pkg)}")
+        cmd = ['pip', 'install']
+        logger.info('Install cmd: %s', ' '.join(cmd))
         cmd.extend(package_names)
-        self.call_cmd(cmd)
+        self.run(cmd)
 
     def get_python_version(self, full=False):
         cmd = [self.python_executable, '--version']
@@ -34,28 +51,33 @@ class UVVenvManager(VenvManagerBase):
         return '.'.join(version.split('.')[:2])
 
     def uninstall_package(self, package_name):
-        cmd = ['pip', 'install', '--python', self.python_executable, package_name]
-        self.call_cmd(cmd)
+        cmd = ['pip', 'uninstall', package_name]
+        self.run(cmd)
 
-    def list_installed_packages(self, venv_path: str) -> dict:
-        cmd = ['pip', 'list', '--python', self.python_executable, '-q' '--format', 'json']
-        result = self.call_cmd(cmd)
+    def list_installed_packages(self) -> dict:
+        cmd = ['pip', 'list', '-q', '--format', 'json']
+        result = self.run(cmd)
         return json.loads(result)
 
-    def update_package(self, package_name: str, venv_path: str):
-        cmd = ['pip', 'install', '--upgrade', '--prefix', self.path, package_name]
-        self.call_cmd(cmd)
+    def update_package(self, package_name: str):
+        cmd = ['pip', 'install', '--upgrade', package_name]
+        self.run(cmd)
 
-    def get_package_version(self, package_name: str, venv_path: str) -> str | None:
-        for prk in self.list_installed_packages(venv_path):
+    def get_package_version(self, package_name: str) -> str | None:
+        for prk in self.list_installed_packages():
             if prk['name'] == package_name:
                 return prk['version']
 
     def create_venv(self):
-        self.call_cmd(['venv', self.path])
+        self.run(['venv'], workdir=self.path.as_posix())
 
     def venv_exists(self):
-        return Path(self.path, 'pyvenv.cfg').exists()
+        return Path(self.venv_path, 'pyvenv.cfg').exists()
+
+    def delete_venv(self):
+        venv_path = self.path / '.venv'
+        if venv_path.exists():
+            shutil.rmtree(venv_path)
 
     def get_executable(self):
         executable = Path(self.get_package_manager_installation_path(), 'uv', 'uv' + ('.exe' if os.name == 'nt' else ''))
@@ -67,6 +89,25 @@ class UVVenvManager(VenvManagerBase):
     def install_executable(cls):
         install_path = Path(cls.get_package_manager_installation_path(), 'uv').as_posix()
         return _install_uv(install_path)
+
+    def build_package(self, cleanup=True):
+        self.run(['pip', 'install', 'build'])
+        dist_path = self.path/'dist'
+        if dist_path.exists():
+            shutil.rmtree(dist_path)
+        self.run(['build', '--wheel'])
+        if cleanup:
+            self.cleanup_build_files()
+        return dist_path
+
+    def cleanup_build_files(self):
+        to_delete = ['*egg-info', 'build']
+        for name in to_delete:
+            for path in self.path.glob(name):
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()
 
 
 def _install_uv(install_dir: str, version: str = "latest") -> str:
