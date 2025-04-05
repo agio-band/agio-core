@@ -1,8 +1,4 @@
 import requests
-from packaging.tags import sys_tags
-from packaging.utils import parse_wheel_filename, InvalidWheelFilename
-from requests.exceptions import RequestException
-import requests
 import re
 from packaging.tags import sys_tags
 from packaging.utils import parse_wheel_filename

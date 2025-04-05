@@ -26,6 +26,7 @@ def start_process(
         output_file=None,
         workdir: str = None,
         get_output: bool = False,
+        **kwargs
 ):
     """
     Universal function to start a process with different modes.
@@ -108,7 +109,8 @@ def start_process(
         start_new_session=start_new_session,
         creationflags=creationflags,
         shell=use_shell,
-        cwd=workdir
+        cwd=workdir,
+        **kwargs
     )
 
     if detached and output_file and not get_output:

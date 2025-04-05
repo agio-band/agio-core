@@ -1,8 +1,9 @@
 from abc import ABC
+import click
 
+from agio.core.packages.package import APackage
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.plugin_base import APlugin
-import click
 
 
 class AbstractCommand(ABC):
@@ -38,7 +39,7 @@ class AbstractCommand(ABC):
 class ACommand(BasePluginClass, AbstractCommand, APlugin):
     __is_subcommand = False
 
-    def __init__(self, package: "APackage", parent_group=None):
+    def __init__(self, package: APackage, parent_group=None):
         APlugin.__init__(self, package)
         AbstractCommand.__init__(self, parent_group)
 
@@ -49,7 +50,7 @@ class AGroupCommand(BasePluginClass, AbstractCommand, APlugin):
     invoke_without_command = False
     help = None
 
-    def __init__(self, package: "APackage", parent_group=None):
+    def __init__(self, package: APackage, parent_group=None):
         APlugin.__init__(self, package)
         AbstractCommand.__init__(self, parent_group)
 

@@ -37,4 +37,29 @@ def get_tags(repository_root: str, remote_name: str = 'origin'):
         logger.warning(str(e))
     remote_tags = set(re.findall(r'refs/tags/([\w.]+)', output))
 
-    return local_tags.union(remote_tags)
+    return local_tags, remote_tags
+
+
+def create_tag(repository_root: str, tag_name: str, message: str = None, push: bool = True):
+    """
+    Configured ssh required
+    """
+    repository_root = str(repository_root)
+    local_tags, remote_tags = get_tags(repository_root)
+    if tag_name in local_tags:
+        cmd = f'git tag -d {tag_name}'
+        print('REMOVE LOCAL:', cmd)
+        subprocess.call(shlex.split(cmd), cwd=repository_root)
+    if push and tag_name in remote_tags:
+        cmd = f'git push --delete origin {tag_name}'
+        print('REMOVE REMOTE:', cmd)
+        subprocess.call(shlex.split(cmd), cwd=repository_root)
+    cmd = f'git tag {tag_name}'
+    if message:
+        cmd += f' -m "{message}"'
+    print('CREATE TAG', cmd)
+    subprocess.call(shlex.split(cmd), cwd=repository_root)
+    if push:
+        cmd = f'git push origin {tag_name}'
+        print('PUSH TAG TO REMOTE', cmd)
+        subprocess.call(shlex.split(cmd), cwd=repository_root)

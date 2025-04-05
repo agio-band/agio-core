@@ -13,12 +13,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 class _APluginAbstract(ABC):
+    plugin_type = None
+    name = None
     is_abstract = True
 
 
 class APlugin(_APluginAbstract):
-    plugin_type = None
-    name = None
 
     def __init__(self, package: APackage):
         self.before_load()

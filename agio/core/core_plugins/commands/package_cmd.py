@@ -40,14 +40,34 @@ class PackageBuildCommand(ACommand):
 class PackageReleaseCommand(ACommand):
     command_name = "release"
     arguments = [
-        click.argument('version'),
+        click.option('-t', '--token'),
         click.argument("path",
                      type=click.Path(exists=True, dir_okay=True, resolve_path=True),
                      default=Path.cwd().absolute().as_posix()),
     ]
 
-    def execute(self, version: str, path: str):
-        print(f"Make package release {version} in {path}")
+    def execute(self, token: str, path: str):
+        logger.debug(f"Make package release: {path}")
+        result = package_tools.make_release(
+            path,
+            token=token
+        )
+
+
+class PackageRegisterCommand(ACommand):
+    command_name = "register"
+    arguments = [
+        click.option('-t', '--token'),
+        click.argument("path",
+                     type=click.Path(exists=True, dir_okay=True, resolve_path=True),
+                     default=Path.cwd().absolute().as_posix()),
+    ]
+
+    def execute(self, token: str, path: str):
+        # проверить что текущая версия еще не зарегистрирована в agio
+        # проверить что релиз с такой версией есть и там есть файлы whl
+        # собрать полную информацию из __agio__.yml и pyproject.toml
+        logger.debug(f"Register release in agio store: {path}")
 
 
 class PackageCommandGroup(AGroupCommand):

@@ -4,6 +4,7 @@ import logging
 import requests
 from agio.core.plugins.base.release_repository_base_plugin import ReleaseRepositoryPlugin
 from urllib.parse import urlparse
+from fnmatch import fnmatch
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,14 @@ class GitHubRepository(ReleaseRepositoryPlugin):
             repository_path='/'.join(parsed.path.strip('/').split('/')[0:2])
         )
 
-    def download_release_file(self, tag: str, file_type: str = 'whl', dest_dir: str | Path = None) -> str:
+    @classmethod
+    def download_release_file(
+            cls,
+            repository_url: str,
+            tag: str,
+            file_type: str = 'whl',
+            dest_dir: str | Path = None
+    ) -> str:
         pass
 
     def create_and_upload_release(
@@ -48,21 +56,26 @@ class GitHubRepository(ReleaseRepositoryPlugin):
         }
         data = {
             "tag_name": tag,
-            "name": name,
-            "body": notes,
+            "name": name or tag,
+            "body": notes or '',
             "draft": False,
-            "prerelease": None
+            "prerelease": False
         }
-        logger.debug(f'Crate release url: {url}')
+        logger.info(f'Crate release url: {url}. Data: {data}')
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()
         release_data = response.json()
         upload_url = release_data["upload_url"].split("{?")[0]
+        ignore_list = self.release_ignore_list + list((ignore_list or []))
         if build_dir:
             for filename in os.listdir(build_dir):
                 filepath = os.path.join(build_dir, filename)
                 if os.path.isfile(filepath):
-                    self.upload_github_file(upload_url, filepath)
+                    rel_path = os.path.relpath(filepath, build_dir)
+                    if not self.validate_file_name_with_ignore_list(rel_path, ignore_list):
+                        logger.debug(f"File {rel_path} is ignored")
+                        continue
+                    self.upload_github_file(upload_url, filepath, access_data)
         return release_data
 
     def upload_github_file(self, upload_url: str, filepath: str, access_data: dict = None):
@@ -80,3 +93,27 @@ class GitHubRepository(ReleaseRepositoryPlugin):
             logger.info(f"File {filename} uploaded successfully to GitHub")
         else:
             raise Exception(response.text)
+
+    def has_release_with_tag(self, repository_url: str, tag: str, access_data: dict) -> dict | None:
+        repo_details = self.parse_url(repository_url)
+        token = access_data.get('token', None)
+        if not token:
+            raise Exception("No token provided")
+
+        url = f"https://api.github.com/repos/{repo_details['username']}/{repo_details['repository_name']}/releases/tags/{tag}"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+
+        logger.debug(f"Checking if release exists: {url}")
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 404:
+            return None
+        else:
+            logger.warning(f"GitHub API error: {response.status_code} {response.text}")
+            response.raise_for_status()

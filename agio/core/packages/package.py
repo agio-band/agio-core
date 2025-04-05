@@ -31,6 +31,10 @@ class APackage:
         return f"APackage({self.name} v{self.version})"
 
     @property
+    def data(self):
+        return self._manifest_data
+
+    @property
     def name(self) -> str:
         return self._manifest_data['name']
 
@@ -63,6 +67,10 @@ class APackage:
             'license': self._manifest_data.get('license', ''),
             'home_page': self._manifest_data.get('home_page', ''),
         }
+
+    @property
+    def repository_url(self):
+        return self._manifest_data['repository_url']
 
     @property
     def root(self):
