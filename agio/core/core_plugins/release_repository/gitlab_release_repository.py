@@ -1,6 +1,6 @@
-from agio.core.plugins.base.release_repository_base_plugin import ReleaseRepositoryPlugin
+from agio.core.plugins.base.base_plugin_release_repository import ReleaseRepositoryPlugin
 
 
 class GitLabRepository(ReleaseRepositoryPlugin):
-    name = 'github'
+    name = 'gitlab'
     check_url_pattern = r'https://gitlab\.com.*'

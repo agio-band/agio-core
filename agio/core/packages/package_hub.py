@@ -39,7 +39,6 @@ class APackageHub(metaclass=Singleton):
 
     def collect_packages(self) -> None:
         self._packages.clear()
-        # if AWorkspace.current():
         for package in self.iter_packages():
             self.add_package(package)
 

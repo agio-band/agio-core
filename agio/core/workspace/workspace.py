@@ -5,16 +5,18 @@ from pathlib import Path
 from uuid import UUID
 
 from agio.core.exceptions import WorkspaceNotExists, WorkspaceNotInstalled
-from agio.core.packages.package import APackage
+from agio.core.packages.package import APackage, APackageInfo
+# from agio.core.packages.package_tools import resolve_and_simplify_dependencies
 from agio.core.workspace import pkg_manager, request_data
 
 
 class AWorkspace:
     _meta_file_name = '__agio_ws__.json'
+    workspaces_root = Path('~/.agio/workspaces').expanduser()  # TODO: path from config
 
     def __init__(self, workspace_id: str | UUID):
         self.id = workspace_id
-        self._root = Path.home().joinpath('.agio', 'workspaces', str(self.id))
+        self._root = self.workspaces_root.joinpath(str(self.id))
         try:
             self._data = self._load_local_data()
         except WorkspaceNotInstalled:
@@ -54,17 +56,19 @@ class AWorkspace:
 
     @property
     def root(self):
-        return request_data.get_workspaces_installation_root() / str(self.id)
+        return self._root
 
     @cached_property
     def venv_manager(self):
         return pkg_manager.get_package_manager(self.root)
 
-    def get_package_list_to_install(self) -> list:
-        packages = []
-        for pkg in self._data.get('packages', []):
-            packages.append(pkg)
-        return packages
+    # def get_package_list_to_install(self) -> list:
+    #     packages = []
+    #     for pkg in self._data.get('packages', []):
+    #         packages.append(pkg)
+    #     return packages
+
+    # packages
 
     def iter_installed_packages(self):
         yield from self.venv_manager.iter_packages()
@@ -74,9 +78,6 @@ class AWorkspace:
             raise WorkspaceNotInstalled
         for pkg in self._data.get('packages', []):
             yield APackage(**pkg)
-
-    def get_package(self, name):
-        pass
 
     def get_launch_envs(self):
         return {
@@ -104,17 +105,23 @@ class AWorkspace:
         return self.local_meta_file.exists()
 
     def install(self, force: bool = False):
-        if self.exists() and next(self.root.iterdir()):
+        if self.is_installed():
             if force:
                 self.venv_manager.delete_venv()
             else:
                 return False
+        from pprint import pprint
         self.venv_manager.create_venv()
-        packages = self.get_package_list_to_install()
-        self.venv_manager.install_packages(*packages)
+        print('VENV:', self.venv_manager.path)
+        package_info_list = self.get_packages_info()
+        install_args = [pkg.get_installation_command() for pkg in package_info_list]      # todo: move to multithread
+        pprint(install_args)
+        self.venv_manager.install_packages(*install_args)
         with open(self.local_meta_file, 'w') as f:
             json.dump(self._data, f, indent=4)
 
+    def get_packages_info(self):
+        return [APackageInfo(pkg['name'], pkg['version']) for pkg in self._data['packages']]
 
     def remove(self) -> bool:
         if self.exists():
@@ -129,5 +136,5 @@ class AWorkspace:
     def update(self):
         if not self.exists():
             raise WorkspaceNotExists('Workspace not installed')
-        packages = self.iter_packages()
-        self.venv_manager.install_packages(*packages)
+        self.install(force=True)
+

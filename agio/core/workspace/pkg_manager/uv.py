@@ -27,19 +27,19 @@ class UVPackageManager(PackageManagerBase):
         self.run(cmd)
 
     def install_packages(self, *packages: str):
-        package_names = []
-        for pkg in packages:
-            if isinstance(pkg, str):
-                package_names.append(pkg)
-            elif isinstance(pkg, dict):
-                package_names.append(f"{pkg['name']}=={pkg['version']}")
-            elif isinstance(pkg, APackage):
-                package_names.extend(pkg.installation_name)
-            else:
-                raise ValueError(f"Invalid package type: {type(pkg)}")
+        # package_names = []
+        # for pkg in packages:
+        #     if isinstance(pkg, str):
+        #         package_names.append(pkg)
+        #     elif isinstance(pkg, dict):
+        #         package_names.append(f"{pkg['name']}=={pkg['version']}")
+        #     elif isinstance(pkg, APackage):
+        #         package_names.extend(pkg.installation_name)
+        #     else:
+        #         raise ValueError(f"Invalid package type: {type(pkg)}")
         cmd = ['pip', 'install']
+        cmd.extend(packages)
         logger.info('Install cmd: %s', ' '.join(cmd))
-        cmd.extend(package_names)
         self.run(cmd)
 
     def get_python_version(self, full=False):
@@ -90,13 +90,13 @@ class UVPackageManager(PackageManagerBase):
         install_path = Path(cls.get_package_manager_installation_path(), 'uv').as_posix()
         return _install_uv(install_path)
 
-    def build_package(self, cleanup=True):
+    def build_package(self, cleanup=True, **kwargs):
         self.run(['pip', 'install', 'build'])
         dist_path = self.path/'dist'
         if dist_path.exists():
             shutil.rmtree(dist_path)
         self.run(['build', '--wheel'])
-        if cleanup:
+        if cleanup and not kwargs.get('no_cleanup'):
             self.cleanup_build_files()
         return dist_path
 

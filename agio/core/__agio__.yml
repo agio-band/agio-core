@@ -1,30 +1,21 @@
-label: 'agio Core'
-name: 'agio-core'
-version: '0.0.1'
-short_description: 'Agio Core Package'
-long_description: |
-  Long help description of package
-
-license: 'MIT'
-author: 'paulwinex'
-authors_email:
-  - 'paulwinex@gmail.com'
-documentation:
-  # first url is home page
-  - 'https://store.agio.services/package/agio-core/{version}'
-
-# for clone
-repository_url: 'https://github.com/agio/agio-core'
-
+name: agio.core
+version: 0.0.1
+label: agio Core
+description: |
+  Main agio-pipeline package
+icon: 'core/agio-logo.png'
+urls:
+  home_page: ""
+  documentation: ""
+  bug_tracker: "https://github.com/agio/agio-core/issues"
+#  source_url: ""
 resources_dir: "custom/resources" # default "/resources"
-icon: 'core/agio-logo.png'  # inside resources path
+dependencies: []
+#private_releases: true
+repository_api: gitea
 
-
-python_requirements:
-  requests: "^2.32.3"
-
-agio_packages_requirements:
-
+callbacks:
+  - "callbacks/*"
 
 plugins:
   # commands
@@ -44,13 +35,13 @@ plugins:
       - module: core_plugins/commands/run_cmd.py
 
   - name: package_command
-    label: Manage agio Packages Command
+    label: Manage agio packages command
     implementations:
       - module: core_plugins/commands/package_cmd.py
 
   # release repository
   - name: github_release_repository
-    label: GitHub Release repository
+    label: GitHub release repository
     implementations:
       - module: core_plugins/release_repository/github_release_repository.py
 
@@ -58,3 +49,18 @@ plugins:
     label: GitLab Release repository
     implementations:
       - module: core_plugins/release_repository/gitlab_release_repository.py
+
+
+  - name: gitea_release_repository
+    label: Gitea Release repository
+    implementations:
+      - module: core_plugins/release_repository/gitea_release_repository.py
+
+
+settings:
+  - type: local
+    paths:
+      - "settings/client.yml"
+  - type: global
+    paths:
+      - "settings/server/*.yml"

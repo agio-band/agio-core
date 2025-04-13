@@ -1,0 +1,4 @@
+
+
+class AEvent:
+    pass

@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 
 from agio.core.packages.package import APackage
-from agio.core.utils.process_tools import start_process
+from agio.core.utils.process_utils import start_process
 from agio.core.workspace import venv_utils
 
 logger = logging.getLogger(__name__)
@@ -15,6 +15,7 @@ class PackageManagerBase:
 
     def __init__(self, package_root: str|Path):
         self.path = Path(package_root)
+        self.path.mkdir(exist_ok=True, parents=True)
 
     @property
     def python_executable(self):
@@ -43,7 +44,7 @@ class PackageManagerBase:
         if not site_packages_path:
             return
         site_packages_path = Path(site_packages_path)
-        for package in site_packages_path.glob(f'*/{APackage.manifest_file_name}'):
+        for package in site_packages_path.glob(f'*/{APackage.info_file_name}'):
             yield APackage(package.parent.as_posix())
 
     def create_venv(self):

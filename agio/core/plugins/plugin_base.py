@@ -5,7 +5,7 @@ from abc import ABC
 from pathlib import Path
 from typing import TYPE_CHECKING, Generator
 import logging
-from agio.core.utils.import_tools import import_module_by_path
+from agio.core.utils.import_utils import import_module_by_path
 if TYPE_CHECKING:
     from agio.core.packages.package import APackage
 
@@ -24,14 +24,13 @@ class APlugin(_APluginAbstract):
         self.before_load()
         # self.manifest_data = manifest_data
         # self.name = manifest_data.get('name')
-        self.name = self.__class__.__name__
+        # self.name = self.__class__.__name__
         self._package = package
         self.on_load()
 
     @classmethod
-    def load_from_manifest_data(cls, plugin_info: dict, manifest_file_path: str) -> Generator[APlugin, None, None]:
+    def load_from_info(cls, plugin_info: dict, manifest_file_path: str) -> Generator[APlugin, None, None]:
         from agio.core.init_core import app_context
-
         for imp in plugin_info.get('implementations', ()):
             if supported_apps := imp.get('apps'):
                 if isinstance(supported_apps, str):

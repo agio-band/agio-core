@@ -1,28 +1,38 @@
 [project]
-name = "agio.core"
+name = "agio-core"
 version = "0.0.1"
 description = "Core functionality for agio framework."
-authors = [{ name = "Your Name", email = "your.email@example.com" }]
+authors = [
+    { name = "paulwinex", email = "paulwinex@gmail.com" }
+]
 license = { text = "MIT" }
+#license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.32.3",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 
+[project.scripts]
+agio = "agio.core.cli:__main__"
+
+
+# for c-code compilation
+#[tool.cibuildwheel]
+#build = "cp38-* cp39-* cp310-* cp311-* cp312-*"
+#skip = "pp*"  # skip PyPy
+
+
+# === do not change code below  === #
 [build-system]
 requires = ["uv", "wheel", "setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[project.urls]
-"Homepage" = "https://example.com/agio"
-"Bug Tracker" = "https://example.com/agio/issues"
 
-[project.scripts]
-agio = "agio.cli:main"
-
-[tool.cibuildwheel]
-build = "cp38-* cp39-* cp310-* cp311-* cp312-*"
-skip = "pp*"  # skip PyPy
+[tool.setuptools.packages.find]
+where = ["."]

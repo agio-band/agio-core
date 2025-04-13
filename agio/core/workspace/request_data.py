@@ -27,8 +27,6 @@ def delete_workspace(workspace_id: str):
     return requests.delete(f'{ws_api_url}/{workspace_id}').json()
 
 
-def get_workspaces_installation_root():
-    return Path('~/.agio/workspaces').expanduser()
 
 # packages
 pkg_api_url = f'{api_url}/package'
@@ -37,10 +35,14 @@ def list_packages():
     return requests.get(f'{pkg_api_url}').json()
 
 
-def get_package(name: str, version: str):
-    resp = requests.get(f'{pkg_api_url}/{name}/{version}')
+def get_package(name: str, version: str = None):
+    url = f'{pkg_api_url}/{name}'
+    if version:
+        url += f'/{version}'
+    resp = requests.get(url)
     resp.raise_for_status()
     return resp.json()
+
 
 def get_packages():
     resp = requests.get(f'{pkg_api_url}')

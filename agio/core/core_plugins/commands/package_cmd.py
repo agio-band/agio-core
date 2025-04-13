@@ -1,7 +1,8 @@
 from pathlib import Path
+
 import click
 import logging
-from agio.core.plugins.base.command_base_plugin import ACommand, AGroupCommand
+from agio.core.plugins.base.base_plugin_command import ACommand, AGroupCommand
 from agio.core.packages import package_tools
 
 logger = logging.getLogger(__name__)
@@ -27,31 +28,38 @@ class PackageBuildCommand(ACommand):
                         default=Path.cwd().absolute().as_posix(),
                         metavar='[PACKAGE_PATH]'
                        ),
+        click.option('-b', '--no-check-branch', is_flag=True, default=False, help='Skip branch check'),
+        click.option('-c', '--no-check-commits', is_flag=True, default=False, help='Skip commits check'),
+        click.option('-p', '--no-check-pushed', is_flag=True, default=False, help='Skip push check'),
+        click.option('-l', '--no-cleanup', is_flag=True, default=False, help='Skip cleanup build files'),
     ]
 
-    def execute(self, path: str|Path):
+    def execute(self, path: str|Path, **kwargs):
         """
         PATH: path to package repository
         """
         logger.info(f"Build package {path}")
-        package_tools.build_package(path)
+        package_tools.build_package(path, **kwargs)
 
 
 class PackageReleaseCommand(ACommand):
     command_name = "release"
     arguments = [
         click.option('-t', '--token'),
+        click.option('-b', '--no-check-branch', is_flag=True, default=False, help='Skip branch check'),
+        click.option('-c', '--no-check-commits', is_flag=True, default=False, help='Skip commits check'),
+        click.option('-p', '--no-check-pushed', is_flag=True, default=False, help='Skip push check'),
+        click.option('-l', '--no-cleanup', is_flag=True, default=False, help='Skip cleanup build files'),
         click.argument("path",
                      type=click.Path(exists=True, dir_okay=True, resolve_path=True),
                      default=Path.cwd().absolute().as_posix()),
     ]
 
-    def execute(self, token: str, path: str):
+    def execute(self, token: str, path: str, **kwargs):
         logger.debug(f"Make package release: {path}")
-        result = package_tools.make_release(
-            path,
-            token=token
-        )
+        result = package_tools.make_release(path, token=token, **kwargs)
+        from pprint import pprint
+        pprint(result)
 
 
 class PackageRegisterCommand(ACommand):

@@ -1,6 +1,9 @@
+from pathlib import Path
+from typing import List
+
 import requests
 import re
-from packaging.tags import sys_tags
+from packaging.tags import sys_tags, Tag
 from packaging.utils import parse_wheel_filename
 from requests.exceptions import RequestException
 
@@ -87,3 +90,32 @@ def get_compatible_whl_url(repo_url: str, package_version: str):
         return get_gitlab_whl_url(repo_url, package_version)
     else:
         raise ValueError("Unsupported platform")
+
+
+# def filter_compatible_package(files: List[str]) -> str:
+#     compatible_tags = list(sys_tags())
+#
+#     def score_wheel(tags_whl: List[Tag]) -> int:
+#         return sum(
+#             (len(compatible_tags) - compatible_tags.index(tag))
+#             for tag in tags_whl if tag in compatible_tags
+#         )
+#
+#     best_match = None
+#     best_score = -1
+#
+#     for file in files:
+#         short = Path(file).name
+#         try:
+#             _, _, _, tags_whl = parse_wheel_filename(short)
+#             score = score_wheel(tags_whl)
+#             if score > best_score:
+#                 best_score = score
+#                 best_match = file
+#         except Exception as e:
+#             print(f"Warning: unexpected error parsing wheel '{file}': {e}")
+#             continue
+#
+#     if best_match:
+#         return best_match
+#     raise ValueError("No compatible .whl found for your platform.")

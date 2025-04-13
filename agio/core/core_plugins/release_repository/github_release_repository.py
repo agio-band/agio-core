@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import logging
 import requests
-from agio.core.plugins.base.release_repository_base_plugin import ReleaseRepositoryPlugin
+from agio.core.plugins.base.base_plugin_release_repository import ReleaseRepositoryPlugin
 from urllib.parse import urlparse
 from fnmatch import fnmatch
 
@@ -17,6 +17,7 @@ class GitHubRepository(ReleaseRepositoryPlugin):
     def parse_url(cls, url: str):
         parsed = urlparse(url)
         return dict(
+            schema=parsed.scheme,
             domain=parsed.netloc,
             username=parsed.path.split('/')[1],
             repository_name=parsed.path.split('/')[2],
@@ -24,13 +25,14 @@ class GitHubRepository(ReleaseRepositoryPlugin):
         )
 
     @classmethod
-    def download_release_file(
+    def download_package_release(
             cls,
             repository_url: str,
             tag: str,
             file_type: str = 'whl',
             dest_dir: str | Path = None
     ) -> str:
+        # TODO
         pass
 
     def create_and_upload_release(
@@ -48,7 +50,8 @@ class GitHubRepository(ReleaseRepositoryPlugin):
         if not token:
             raise Exception("No token provided")
         # TODO: check release already exists
-        url = f"https://api.github.com/repos/{repo_details['username']}/{repo_details['repository_name']}/releases"
+        base_url = self.get_api_base_url(repository_url)
+        url = f"{base_url}/repos/{repo_details['username']}/{repo_details['repository_name']}/releases"
         headers = {
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
@@ -94,13 +97,18 @@ class GitHubRepository(ReleaseRepositoryPlugin):
         else:
             raise Exception(response.text)
 
-    def has_release_with_tag(self, repository_url: str, tag: str, access_data: dict) -> dict | None:
+    def get_api_base_url(self, repository_url: str):
         repo_details = self.parse_url(repository_url)
+        return "{schema}://{domain}".format(**repo_details)
+
+    def get_release_with_tag(self, repository_url: str, tag: str, access_data: dict) -> dict | None:
         token = access_data.get('token', None)
         if not token:
             raise Exception("No token provided")
 
-        url = f"https://api.github.com/repos/{repo_details['username']}/{repo_details['repository_name']}/releases/tags/{tag}"
+        base_url = self.get_api_base_url(repository_url)
+        repo_details = self.parse_url(repository_url)
+        url = f'{base_url}/repos/{repo_details['username']}/{repo_details['repository_name']}/releases/tags/{tag}'
         headers = {
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
@@ -113,7 +121,13 @@ class GitHubRepository(ReleaseRepositoryPlugin):
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 404:
-            return None
+            return
         else:
             logger.warning(f"GitHub API error: {response.status_code} {response.text}")
             response.raise_for_status()
+
+    def get_asset_list(self, repository_url: str, tag: str, access_data: dict) -> list:
+        release_data = self.get_release_with_tag(repository_url, tag, access_data)
+        if not release_data:
+            return []
+        return release_data['assets']

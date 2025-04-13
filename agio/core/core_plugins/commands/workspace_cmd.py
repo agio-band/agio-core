@@ -1,16 +1,20 @@
 import click
-from agio.core.plugins.base.command_base_plugin import ACommand, AGroupCommand
+from agio.core.plugins.base.base_plugin_command import ACommand, AGroupCommand
+from agio.core.workspace.workspace import AWorkspace
 
 
 class InstallWorkspaceCommand(ACommand):
     command_name = 'install'
     arguments = [
         click.argument('workspace_id'),
+        click.option('--force', '-f', is_flag=True, default=False, help='Force install workspace'),
     ]
     help = 'Install workspace by ID'
 
-    def execute(self, workspace_id: str):
+    def execute(self, workspace_id: str, force: bool = False):
         print('Install Workspace', workspace_id)
+        AWorkspace(workspace_id).install(force=force)
+
 
 
 class UninstallWorkspaceCommand(ACommand):
@@ -22,6 +26,7 @@ class UninstallWorkspaceCommand(ACommand):
 
     def execute(self, workspace_id: str):
         print('Uninstall Workspace', workspace_id)
+        AWorkspace(workspace_id).remove()
 
 
 class ListWorkspaceCommand(ACommand):
