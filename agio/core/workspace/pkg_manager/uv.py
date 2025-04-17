@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 class UVPackageManager(PackageManagerBase):
+    """
+    uv python install 3.12
+    uv python install '>=3.8,<3.10'
+    """
 
     @property
     def venv_path(self):
@@ -26,18 +30,10 @@ class UVPackageManager(PackageManagerBase):
         cmd = ['pip', 'install', package_name]
         self.run(cmd)
 
-    def install_packages(self, *packages: str):
-        # package_names = []
-        # for pkg in packages:
-        #     if isinstance(pkg, str):
-        #         package_names.append(pkg)
-        #     elif isinstance(pkg, dict):
-        #         package_names.append(f"{pkg['name']}=={pkg['version']}")
-        #     elif isinstance(pkg, APackage):
-        #         package_names.extend(pkg.installation_name)
-        #     else:
-        #         raise ValueError(f"Invalid package type: {type(pkg)}")
+    def install_packages(self, *packages: str, **kwargs):
         cmd = ['pip', 'install']
+        if kwargs.get('no_cache'):
+            cmd.append('--no-cache')
         cmd.extend(packages)
         logger.info('Install cmd: %s', ' '.join(cmd))
         self.run(cmd)
@@ -68,7 +64,12 @@ class UVPackageManager(PackageManagerBase):
             if prk['name'] == package_name:
                 return prk['version']
 
-    def create_venv(self):
+    def create_venv(self, py_version: str = None):
+        cmd = ['init', '--bare']
+        if py_version:
+            logger.info('Install with version: %s', py_version)
+            cmd.extend(['--python', py_version])
+        self.run(cmd, workdir=self.path.as_posix())
         self.run(['venv'], workdir=self.path.as_posix())
 
     def venv_exists(self):

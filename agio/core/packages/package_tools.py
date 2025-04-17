@@ -1,10 +1,12 @@
-from collections import defaultdict
 from pathlib import Path
 from typing import Generator
 import os
 import sys
+
+import requests
+
 from . import get_release_repository_plugin
-from .package import APackage, APackageRepository, APackageInfo
+from .package import APackage, APackageRepository
 from ..workspace.pkg_manager import get_package_manager, get_package_manager_class
 
 
@@ -22,16 +24,52 @@ def make_release(package_repository_path: str, token: str = None, **kwargs):
     repo = get_release_repository_plugin(pkg.source_url, pkg.repository_api)
     if not repo:
         raise ValueError(f"Repository {pkg.source_url} is not supported")
+    # check registered release
+    resp = requests.get(f'http://localhost:8002/release/{pkg.name}/{pkg.version}')
+    if resp.status_code == 200:
+        raise ValueError(f"Release {pkg.name} {pkg.version} already exists in agio repository")
     release_data = repo.make_release(
         pkg,
         access_data={'token': token},
         **kwargs
     )
+    return register_new_package_release(pkg, release_data)
 
 
-def register_new_package_release(package_repository_path: str, data: dict = None, **kwargs):
-    ...
+def register_new_package_release(pkg: APackageRepository, data: dict = None, **kwargs):
+    url = 'http://localhost:8002/release'
+    submit_data = dict(
+        package_name=pkg.name,
+        version=pkg.version,
+        data=dict(
+            urls=pkg.data.get('urls', {}),
+            icon=pkg.data.get('icon', ''),
+            assets=data['assets'],
+            description=pkg.data.get('description', ''),
+            dependencies=pkg.data.get('dependencies', []),
+            settings=pkg.data.get('settings', {}),
+            callbacks=pkg.data.get('callbacks', [])
+        )
+    )
+    resp = requests.post(url, json=submit_data)
+    if not resp.ok:
+        print(resp.json())
+    resp.raise_for_status()
+    return resp.json()
 
+
+def register_package(package_repository_path: str):
+    pkg = APackageRepository(package_repository_path)
+    url = 'http://localhost:8002/package'
+    data = dict(
+        name=pkg.name,
+        label=pkg.label,
+    )
+    resp = requests.post(url, json=data)
+    if not resp.ok:
+        print(resp.json())
+    resp.raise_for_status()
+    return resp.json()
 
 def build_package(package_root: str, **kwargs):
     path = Path(package_root)

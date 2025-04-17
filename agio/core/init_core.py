@@ -31,7 +31,7 @@ logger.debug(f'Loaded packages: {package_hub.packages_count}')
 logger.debug('Init plugins...')
 plugin_hub = APluginHub(package_hub)
 # collect plugins
-...
+plugin_hub.collect_plugins()
 # init plugins
 ...
 logger.debug(f'Loaded plugins: {plugin_hub.plugins_count}')

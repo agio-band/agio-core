@@ -1,3 +1,5 @@
+import sys
+
 import click
 
 
@@ -19,6 +21,7 @@ class InfoCommand(ACommand):
         print('='*30)
         print('Workspace:', ws)
         print('='*30)
+        print('Python', sys.version)
         if any([core, packages, plugins]):
             if core:
                 self._show_core_info()

@@ -19,7 +19,7 @@ class PackageManagerBase:
 
     @property
     def python_executable(self):
-        return Path(self.path, 'bin/python' + ('.exe' if os.name == 'nt' else '')).as_posix()
+        return Path(self.path, '.venv/bin/python' + ('.exe' if os.name == 'nt' else '')).as_posix()
 
     def install_package(self, package_name):
         raise NotImplementedError
@@ -71,9 +71,9 @@ class PackageManagerBase:
         kwargs.setdefault('get_output', True)
         return start_process(cmd, workdir=workdir, **kwargs)
 
-    @classmethod
-    def get_venvs_installation_path(cls):
-        return Path('~.agio/venvs').expanduser().as_posix() # TODO from config
+    # @classmethod
+    # def get_venvs_installation_path(cls):
+    #     return Path('~.agio/venvs').expanduser().as_posix() # TODO from config
 
     @classmethod
     def get_package_manager_installation_path(cls):

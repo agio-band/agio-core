@@ -1,4 +1,6 @@
 import os
+import re
+import time
 from pathlib import Path
 import logging
 import requests
@@ -9,8 +11,8 @@ from fnmatch import fnmatch
 logger = logging.getLogger(__name__)
 
 
-class GitHubRepository(ReleaseRepositoryPlugin):
-    name = 'github'
+class GitHubRepositoryPlugin(ReleaseRepositoryPlugin):
+    repository_api = 'github'
     check_url_pattern = r'https://github\.com.*'
 
     @classmethod
@@ -51,7 +53,8 @@ class GitHubRepository(ReleaseRepositoryPlugin):
             raise Exception("No token provided")
         # TODO: check release already exists
         base_url = self.get_api_base_url(repository_url)
-        url = f"{base_url}/repos/{repo_details['username']}/{repo_details['repository_name']}/releases"
+        repo_name = re.sub(r"\.git$", '', repo_details['repository_name'])
+        url = f"{base_url}/repos/{repo_details['username']}/{repo_name}/releases"
         headers = {
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
@@ -64,7 +67,7 @@ class GitHubRepository(ReleaseRepositoryPlugin):
             "draft": False,
             "prerelease": False
         }
-        logger.info(f'Crate release url: {url}. Data: {data}')
+        logger.info(f'Crate release url: {url}')
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()
         release_data = response.json()
@@ -116,15 +119,19 @@ class GitHubRepository(ReleaseRepositoryPlugin):
         }
 
         logger.debug(f"Checking if release exists: {url}")
-        response = requests.get(url, headers=headers)
-
-        if response.status_code == 200:
-            return response.json()
-        elif response.status_code == 404:
-            return
-        else:
-            logger.warning(f"GitHub API error: {response.status_code} {response.text}")
-            response.raise_for_status()
+        retry = 0
+        while retry < 3:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 404:
+                retry += 1
+                logger.info('Retry...')
+                time.sleep(.5)
+                continue
+            else:
+                logger.warning(f"GitHub API error: {response.status_code} {response.text}")
+                response.raise_for_status()
 
     def get_asset_list(self, repository_url: str, tag: str, access_data: dict) -> list:
         release_data = self.get_release_with_tag(repository_url, tag, access_data)

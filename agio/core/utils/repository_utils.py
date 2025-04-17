@@ -62,12 +62,10 @@ def get_gitlab_whl_url(repo_url: str, package_version: str):
 
 def fetch_whl_url(releases_url: str):
     compatible_tags = list(sys_tags())
-    try:
-        response = requests.get(releases_url)
-        response.raise_for_status()
-        assets = response.json().get("assets", {}).get("links", [])
-    except RequestException as e:
-        raise RuntimeError(f"Failed to fetch release: {e}")
+    response = requests.get(releases_url)
+    response.raise_for_status()
+    assets = response.json().get("assets", {})
+    links = assets.get("links", [])
 
     for asset in assets:
         if not asset["name"].endswith(".whl"):
@@ -92,30 +90,30 @@ def get_compatible_whl_url(repo_url: str, package_version: str):
         raise ValueError("Unsupported platform")
 
 
-# def filter_compatible_package(files: List[str]) -> str:
-#     compatible_tags = list(sys_tags())
-#
-#     def score_wheel(tags_whl: List[Tag]) -> int:
-#         return sum(
-#             (len(compatible_tags) - compatible_tags.index(tag))
-#             for tag in tags_whl if tag in compatible_tags
-#         )
-#
-#     best_match = None
-#     best_score = -1
-#
-#     for file in files:
-#         short = Path(file).name
-#         try:
-#             _, _, _, tags_whl = parse_wheel_filename(short)
-#             score = score_wheel(tags_whl)
-#             if score > best_score:
-#                 best_score = score
-#                 best_match = file
-#         except Exception as e:
-#             print(f"Warning: unexpected error parsing wheel '{file}': {e}")
-#             continue
-#
-#     if best_match:
-#         return best_match
-#     raise ValueError("No compatible .whl found for your platform.")
+def filter_compatible_package(files: List[str]) -> str:
+    compatible_tags = list(sys_tags())
+
+    def score_wheel(tags_whl: List[Tag]) -> int:
+        return sum(
+            (len(compatible_tags) - compatible_tags.index(tag))
+            for tag in tags_whl if tag in compatible_tags
+        )
+
+    best_match = None
+    best_score = -1
+
+    for file in files:
+        short = Path(file).name
+        try:
+            _, _, _, tags_whl = parse_wheel_filename(short)
+            score = score_wheel(tags_whl)
+            if score > best_score:
+                best_score = score
+                best_match = file
+        except Exception as e:
+            print(f"Warning: unexpected error parsing wheel '{file}': {e}")
+            continue
+
+    if best_match:
+        return best_match
+    raise ValueError("No compatible .whl found for your platform.")

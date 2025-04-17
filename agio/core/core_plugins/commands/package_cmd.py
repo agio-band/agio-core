@@ -38,6 +38,8 @@ class PackageBuildCommand(ACommand):
         """
         PATH: path to package repository
         """
+        # --no-cache
+        # --cache-dir <CACHE_DIR>
         logger.info(f"Build package {path}")
         package_tools.build_package(path, **kwargs)
 
@@ -58,29 +60,26 @@ class PackageReleaseCommand(ACommand):
     def execute(self, token: str, path: str, **kwargs):
         logger.debug(f"Make package release: {path}")
         result = package_tools.make_release(path, token=token, **kwargs)
-        from pprint import pprint
-        pprint(result)
+        logger.info(f"Release created: ID {result['id']}")
 
 
 class PackageRegisterCommand(ACommand):
     command_name = "register"
     arguments = [
-        click.option('-t', '--token'),
         click.argument("path",
                      type=click.Path(exists=True, dir_okay=True, resolve_path=True),
                      default=Path.cwd().absolute().as_posix()),
     ]
 
-    def execute(self, token: str, path: str):
-        # проверить что текущая версия еще не зарегистрирована в agio
-        # проверить что релиз с такой версией есть и там есть файлы whl
-        # собрать полную информацию из __agio__.yml и pyproject.toml
+    def execute(self, path: str):
         logger.debug(f"Register release in agio store: {path}")
+        resp = package_tools.register_package(path)
+        print(resp)
 
 
 class PackageCommandGroup(AGroupCommand):
     command_name = "pkg"
-    commands = [PackageNewCommand, PackageBuildCommand, PackageReleaseCommand]
+    commands = [PackageNewCommand, PackageBuildCommand, PackageReleaseCommand, PackageRegisterCommand]
     help = 'Manage packages'
     # invoke_without_command = True
 

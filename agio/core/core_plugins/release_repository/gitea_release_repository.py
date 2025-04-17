@@ -1,11 +1,11 @@
 import logging
-from agio.core.core_plugins.release_repository.github_release_repository import GitHubRepository
+from agio.core.core_plugins.release_repository.github_release_repository import GitHubRepositoryPlugin
 
 logger = logging.getLogger(__name__)
 
 
-class GiteaRepository(GitHubRepository):
-    name = 'gitea'
+class GiteaRepositoryPlugin(GitHubRepositoryPlugin):
+    repository_api = 'gitea'
     check_url_pattern=  None
 
     def get_api_base_url(self, repository_url: str):

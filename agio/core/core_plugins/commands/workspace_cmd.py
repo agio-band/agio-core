@@ -7,13 +7,14 @@ class InstallWorkspaceCommand(ACommand):
     command_name = 'install'
     arguments = [
         click.argument('workspace_id'),
-        click.option('--force', '-f', is_flag=True, default=False, help='Force install workspace'),
+        click.option('--clean', '-c', is_flag=True, default=False, help='Delete all before install workspace'),
+        click.option('--no-cache', '-n', is_flag=True, default=False, help="Don't use package cache"),
     ]
     help = 'Install workspace by ID'
 
-    def execute(self, workspace_id: str, force: bool = False):
+    def execute(self, workspace_id: str, clean: bool = False, no_cache=False):
         print('Install Workspace', workspace_id)
-        AWorkspace(workspace_id).install(force=force)
+        AWorkspace(workspace_id).install(clean=clean, no_cache=no_cache)
 
 
 
@@ -34,7 +35,9 @@ class ListWorkspaceCommand(ACommand):
     help = 'List workspaces'
 
     def execute(self):
-        print('List Workspaces')
+        # todo: show table of workspaces
+        for ws in AWorkspace.workspaces_root.iterdir():
+            print(ws.name)
 
 
 class ShowWorkspaceDetailCommand(ACommand):
@@ -48,8 +51,24 @@ class ShowWorkspaceDetailCommand(ACommand):
         print('Show workspace details:', workspace_id)
 
 
+class UpdateWorkspaceDetailCommand(ACommand):
+    command_name = 'update'
+    arguments = [
+        click.argument('workspace_id', envvar='AGIO_WORKSPACE_ID'),
+    ]
+    help = 'Show workspace details'
+
+    def execute(self, workspace_id: str):
+        print('Update workspace details:', workspace_id)
+        AWorkspace(workspace_id).update()
+
+
 class WorkspaceCommandGroup(AGroupCommand):
     command_name = "ws"
-    commands = [InstallWorkspaceCommand, UninstallWorkspaceCommand, ListWorkspaceCommand, ShowWorkspaceDetailCommand]
+    commands = [InstallWorkspaceCommand,
+                UninstallWorkspaceCommand,
+                ListWorkspaceCommand,
+                UpdateWorkspaceDetailCommand,
+                ShowWorkspaceDetailCommand,]
     help = 'Manage workspaces'
 

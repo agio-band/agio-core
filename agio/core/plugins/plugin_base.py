@@ -22,11 +22,18 @@ class APlugin(_APluginAbstract):
 
     def __init__(self, package: APackage):
         self.before_load()
-        # self.manifest_data = manifest_data
-        # self.name = manifest_data.get('name')
-        # self.name = self.__class__.__name__
         self._package = package
         self.on_load()
+
+    @property
+    def name(self):
+        return f"{self.__class__.__name__}"
+
+    def __repr__(self):
+        return f"{self.name} [{self.package.name}]"
+
+    def __str__(self):
+        return self.name
 
     @classmethod
     def load_from_info(cls, plugin_info: dict, manifest_file_path: str) -> Generator[APlugin, None, None]:
@@ -56,7 +63,9 @@ class APlugin(_APluginAbstract):
             if not full_path.exists():
                 raise ValueError(f"Module file not found: {full_path}")
             try:
-                plugin_module = import_module_by_path(full_path)
+                module_name = module.split('.')[0].replace('/', '.')
+                # todo: add from package root
+                plugin_module = import_module_by_path(full_path, module_name)
             except Exception as e:
                 raise ValueError(f"Error loading plugin: {full_path}") from e
             for obj in plugin_module.__dict__.values():
@@ -74,7 +83,3 @@ class APlugin(_APluginAbstract):
 
     def on_load(self):
         ...
-
-    def __str__(self):
-        return self.name
-

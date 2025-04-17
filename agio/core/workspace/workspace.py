@@ -1,11 +1,13 @@
 import json
 import os
+import shutil
+import sys
 from functools import cached_property
 from pathlib import Path
 from uuid import UUID
 
 from agio.core.exceptions import WorkspaceNotExists, WorkspaceNotInstalled
-from agio.core.packages.package import APackage, APackageInfo
+from agio.core.packages.package import APackage, AReleaseInfo
 # from agio.core.packages.package_tools import resolve_and_simplify_dependencies
 from agio.core.workspace import pkg_manager, request_data
 
@@ -104,28 +106,37 @@ class AWorkspace:
     def is_installed(self):
         return self.local_meta_file.exists()
 
-    def install(self, force: bool = False):
+    def install(self, clean: bool = False, no_cache: bool = False):
+        self._data = self._load_remote_data()
         if self.is_installed():
-            if force:
+            # TODO check current version info
+            if clean:
                 self.venv_manager.delete_venv()
-            else:
-                return False
+        else:
+            os_name = sys.platform.lower()
+            self.venv_manager.create_venv(self._data.get('python_version', {}).get(os_name))
         from pprint import pprint
-        self.venv_manager.create_venv()
-        print('VENV:', self.venv_manager.path)
         package_info_list = self.get_packages_info()
         install_args = [pkg.get_installation_command() for pkg in package_info_list]      # todo: move to multithread
-        pprint(install_args)
-        self.venv_manager.install_packages(*install_args)
+        # debug message
+        print('-'*100)
+        print('Python version:', self.venv_manager.get_python_version())
+        print('-'*100)
+        for pkg in install_args:
+            print(pkg)
+        print('-'*100)
+
+        self.venv_manager.install_packages(*install_args, no_cache=no_cache)
         with open(self.local_meta_file, 'w') as f:
             json.dump(self._data, f, indent=4)
 
     def get_packages_info(self):
-        return [APackageInfo(pkg['name'], pkg['version']) for pkg in self._data['packages']]
+        return [AReleaseInfo(pkg['name'], pkg['version']) for pkg in self._data['packages']]
 
     def remove(self) -> bool:
         if self.exists():
             self.venv_manager.delete_venv()
+            shutil.rmtree(self.root)
             return True
         return False
 
@@ -136,5 +147,5 @@ class AWorkspace:
     def update(self):
         if not self.exists():
             raise WorkspaceNotExists('Workspace not installed')
-        self.install(force=True)
+        self.install()
 

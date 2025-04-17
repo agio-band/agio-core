@@ -43,9 +43,13 @@ class ACommand(BasePluginClass, AbstractCommand, APlugin):
         APlugin.__init__(self, package)
         AbstractCommand.__init__(self, parent_group)
 
+    def __str__(self):
+        return f"{self.__class__.__name__} [{self.package.name}]"
+
 
 class AGroupCommand(BasePluginClass, AbstractCommand, APlugin):
     command_name = None
+    plugin_type = 'command'
     commands = []
     invoke_without_command = False
     help = None
@@ -53,6 +57,9 @@ class AGroupCommand(BasePluginClass, AbstractCommand, APlugin):
     def __init__(self, package: APackage, parent_group=None):
         APlugin.__init__(self, package)
         AbstractCommand.__init__(self, parent_group)
+
+    def __str__(self):
+        return f"{self.__class__.__name__} [{self.package.name}]"
 
     def _init_click(self, parent_group=None):
         if not self.command_name:

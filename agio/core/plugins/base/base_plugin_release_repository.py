@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 class ReleaseRepositoryPlugin(BasePluginClass, APlugin):
     plugin_type = 'release_repository'
-    name = None
     check_url_pattern = None
     default_ignore_list = ['.*', '__pycache__']
     access_token_env = None
@@ -83,11 +82,13 @@ class ReleaseRepositoryPlugin(BasePluginClass, APlugin):
         from agio.core.packages.package_tools import build_package
 
         release_dir = build_package(package.root)
+        if not next(release_dir.glob('*.whl'), None):
+            raise ValueError(f"No whl file found in build dir {release_dir}")
         # create and push local tag
         if package.version not in local_tags:
             git_utils.create_tag(package.root, package.version)
         # create and upload release
-        self.create_and_upload_release(
+        data = self.create_and_upload_release(
             package.source_url,
             package.version,
             release_dir,
@@ -98,6 +99,10 @@ class ReleaseRepositoryPlugin(BasePluginClass, APlugin):
         )
         # register release in backend
         release = self.get_release_with_tag(package.source_url, package.version, access_data)
+        if not release:
+            raise Exception(f"Release {package.name} {package.version} not found in repository")
+        if not release.get('assets'):
+            raise Exception(f"Release {package.version} has no assets")
         assets = []
         for ast in release['assets']:
             assets.append(dict(
@@ -159,5 +164,5 @@ class ReleaseRepositoryPlugin(BasePluginClass, APlugin):
     @classmethod
     def check_is_valid_url(cls, url: str):
         if not cls.check_url_pattern:
-            raise NotImplementedError
+            return False
         return bool(re.match(cls.check_url_pattern, url))

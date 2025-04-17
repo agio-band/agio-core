@@ -35,10 +35,8 @@ def list_packages():
     return requests.get(f'{pkg_api_url}').json()
 
 
-def get_package(name: str, version: str = None):
+def get_package(name: str):
     url = f'{pkg_api_url}/{name}'
-    if version:
-        url += f'/{version}'
     resp = requests.get(url)
     resp.raise_for_status()
     return resp.json()
@@ -46,5 +44,13 @@ def get_package(name: str, version: str = None):
 
 def get_packages():
     resp = requests.get(f'{pkg_api_url}')
+    resp.raise_for_status()
+    return resp.json()
+
+# release
+release_api_url = f'{api_url}/release'
+
+def get_release(package_name: str, version: str = None):
+    resp = requests.get(f'{release_api_url}/{package_name}/{version}')
     resp.raise_for_status()
     return resp.json()

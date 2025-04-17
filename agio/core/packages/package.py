@@ -1,4 +1,5 @@
 import os
+import re
 from functools import lru_cache, cached_property
 from pathlib import Path
 from typing import Generator, Type, Any
@@ -12,8 +13,8 @@ from agio.core.exceptions import PackageError
 from agio.core.plugins.plugin_base import APlugin
 from agio.core.utils import git_utils
 from agio.core.utils.network import download_file
-from agio.core.utils.repository_utils import fetch_whl_url
-from agio.core.workspace.request_data import get_package
+from agio.core.utils.repository_utils import fetch_whl_url, filter_compatible_package
+from agio.core.workspace.request_data import get_package, get_release
 
 logger = logging.getLogger(__name__)
 
@@ -131,17 +132,20 @@ class APackage:
             raise ValueError(f"Manifest file is not a dictionary [{self._info_file}]")
         return info_data
 
+STORE_DOMAIN =  'localhost:8082'    # TODO
 
-
-class APackageInfo:
+class AReleaseInfo:
     """
     Package info from server
     """
     def __init__(self, package_name: str, version: str  = None):
-        self._package_info = get_package(package_name, version)
+        self._package_info = get_release(package_name, version)
 
     def __str__(self):
         return f"{self.name} v{self.version}"
+
+    def __repr__(self):
+        return f"AReleaseInfo({self.name} v{self.version})"
 
     @property
     def data(self):
@@ -164,17 +168,20 @@ class APackageInfo:
 
     def get_installation_command(self):
         if assets := self.get_assets():
-            cmd = fetch_whl_url(assets)
+            url_list = [asset['url'] for asset in assets]
+            cmd = filter_compatible_package(url_list)
+            cmd = cmd.strip()
             if not cmd:
                 raise PackageError(f"Error fetching whl file, Compatible asset not found")
             if cmd.startswith('http'):
                 url_info = urlparse(cmd)
-                if url_info.netloc == 'store.agio.services':
+                if url_info.netloc == STORE_DOMAIN:
+                    logger.info(f'Downloading release from store {cmd}')
                     cmd = download_file(
                         cmd, config['TEMP_DIR'] / 'releases', Path(cmd).name, use_credentials= True
                     )
-                else:
-                    cmd = f'git+{cmd}'
+                # else:
+                #     cmd = f'git+{cmd}'
             elif cmd.startswith('git+'):
                 pass
             else:
@@ -186,7 +193,6 @@ class APackageInfo:
             cmd = os.path.expandvars(Path(self.source_url).expanduser())
         else:
             raise PackageError(f"Error fetching package {self}, installation command not created")
-        print('CMD', cmd)
         return cmd
 
 
@@ -199,6 +205,7 @@ class APackageRepository:
         url = git_utils.get_remote_url(self.root.as_posix())
         if not url:
             url = self.data['urls'].get('source_url')
+        url = re.sub(r'\.git$', '', url)
         return url
 
     @property
@@ -220,6 +227,10 @@ class APackageRepository:
     @property
     def name(self):
         return self.data['name']
+
+    @property
+    def label(self):
+        return self.data['label']
 
     @cached_property
     def data(self):

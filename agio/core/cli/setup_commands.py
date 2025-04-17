@@ -10,7 +10,7 @@ from agio.core.init_core import plugin_hub
 @click.group(name='agio')
 @click.option("-d", "--debug", is_flag=True, default=False,
               help="Enable DEBUG mode")
-@click.option("-ws", "--workspace_id",
+@click.option("-w", "--workspace_id",
               envvar='WORKSPACE_ID',
               help='Execute in workspace (ID)')
 @click.pass_context

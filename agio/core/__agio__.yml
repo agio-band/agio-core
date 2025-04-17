@@ -1,13 +1,15 @@
-name: agio.core
+name: agio_core
 version: 0.0.1
 label: agio Core
 description: |
   Main agio-pipeline package
 icon: 'core/agio-logo.png'
+
 urls:
   home_page: ""
   documentation: ""
   bug_tracker: "https://github.com/agio/agio-core/issues"
+
 #  source_url: ""
 resources_dir: "custom/resources" # default "/resources"
 dependencies: []
@@ -58,9 +60,7 @@ plugins:
 
 
 settings:
-  - type: local
-    paths:
-      - "settings/client.yml"
-  - type: global
-    paths:
-      - "settings/server/*.yml"
+  local:
+    - "settings/client.yml"
+  global:
+    - "settings/server/*.yml"
