@@ -8,10 +8,15 @@ import tarfile
 import tempfile
 import zipfile
 import logging
+from functools import lru_cache
 from pathlib import Path
 import requests
+from propcache import cached_property
+from agio.core.workspace import venv_utils
+
 from .pkg_manager_base import PackageManagerBase
 from ...packages.package import APackage
+from ...utils.process_utils import start_process
 
 logger = logging.getLogger(__name__)
 
@@ -35,16 +40,8 @@ class UVPackageManager(PackageManagerBase):
         if kwargs.get('no_cache'):
             cmd.append('--no-cache')
         cmd.extend(packages)
-        logger.info('Install cmd: %s', ' '.join(cmd))
+        # logger.info('Install cmd: %s', ' '.join(cmd))
         self.run(cmd)
-
-    def get_python_version(self, full=False):
-        cmd = [self.python_executable, '--version']
-        result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
-        version = result.split(' ')[-1]
-        if full:
-            return version
-        return '.'.join(version.split('.')[:2])
 
     def uninstall_package(self, package_name):
         cmd = ['pip', 'uninstall', package_name]
@@ -64,11 +61,23 @@ class UVPackageManager(PackageManagerBase):
             if prk['name'] == package_name:
                 return prk['version']
 
-    def create_venv(self, py_version: str = None):
-        cmd = ['init', '--bare']
+    def create_venv(self, py_version: str):
+        available_versions = [x['version'] for x in self.get_available_python_versions()]
+        py_version = venv_utils.find_best_available_version(
+            None,
+            py_version,
+            available_versions
+        )
         if py_version:
-            logger.info('Install with version: %s', py_version)
-            cmd.extend(['--python', py_version])
+            py_version = '=='+py_version    # force match version
+            if py_version.strip('=') not in self.get_installed_python_versions():
+                logger.info('Installing python version: %s', py_version)
+                cmd = ['python', 'install', py_version]
+                self.run(cmd, workdir=Path.home().as_posix())
+        logger.info('Create venv with version: %s', py_version)
+        cmd = ['init', '--bare']
+        cmd.extend(['--python', py_version])
+        self.path.mkdir(parents=True, exist_ok=True)
         self.run(cmd, workdir=self.path.as_posix())
         self.run(['venv'], workdir=self.path.as_posix())
 
@@ -110,6 +119,16 @@ class UVPackageManager(PackageManagerBase):
                 else:
                     path.unlink()
 
+    def get_installed_python_versions(self):
+        all_version = self.get_available_python_versions()
+        return [v['version'] for v in all_version if v['path']]
+
+    @lru_cache
+    def get_available_python_versions(self):
+        cmd = [self.get_executable(), 'python', 'list', '--output-format', 'json']
+        result = start_process(cmd, get_output=True)
+        if result:
+            return json.loads(result)
 
 def _install_uv(install_dir: str, version: str = "latest") -> str:
     system = platform.system().lower()

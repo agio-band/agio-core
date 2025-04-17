@@ -7,9 +7,8 @@ from pathlib import Path
 from uuid import UUID
 
 from agio.core.exceptions import WorkspaceNotExists, WorkspaceNotInstalled
-from agio.core.packages.package import APackage, AReleaseInfo
-# from agio.core.packages.package_tools import resolve_and_simplify_dependencies
-from agio.core.workspace import pkg_manager, request_data
+from agio.core.packages.package import APackage, AReleaseInfo, logger
+from agio.core.workspace import pkg_manager, request_data, venv_utils
 
 
 class AWorkspace:
@@ -106,18 +105,33 @@ class AWorkspace:
     def is_installed(self):
         return self.local_meta_file.exists()
 
+    def need_to_reinstall(self):
+        if self.is_installed():
+            os_name = sys.platform.lower()
+            required_py_version = self._data.get('python_version', {}).get(os_name)
+            if required_py_version:
+                current_version = self.venv_manager.get_python_version(full=True)
+                if not venv_utils.check_current_python_version(
+                        required_py_version,
+                        current_version):
+                    return True
+        else:
+            return True
+
     def install(self, clean: bool = False, no_cache: bool = False):
         self._data = self._load_remote_data()
-        if self.is_installed():
-            # TODO check current version info
-            if clean:
-                self.venv_manager.delete_venv()
-        else:
+        reinstall = clean or self.need_to_reinstall()
+
+        if reinstall:
             os_name = sys.platform.lower()
-            self.venv_manager.create_venv(self._data.get('python_version', {}).get(os_name))
-        from pprint import pprint
+            logger.info('Reinstalling workspace...')
+            if self.is_installed():
+                self.remove()
+            py_version_required = self._data.get('python_version', {}).get(os_name)
+            self.venv_manager.create_venv(py_version_required)
+
         package_info_list = self.get_packages_info()
-        install_args = [pkg.get_installation_command() for pkg in package_info_list]      # todo: move to multithread
+        install_args = [pkg.get_installation_command() for pkg in package_info_list]
         # debug message
         print('-'*100)
         print('Python version:', self.venv_manager.get_python_version())

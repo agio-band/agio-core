@@ -2,11 +2,13 @@ import inspect
 import os
 import shutil
 import logging
+import subprocess
 from pathlib import Path
 
 from agio.core.packages.package import APackage
 from agio.core.utils.process_utils import start_process
 from agio.core.workspace import venv_utils
+import toml
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,27 @@ class PackageManagerBase:
     @property
     def python_executable(self):
         return Path(self.path, '.venv/bin/python' + ('.exe' if os.name == 'nt' else '')).as_posix()
+
+    @property
+    def pyproject_file_path(self):
+        return Path(self.path, 'pyproject.toml')
+
+    def get_pyproject_file_data(self):
+        if not self.pyproject_file_path.exists():
+            return {}
+        with open(self.pyproject_file_path, 'r') as f:
+            return toml.load(f)
+
+    def get_python_version(self, full=False):
+        if not self.venv_exists():
+            return None
+        cmd = [self.python_executable, '--version']
+        result = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
+        version = result.split(' ')[-1]
+        if full:
+            return version
+        return '.'.join(version.split('.')[:2])
+
 
     def install_package(self, package_name):
         raise NotImplementedError
@@ -59,6 +82,9 @@ class PackageManagerBase:
     def get_executable(self):
         raise NotImplementedError
 
+    def get_installed_python_versions(self):
+        raise NotImplementedError
+
     def run(self, cmd, workdir=None, **kwargs):
         if not self.venv_exists():
             caller_name = inspect.stack()[1].function
@@ -66,8 +92,8 @@ class PackageManagerBase:
                 self.create_venv()
         cmd = list(map(str, [self.get_executable(), *cmd]))
         workdir = workdir or str(self.path)
-        logger.info(f'Running command: {" ".join(cmd)}')
-        logger.info(f'In directory: {workdir}')
+        # logger.info(f'Running command: {" ".join(cmd)}')
+        # logger.info(f'In directory: {workdir}')
         kwargs.setdefault('get_output', True)
         return start_process(cmd, workdir=workdir, **kwargs)
 
