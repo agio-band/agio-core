@@ -51,7 +51,7 @@ class ShowWorkspaceDetailCommand(ACommand):
         print('Show workspace details:', workspace_id)
 
 
-class UpdateWorkspaceDetailCommand(ACommand):
+class UpdateWorkspaceCommand(ACommand):
     command_name = 'update'
     arguments = [
         click.argument('workspace_id', envvar='AGIO_WORKSPACE_ID'),
@@ -68,7 +68,8 @@ class WorkspaceCommandGroup(AGroupCommand):
     commands = [InstallWorkspaceCommand,
                 UninstallWorkspaceCommand,
                 ListWorkspaceCommand,
-                UpdateWorkspaceDetailCommand,
-                ShowWorkspaceDetailCommand,]
+                UpdateWorkspaceCommand,
+                ShowWorkspaceDetailCommand,
+               ]
     help = 'Manage workspaces'
 

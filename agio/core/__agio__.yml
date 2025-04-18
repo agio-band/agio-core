@@ -10,10 +10,9 @@ urls:
   documentation: ""
   bug_tracker: "https://github.com/agio/agio-core/issues"
 
-#  source_url: ""
 resources_dir: "custom/resources" # default "/resources"
 dependencies: []
-#private_releases: true
+
 repository_api: gitea
 
 callbacks:
@@ -47,6 +46,11 @@ plugins:
     implementations:
       - module: core_plugins/release_repository/github_release_repository.py
 
+  - name: auth_commands
+    label: agio auth commands
+    implementations:
+      - module: core_plugins/commands/auth_cmd.py
+
   - name: gitlab_release_repository
     label: GitLab Release repository
     implementations:
@@ -59,8 +63,9 @@ plugins:
       - module: core_plugins/release_repository/gitea_release_repository.py
 
 
+
 settings:
   local:
     - "settings/client.yml"
-  global:
+  workspace:
     - "settings/server/*.yml"

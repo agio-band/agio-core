@@ -9,37 +9,32 @@ from agio.core.plugins.base.base_plugin_command import ACommand
 class InfoCommand(ACommand):
     command_name = 'info'
     arguments = [
-        click.option("-c", "--core", is_flag=True, help='Show core info.', type=bool),
         click.option('-g', '--packages', is_flag=True, help='Show packages info', type=bool),
         click.option("-p", "--plugins", is_flag=True, help='Show plugins info.', type=bool),
     ]
     help = 'Show info about current workspace'
 
-    def execute(self, core, packages, plugins):
+    def execute(self, packages, plugins):
         from agio.core.workspace.workspace import AWorkspace
+
+        line = lambda: print('='*70)
         ws = AWorkspace.current()
-        print('='*30)
-        print('Workspace:', ws)
-        print('='*30)
+        line()
+        print('Workspace:', ws or '[Not set]', f'[{ws.id}]')
+        # print(ws.root.as_posix())
+        line()
         print('Python', sys.version)
-        if any([core, packages, plugins]):
-            if core:
-                self._show_core_info()
+        # print(ws.venv_manager.python_executable.replace(ws.id, '<ID>'))
+        line()
+        if any([packages, plugins]):
             if packages:
                 self._show_packages_info()
             if plugins:
                 self._show_plugins_info()
         else:
-            self._show_core_info()
             self._show_packages_info()
             self._show_plugins_info()
-        print('=' * 30)
-
-    def _show_core_info(self):
-        import agio.core
-
-        print(f"Core v{agio.core.__version__}")
-        print()
+        line()
 
     def _show_packages_info(self):
         from agio.core.init_core import package_hub

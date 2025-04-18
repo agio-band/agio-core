@@ -5,6 +5,7 @@ import sys
 import click
 from pathlib import Path
 from agio.core.utils.process_utils import start_process
+from agio.core.workspace.workspace import AWorkspace
 
 
 def clear_args(args):
@@ -17,8 +18,18 @@ def start_in_workspace(cmd: list[str], workspace_id: str, envs: dict = None, wor
     main_script = os.path.abspath(Path(__file__).joinpath('../__main__.py'))
     workspace_cli_exec = [sys.executable, main_script]
     workspace_envs = (envs or {}) | {'AGIO_CURRENT_WORKSPACE': workspace_id}
-    cmd = workspace_cli_exec + cmd  # TODO check with real binary
+    cmd = workspace_cli_exec + cmd[1:]  # TODO check with real binary
+    start_process(cmd, envs=workspace_envs, workdir=workdir)
     start_process(cmd, envs=workspace_envs, replace=True, workdir=workdir)
+
+
+def ensure_workspace(workspace_id: str):
+    if not workspace_id:
+        click.echo("Workspace ID is not specified.  Please specify it with --workspace_id option or set the AGIO_CURRENT_WORKSPACE environment variable.")
+        sys.exit(1)
+    ws = AWorkspace(workspace_id)
+    if not ws.exists():
+        ws.install()
 
 
 class Env(click.ParamType):

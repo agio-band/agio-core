@@ -2,7 +2,7 @@ import os
 import sys
 import click
 
-from agio.core.cli.tools import clear_args, start_in_workspace
+from agio.core.cli.tools import clear_args, start_in_workspace, ensure_workspace
 from agio.core.init_core import plugin_hub
 
 
@@ -11,12 +11,13 @@ from agio.core.init_core import plugin_hub
 @click.option("-d", "--debug", is_flag=True, default=False,
               help="Enable DEBUG mode")
 @click.option("-w", "--workspace_id",
-              envvar='WORKSPACE_ID',
+              envvar='AGIO_WORKSPACE_ID',
               help='Execute in workspace (ID)')
 @click.pass_context
 def agio_group(ctx, workspace_id, debug):
     if workspace_id and not 'AGIO_CURRENT_WORKSPACE' in os.environ:
         command_args = clear_args(sys.argv)
+        ensure_workspace(workspace_id)
         start_in_workspace(command_args, workspace_id)
         ctx.exit()
     if debug:
@@ -37,6 +38,9 @@ def load_plugins():
     for plugin in commands_to_register:
         agio_group.add_command(plugin.command)
 
+@agio_group.command
+def ping():
+    click.echo('pong')
 
 # init command plugins from all packages
 load_plugins()
