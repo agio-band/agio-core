@@ -1,5 +1,5 @@
 import logging
-from agio.core.core_plugins.release_repository.github_release_repository import GitHubRepositoryPlugin
+from agio.plugins.release_repository.github_release_repository import GitHubRepositoryPlugin
 
 logger = logging.getLogger(__name__)
 

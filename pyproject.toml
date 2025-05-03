@@ -10,6 +10,9 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "click>=8.1.8",
+    "pydantic>=2.11.4",
+    "pyyaml>=6.0.2",
     "requests>=2.32.3",
 ]
 classifiers = [
@@ -36,3 +39,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]

@@ -23,44 +23,44 @@ plugins:
   - name: info_command
     label: Info Command
     implementations:
-      - module: core_plugins/commands/info_cmd.py
+      - module: plugins/commands/info_cmd.py
 
   - name: workspace_command
     label: Workspace Command
     implementations:
-      - module: core_plugins/commands/workspace_cmd.py
+      - module: plugins/commands/workspace_cmd.py
 
   - name: run_command
     label: Run Command
     implementations:
-      - module: core_plugins/commands/run_cmd.py
+      - module: plugins/commands/run_cmd.py
 
   - name: package_command
     label: Manage agio packages command
     implementations:
-      - module: core_plugins/commands/package_cmd.py
+      - module: plugins/commands/package_cmd.py
 
   # release repository
   - name: github_release_repository
     label: GitHub release repository
     implementations:
-      - module: core_plugins/release_repository/github_release_repository.py
+      - module: plugins/release_repository/github_release_repository.py
 
   - name: auth_commands
     label: agio auth commands
     implementations:
-      - module: core_plugins/commands/auth_cmd.py
+      - module: plugins/commands/auth_cmd.py
 
   - name: gitlab_release_repository
     label: GitLab Release repository
     implementations:
-      - module: core_plugins/release_repository/gitlab_release_repository.py
+      - module: plugins/release_repository/gitlab_release_repository.py
 
 
   - name: gitea_release_repository
     label: Gitea Release repository
     implementations:
-      - module: core_plugins/release_repository/gitea_release_repository.py
+      - module: plugins/release_repository/gitea_release_repository.py
 
 
 

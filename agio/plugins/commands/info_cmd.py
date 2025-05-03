@@ -20,7 +20,7 @@ class InfoCommand(ACommand):
         line = lambda: print('='*70)
         ws = AWorkspace.current()
         line()
-        print('Workspace:', ws or '[Not set]', f'[{ws.id}]')
+        print('Workspace:', ws or '[Not set]', f'[{ws.id if ws else "N/A"}]')
         # print(ws.root.as_posix())
         line()
         print('Python', sys.version)
@@ -37,7 +37,7 @@ class InfoCommand(ACommand):
         line()
 
     def _show_packages_info(self):
-        from agio.core.init_core import package_hub
+        from agio.core.main import package_hub
         print('PACKAGES:')
         print()
         for package in package_hub.get_package_list():
@@ -45,7 +45,7 @@ class InfoCommand(ACommand):
         print()
 
     def _show_plugins_info(self):
-        from agio.core.init_core import plugin_hub
+        from agio.core.main import plugin_hub
         print('PLUGINS:')
         print()
         for plugin in plugin_hub.iter_loaded_plugins():

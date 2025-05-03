@@ -37,7 +37,7 @@ class APlugin(_APluginAbstract):
 
     @classmethod
     def load_from_info(cls, plugin_info: dict, manifest_file_path: str) -> Generator[APlugin, None, None]:
-        from agio.core.init_core import app_context
+        from agio.core.main import app_context
         for imp in plugin_info.get('implementations', ()):
             if supported_apps := imp.get('apps'):
                 if isinstance(supported_apps, str):

@@ -3,7 +3,7 @@ import sys
 import click
 
 from agio.core.cli.tools import clear_args, start_in_workspace, ensure_workspace
-from agio.core.init_core import plugin_hub
+from agio.core.main import plugin_hub
 
 
 # base command

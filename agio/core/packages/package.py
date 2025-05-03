@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 
 import yaml
 
-from agio.core.config import config
 from agio.core.exceptions import PackageError
 from agio.core.plugins.plugin_base import APlugin
 from agio.core.utils import git_utils
