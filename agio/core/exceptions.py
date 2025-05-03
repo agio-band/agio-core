@@ -1,10 +1,8 @@
-
-
-class AppError(Exception):
+class AError(Exception):
     pass
 
 
-class WorkspaceError(AppError):
+class WorkspaceError(AError):
     pass
 
 
@@ -16,5 +14,7 @@ class WorkspaceNotInstalled(WorkspaceError):
     pass
 
 
-class PackageError(AppError):
+class PackageError(AError):
     pass
+
+
