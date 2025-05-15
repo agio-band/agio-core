@@ -1,5 +1,5 @@
 def get_release_repository_plugin(repo_url: str, repository_api: str = None):
-    from agio.core.init_core import plugin_hub
+    from agio.core.main import plugin_hub
 
     if not repo_url:
         raise ValueError('No repo url provided')
