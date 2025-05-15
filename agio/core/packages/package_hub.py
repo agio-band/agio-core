@@ -1,5 +1,6 @@
 import os
 import sys
+
 from agio.core.packages.package import APackage
 from agio.core.utils.singleton import Singleton
 from agio.core.workspace.workspace import AWorkspace
@@ -12,7 +13,7 @@ class APackageHub(metaclass=Singleton):
 
     def add_package(self, package: APackage):
         if package.name in self._packages:
-            raise ValueError(f"Package {package.name} already registered")
+            raise ValueError(f"Package {package.name} already registered: {self._packages[package.name].root}")
         self._packages[package.name] = package
 
     @property
@@ -50,9 +51,16 @@ class APackageHub(metaclass=Singleton):
             if os.path.exists(path):
                 if os.path.isdir(path):
                     for _path, _dirs, _files in os.walk(path):
+                        to_delete_dirs = [d for d in _dirs if d.startswith('_') or d.startswith('.')]
+                        for d in to_delete_dirs:
+                            _dirs.remove(d)
+                        path_name = os.path.basename(_path)
+                        if path_name.startswith('_') or path_name.startswith('.'):
+                            continue
                         if APackage.is_package_root(_path):
                             if _path in loaded:
                                 continue
+                            # logger.debug(f"Found package at {_path}")
                             yield APackage(_path)
                             loaded.add(_path)
                             _dirs.clear()

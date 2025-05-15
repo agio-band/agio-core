@@ -56,16 +56,8 @@ plugins:
     implementations:
       - module: plugins/release_repository/gitlab_release_repository.py
 
-
   - name: gitea_release_repository
     label: Gitea Release repository
     implementations:
       - module: plugins/release_repository/gitea_release_repository.py
 
-
-
-settings:
-  local:
-    - "settings/client.yml"
-  workspace:
-    - "settings/server/*.yml"

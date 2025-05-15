@@ -8,7 +8,7 @@ from pathlib import Path
 from agio.core.packages.package import APackage
 from agio.core.utils.process_utils import start_process
 from agio.core.workspace import venv_utils
-import toml
+import tomllib as  toml
 
 logger = logging.getLogger(__name__)
 

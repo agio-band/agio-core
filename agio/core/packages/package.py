@@ -5,13 +5,13 @@ from pathlib import Path
 from typing import Generator, Type, Any
 import logging
 from urllib.parse import urlparse
-
 import yaml
 
 from agio.core.exceptions import PackageError
 from agio.core.plugins.plugin_base import APlugin
 from agio.core.utils import git_utils
 from agio.core.utils.network import download_file
+from agio.core.utils.import_utils import import_object_by_dotted_path
 from agio.core.utils.repository_utils import fetch_whl_url, filter_compatible_package
 from agio.core.workspace.request_data import get_package, get_release
 
@@ -76,6 +76,11 @@ class APackage:
     def get_resource_dir(self):
         return self.root / self._info_data.get('resources_dir', 'resources')
 
+    def import_path(self, dotted_path: str) -> str:
+        package_name = self.root.stem
+        module_path = f"{package_name}.{dotted_path}"
+        return module_path
+
     def collect_plugins(self):
         plugin_info: dict
         for plugin_info, plugin_class in self.iterate_plugin_classes():
@@ -97,10 +102,30 @@ class APackage:
             raise ValueError(f"Plugins must be a list")
         yield from plugins
 
+    def get_workspace_settings_class(self):
+        return self._get_settings_class('workspace')
+
+    def get_local_settings_class(self):
+        return self._get_settings_class('local')
+
+    def _get_settings_class(self, settings_type: str):
+        required = True
+        settings_path = self._info_data.get('settings', {}).get(settings_type)
+        if not settings_path:
+            required = False
+            settings_path = self.import_path(f'settings.{settings_type}.Settings')
+        try:
+            cls = import_object_by_dotted_path(settings_path)
+        except ModuleNotFoundError:
+            if not required:
+                return None
+            raise PackageError(f"Settings class not found: {settings_path}")
+        return cls
 
     @classmethod
     def is_package_root(cls, path: str) -> bool:
-        return os.path.exists(path + "/__agio__.yml")
+        info_file = os.path.join(path, "__agio__.yml")
+        return os.path.exists(info_file)
 
     def __get_info_file(self, path: str | Path) -> Path:
         if not self.is_package_root(path):

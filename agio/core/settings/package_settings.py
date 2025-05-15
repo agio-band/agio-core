@@ -1,10 +1,11 @@
 import json
+import re
 import types
 import copy
 import inspect
 from pydantic import BaseModel
 from typing import Any, get_origin, get_args, Type,Union
-
+from weakref import ref
 from .exceptions import RequiredValueNotSetError
 from .fields.base_field import BaseField
 from .fields.compaund_fields import CollectionField
@@ -110,7 +111,7 @@ class _SettingsMeta(type):
         for attr_name, attr_value in namespace.items():
             if isinstance(attr_value, BaseField):
                 field = copy.deepcopy(attr_value)
-                field.name = attr_name
+                field.set_name(attr_name)
                 fields[attr_name] = field
         # Process type annotations
         for attr_name, annotation in annotations.items():
@@ -135,11 +136,23 @@ class _SettingsMeta(type):
 
 
 class APackageSettings(metaclass=_SettingsMeta):
+    __name_pattern = re.compile(r"^[a-z][a-z0-9_][a-z0-9]+$")
+
     def __init__(self, **kwargs):
+        class_kwargs = {k: v for k, v in kwargs.items() if k.startswith('_')}
+        self._label = kwargs.pop('_label', None)
+        self._help_text = kwargs.pop('_help_text', None)
+        self._description = kwargs.pop('_description', None)
+        self._layout = kwargs.pop('_layout', None)
+        self._name = ''
         self._fields_data = {}
+        self._get_other_parm_func = class_kwargs.pop('_get_other_parm_func', None)
+        self._class_kwargs = class_kwargs
         # Initialize fields from class
+        package_name = kwargs.pop('_name', '')
         for name, field in self._get_fields().items():
             self._fields_data[name] = copy.deepcopy(field)
+            # self._fields_data[name]._set_parent_settings(self)
             setattr(self, name, self._fields_data[name])
 
         # Check required fields first
@@ -154,11 +167,49 @@ class APackageSettings(metaclass=_SettingsMeta):
             if name in self._fields_data:
                 self._fields_data[name].set(value)
 
+        if package_name:
+            self.set_name(package_name)
+
     def __str__(self):
         return f"({', '.join(f'{name}={repr(getattr(self, name))}' for name in self._fields_data)})"
 
     def __repr__(self):
         return f"<{self.__class__.__name__}>"
+
+    def get(self, param_name: str, **kwargs) -> Any:
+        return self.get_parameter(param_name).get(**kwargs)
+
+    def set(self, param_name: str, value: Any, **kwargs) -> None:
+        if param_name not in self._fields_data:
+            raise ValueError(f"Parameter '{param_name}' not found")
+        self._fields_data[param_name].set(value, **kwargs)
+
+    def get_parameter(self, param_name: str) -> Type[BaseField]:
+        if param_name not in self._fields_data:
+            raise ValueError(f"Parameter '{param_name}' not found")
+        return self._fields_data[param_name]
+
+    def _get_other_parm(self, parm_name: str) -> Type[BaseField]:
+        if self._get_other_parm_func:
+            return self._get_other_parm_func(parm_name)
+        raise ValueError(f"No function to get related parameter")
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def set_name(self, name: str) -> None:
+        if not isinstance(name, str):
+            raise TypeError("Name must be a string")
+        if not self.__name_pattern.match(name):
+            raise ValueError(f"Invalid name: {name}")
+        self._name = name
+        # for field_name, field in self._fields_data.items():
+        #     field.set_name(f"{name}.{field_name}")
+
+    def find_parameter(self, name: str) -> BaseField:
+        """Find a field by name"""
+        return self._fields_data.get(name)
 
     def _get_fields(self) -> dict:
         """Return a dictionary of field names to field instances"""
@@ -181,10 +232,14 @@ class APackageSettings(metaclass=_SettingsMeta):
         return json.dumps(self.__dump__(serialized=True), cls=JsonSerializer, **kwargs)
 
     def __schema__(self) -> dict:
-        schema = {}
+        parameters = {}
         for name, field in self._fields_data.items():
             field_schema = field.get_schema()
             field_schema['field_type'] = field.__class__.__name__
-            schema[name] = field_schema
+            parameters[name] = field_schema
+        return {
+            'parameters': parameters,
+            'name': self.name
+        }
 
-        return schema
+

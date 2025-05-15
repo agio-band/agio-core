@@ -63,12 +63,6 @@ class AWorkspace:
     def venv_manager(self):
         return pkg_manager.get_package_manager(self.root)
 
-    # def get_package_list_to_install(self) -> list:
-    #     packages = []
-    #     for pkg in self._data.get('packages', []):
-    #         packages.append(pkg)
-    #     return packages
-
     # packages
 
     def iter_installed_packages(self):
@@ -79,6 +73,12 @@ class AWorkspace:
             raise WorkspaceNotInstalled
         for pkg in self._data.get('packages', []):
             yield APackage(**pkg)
+
+    def get_package(self, package_name) -> APackage:
+        pkg_data = self._data.get(package_name)
+        if not pkg_data:
+            raise ValueError(f'Package {package_name} not found in workspace {self.id}')
+        return APackage(**pkg_data)
 
     def get_launch_envs(self):
         return {

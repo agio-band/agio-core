@@ -8,3 +8,16 @@ def import_module_by_path(path: str, name: str = None):
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def import_object_by_dotted_path(dotted_path: str) -> object:
+    """
+    Import and return object inside module by dotted path.
+    Path example: "my_module.my_submodule.MyClass"
+    """
+    module_name, object_name = dotted_path.rsplit(".", 1)
+    module = importlib.import_module(module_name)
+    return getattr(module, object_name)
+
+
+

@@ -3,7 +3,6 @@ import os
 import platform
 import shutil
 import stat
-import subprocess
 import tarfile
 import tempfile
 import zipfile
@@ -11,7 +10,6 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 import requests
-from propcache import cached_property
 from agio.core.workspace import venv_utils
 
 from .pkg_manager_base import PackageManagerBase
