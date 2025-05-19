@@ -13,6 +13,8 @@ from agio.core.main import plugin_hub
 @click.option("-w", "--workspace_id",
               envvar='AGIO_WORKSPACE_ID',
               help='Execute in workspace (ID)')
+# TODO @click.option("-p", "--project", help='Project ID or name. Autodetect revision ID')
+# TODO @click.option("-r", "--workspace_revision_id", help='Workspace revision ID')
 @click.pass_context
 def agio_group(ctx, workspace_id, debug):
     if workspace_id and not 'AGIO_CURRENT_WORKSPACE' in os.environ:
