@@ -41,7 +41,7 @@ class BaseField(ABC):
             'validators': list(self.default_validators) + (validators or []),
             'dependency': {
                 'value': None,  # ref|exp|pdg
-                'enabled': False,
+                'enabled': False, # for disable in overrides
             },
             'kwargs': kwargs,
             'description': description,

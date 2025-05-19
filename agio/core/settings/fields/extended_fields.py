@@ -1,5 +1,6 @@
 from datetime import datetime
 from numbers import Real
+from pathlib import Path
 from typing import Any, Union
 
 from pydantic import EmailStr, AnyUrl
@@ -195,4 +196,12 @@ class ColorField(BaseField):
     def get_rgba_float(self, alpha: float = 1.0) -> tuple[float, float, float, float]:
         r, g, b = self.get_rgb_float()
         return (r, g, b, alpha)
+
+
+class PathField(BaseField):
+    field_type = Path|str
+
+class DirectoryField(BaseField):
+    field_type = Path|str
+
 
