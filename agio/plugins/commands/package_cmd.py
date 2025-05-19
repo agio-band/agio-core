@@ -2,13 +2,13 @@ from pathlib import Path
 
 import click
 import logging
-from agio.core.plugins.base.base_plugin_command import ACommandPlugin, AGroupCommandPlugin
+from agio.core.plugins.base.base_plugin_command import ACommandPlugin, ASubCommand
 from agio.core.packages import package_tools
 
 logger = logging.getLogger(__name__)
 
 
-class PackageNewCommand(ACommandPlugin):
+class PackageNewCommand(ASubCommand):
     command_name = "new"
     arguments = [
         click.option("-p", "--path", help='Package root path, Default: $PWD',
@@ -20,7 +20,7 @@ class PackageNewCommand(ACommandPlugin):
         print(f"Create new package in {path}")
 
 
-class PackageBuildCommand(ACommandPlugin):
+class PackageBuildCommand(ASubCommand):
     command_name = "build"
     arguments = [
         click.argument("path",
@@ -44,7 +44,7 @@ class PackageBuildCommand(ACommandPlugin):
         package_tools.build_package(path, **kwargs)
 
 
-class PackageReleaseCommand(ACommandPlugin):
+class PackageReleaseCommand(ASubCommand):
     command_name = "release"
     arguments = [
         click.option('-t', '--token'),
@@ -63,7 +63,7 @@ class PackageReleaseCommand(ACommandPlugin):
         logger.info(f"Release created: ID {result['id']}")
 
 
-class PackageRegisterCommand(ACommandPlugin):
+class PackageRegisterCommand(ASubCommand):
     command_name = "register"
     arguments = [
         click.argument("path",
@@ -77,11 +77,18 @@ class PackageRegisterCommand(ACommandPlugin):
         print(resp)
 
 
-class PackageCommandGroup(AGroupCommandPlugin):
+class PackageCommandGroup(ACommandPlugin):
     command_name = "pkg"
-    commands = [PackageNewCommand, PackageBuildCommand, PackageReleaseCommand, PackageRegisterCommand]
+    subcommands = [PackageNewCommand(), PackageBuildCommand(), PackageReleaseCommand(), PackageRegisterCommand()]
     help = 'Manage packages'
-    # invoke_without_command = True
+    arguments = [
+        click.option('-i', '--info', is_flag=True, default=False, help='Show package information'),
+    ]
 
-    # def execute(self, *args, **kwargs):
-    #     print('Empty command executed: Package command')
+    def execute(self, info, *args, **kwargs):
+        if info:
+            print('Show packages info... [TODO]')
+        else:
+            click.echo("ERROR: Arguments not pass", err=True)
+            self.context.exit(1)
+
