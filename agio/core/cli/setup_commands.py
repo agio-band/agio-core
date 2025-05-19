@@ -26,23 +26,19 @@ def agio_group(ctx, workspace_id, debug):
         os.environ['DEBUG'] = 'true'
 
 
+@agio_group.command
+def ping():
+    click.echo('pong')
+
+
 def load_plugins():
     """
     Collect command plugins and register in cli
     """
     all_command_plugins = list(plugin_hub.get_plugins_by_type('command'))
-    # filter nested commands
-    groups = [plg for plg in all_command_plugins if isinstance(plg.command, click.MultiCommand)]
-    subcommands = []
-    for grp in groups:
-        subcommands.extend(grp.commands)
-    commands_to_register = [plg for plg in all_command_plugins if plg.__class__ not in subcommands]
-    for plugin in commands_to_register:
+    for plugin in all_command_plugins:
         agio_group.add_command(plugin.command)
 
-@agio_group.command
-def ping():
-    click.echo('pong')
 
 # init command plugins from all packages
 load_plugins()

@@ -8,8 +8,9 @@ import sys
 
 
 def debug_flag_is_set():
-    first_cmd = shlex.split(' '.join(sys.argv).split('--')[0])
-    return '-d' in first_cmd or '--debug' in first_cmd
+    first_cmd = ' '.join(sys.argv).split('--')[0]
+    first_cmd_args = shlex.split(re.split(r'\s\b\w+\b', first_cmd)[0])
+    return '-d' in first_cmd_args or '--debug' in first_cmd_args
 
 
 DEBUG_MODE = bool(os.getenv("DEBUG")) or debug_flag_is_set()
