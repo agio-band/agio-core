@@ -1,9 +1,9 @@
 import click
-from agio.core.plugins.base.base_plugin_command import ACommand, AGroupCommand
+from agio.core.plugins.base.base_plugin_command import ACommandPlugin, AGroupCommandPlugin
 from agio.core.workspace.workspace import AWorkspace
 
 
-class InstallWorkspaceCommand(ACommand):
+class InstallWorkspaceCommand(ACommandPlugin):
     command_name = 'install'
     arguments = [
         click.argument('workspace_id'),
@@ -18,7 +18,7 @@ class InstallWorkspaceCommand(ACommand):
 
 
 
-class UninstallWorkspaceCommand(ACommand):
+class UninstallWorkspaceCommand(ACommandPlugin):
     command_name = 'uninstall'
     arguments = [
         click.argument('workspace_id'),
@@ -30,7 +30,7 @@ class UninstallWorkspaceCommand(ACommand):
         AWorkspace(workspace_id).remove()
 
 
-class ListWorkspaceCommand(ACommand):
+class ListWorkspaceCommand(ACommandPlugin):
     command_name = 'ls'
     help = 'List workspaces'
 
@@ -40,7 +40,7 @@ class ListWorkspaceCommand(ACommand):
             print(ws.name)
 
 
-class ShowWorkspaceDetailCommand(ACommand):
+class ShowWorkspaceDetailCommand(ACommandPlugin):
     command_name = 'show'
     arguments = [
         click.argument('workspace_id'),
@@ -51,7 +51,7 @@ class ShowWorkspaceDetailCommand(ACommand):
         print('Show workspace details:', workspace_id)
 
 
-class UpdateWorkspaceCommand(ACommand):
+class UpdateWorkspaceCommand(ACommandPlugin):
     command_name = 'update'
     arguments = [
         click.argument('workspace_id', envvar='AGIO_WORKSPACE_ID'),
@@ -63,7 +63,7 @@ class UpdateWorkspaceCommand(ACommand):
         AWorkspace(workspace_id).update()
 
 
-class WorkspaceCommandGroup(AGroupCommand):
+class WorkspaceCommandGroup(AGroupCommandPlugin):
     command_name = "ws"
     commands = [InstallWorkspaceCommand,
                 UninstallWorkspaceCommand,

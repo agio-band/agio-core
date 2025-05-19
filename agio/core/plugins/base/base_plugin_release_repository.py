@@ -20,8 +20,8 @@ class ReleaseRepositoryPlugin(BasePluginClass, APlugin):
     access_token_field_name = 'token'
     ignore_list = []
 
-    def __init__(self, package: APackage):
-        super().__init__(package)
+    def __init__(self, package: APackage, plugin_info: dict):
+        super().__init__(package, plugin_info)
         self.release_ignore_list = self.default_ignore_list + self.ignore_list
 
     @classmethod

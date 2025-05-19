@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Generator
 import logging
 from agio.core.utils.import_utils import import_module_by_path
+from agio.core.utils.text_utils import unslugify
+
 if TYPE_CHECKING:
     from agio.core.packages.package import APackage
 
@@ -20,14 +22,19 @@ class _APluginAbstract(ABC):
 
 class APlugin(_APluginAbstract):
 
-    def __init__(self, package: APackage):
+    def __init__(self, package: APackage, plugin_info: dict):
+        self._plugin_info = plugin_info
         self.before_load()
         self._package = package
         self.on_load()
 
     @property
     def name(self):
-        return f"{self.__class__.__name__}"
+        return self._plugin_info['name']
+
+    @property
+    def label(self):
+        return self._plugin_info.get('label') or unslugify(self.name)
 
     def __repr__(self):
         return f"{self.name} [{self.package.name}]"

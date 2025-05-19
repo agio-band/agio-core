@@ -3,10 +3,10 @@ import sys
 import click
 
 
-from agio.core.plugins.base.base_plugin_command import ACommand
+from agio.core.plugins.base.base_plugin_command import ACommandPlugin
 
 
-class InfoCommand(ACommand):
+class InfoCommand(ACommandPlugin):
     command_name = 'info'
     arguments = [
         click.option('-g', '--packages', is_flag=True, help='Show packages info', type=bool),
@@ -49,5 +49,5 @@ class InfoCommand(ACommand):
         print('PLUGINS:')
         print()
         for plugin in plugin_hub.iter_plugins():
-            print(f"{plugin!r}")
+            print(f"{plugin.name}")
         print()

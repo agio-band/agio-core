@@ -84,7 +84,7 @@ class APackage:
     def collect_plugins(self):
         plugin_info: dict
         for plugin_info, plugin_class in self.iterate_plugin_classes():
-            instance = plugin_class(self)
+            instance = plugin_class(self, plugin_info)
             yield instance
 
     def iterate_plugin_classes(self) -> Generator[tuple[dict, Type[APlugin]], None, None]:

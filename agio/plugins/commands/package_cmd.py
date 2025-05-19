@@ -2,13 +2,13 @@ from pathlib import Path
 
 import click
 import logging
-from agio.core.plugins.base.base_plugin_command import ACommand, AGroupCommand
+from agio.core.plugins.base.base_plugin_command import ACommandPlugin, AGroupCommandPlugin
 from agio.core.packages import package_tools
 
 logger = logging.getLogger(__name__)
 
 
-class PackageNewCommand(ACommand):
+class PackageNewCommand(ACommandPlugin):
     command_name = "new"
     arguments = [
         click.option("-p", "--path", help='Package root path, Default: $PWD',
@@ -20,7 +20,7 @@ class PackageNewCommand(ACommand):
         print(f"Create new package in {path}")
 
 
-class PackageBuildCommand(ACommand):
+class PackageBuildCommand(ACommandPlugin):
     command_name = "build"
     arguments = [
         click.argument("path",
@@ -44,7 +44,7 @@ class PackageBuildCommand(ACommand):
         package_tools.build_package(path, **kwargs)
 
 
-class PackageReleaseCommand(ACommand):
+class PackageReleaseCommand(ACommandPlugin):
     command_name = "release"
     arguments = [
         click.option('-t', '--token'),
@@ -63,7 +63,7 @@ class PackageReleaseCommand(ACommand):
         logger.info(f"Release created: ID {result['id']}")
 
 
-class PackageRegisterCommand(ACommand):
+class PackageRegisterCommand(ACommandPlugin):
     command_name = "register"
     arguments = [
         click.argument("path",
@@ -77,7 +77,7 @@ class PackageRegisterCommand(ACommand):
         print(resp)
 
 
-class PackageCommandGroup(AGroupCommand):
+class PackageCommandGroup(AGroupCommandPlugin):
     command_name = "pkg"
     commands = [PackageNewCommand, PackageBuildCommand, PackageReleaseCommand, PackageRegisterCommand]
     help = 'Manage packages'

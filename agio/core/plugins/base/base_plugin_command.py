@@ -6,7 +6,7 @@ from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.plugin_base import APlugin
 
 
-class AbstractCommand(ABC):
+class AbstractCommandPlugin(ABC):
     plugin_type = 'command'
     command_name = None
     arguments = []
@@ -36,27 +36,28 @@ class AbstractCommand(ABC):
         raise NotImplementedError
 
 
-class ACommand(BasePluginClass, AbstractCommand, APlugin):
+class ACommandPlugin(BasePluginClass, AbstractCommandPlugin, APlugin):
     __is_subcommand = False
 
-    def __init__(self, package: APackage, parent_group=None):
-        APlugin.__init__(self, package)
-        AbstractCommand.__init__(self, parent_group)
+    def __init__(self, package: APackage, plugin_info: dict, parent_group=None):
+        APlugin.__init__(self, package, plugin_info)
+        AbstractCommandPlugin.__init__(self, parent_group)
 
     def __str__(self):
         return f"{self.__class__.__name__} [{self.package.name}]"
 
 
-class AGroupCommand(BasePluginClass, AbstractCommand, APlugin):
+class AGroupCommandPlugin(BasePluginClass, AbstractCommandPlugin, APlugin):
     command_name = None
     plugin_type = 'command'
     commands = []
     invoke_without_command = False
     help = None
 
-    def __init__(self, package: APackage, parent_group=None):
-        APlugin.__init__(self, package)
-        AbstractCommand.__init__(self, parent_group)
+    def __init__(self, package: APackage, plugin_info: dict, parent_group=None):
+        APlugin.__init__(self, package, plugin_info)
+        self._plugin_info = plugin_info
+        AbstractCommandPlugin.__init__(self, parent_group)
 
     def __str__(self):
         return f"{self.__class__.__name__} [{self.package.name}]"
@@ -72,5 +73,5 @@ class AGroupCommand(BasePluginClass, AbstractCommand, APlugin):
             invoke_without_command=self.invoke_without_command,
         )
         for cmd_cls in self.commands:
-            cmd = cmd_cls(package=self.package)
+            cmd = cmd_cls(package=self.package, plugin_info=self._plugin_info)
             self.command.add_command(cmd.command)

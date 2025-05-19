@@ -2,11 +2,11 @@ import sys
 
 from  agio.core.cli.tools import Env
 import click
-from agio.core.plugins.base.base_plugin_command import ACommand
+from agio.core.plugins.base.base_plugin_command import ACommandPlugin
 from agio.core.utils.process_utils import start_process
 
 
-class RunCommand(ACommand):
+class RunCommand(ACommandPlugin):
     command_name = 'run'
     arguments = [
         click.option("-e", "--env", help='Custom Environments', type=Env(), multiple=True),

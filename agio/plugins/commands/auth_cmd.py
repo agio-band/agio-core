@@ -1,10 +1,16 @@
-from agio.core.plugins.base.base_plugin_command import ACommand
+from agio.core.plugins.base.base_plugin_command import ACommandPlugin
 
 
-class LoginCommand(ACommand):
+class LoginCommand(ACommandPlugin):
     command_name = 'login'
 
+    def execute(self, *args, **kwargs):
+        raise NotImplementedError()
 
-class LogoutCommand(ACommand):
+
+class LogoutCommand(ACommandPlugin):
     command_name = 'logout'
+
+    def execute(self, *args, **kwargs):
+        raise NotImplementedError()
 
