@@ -40,16 +40,17 @@ plugins:
     implementations:
       - module: plugins/commands/package_cmd.py
 
+  # auth
+  - name: auth_commands
+    label: agio auth commands
+    implementations:
+      - module: plugins/commands/auth_cmd.py
+
   # release repository
   - name: github_release_repository
     label: GitHub release repository
     implementations:
       - module: plugins/release_repository/github_release_repository.py
-
-  - name: auth_commands
-    label: agio auth commands
-    implementations:
-      - module: plugins/commands/auth_cmd.py
 
   - name: gitlab_release_repository
     label: GitLab Release repository
