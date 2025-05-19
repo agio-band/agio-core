@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import inspect
+import inspect, os
 from abc import ABC
 from pathlib import Path
 from typing import TYPE_CHECKING, Generator
@@ -72,11 +72,17 @@ class APlugin(_APluginAbstract):
                 if inspect.isclass(obj):
                     if issubclass(obj, APlugin) and not obj.__name__ == APlugin.__name__:
                         if not getattr(obj, 'is_base_class', True):
-                            yield obj
+                            if obj.__module__ == plugin_module.__name__:
+                                yield obj
 
     @property
     def package(self):
         return self._package
+
+    @property
+    def path(self):
+        file = inspect.getfile(self.__class__)
+        return os.path.abspath(file)
 
     def before_load(self):
         ...
