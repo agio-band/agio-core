@@ -1,9 +1,9 @@
 import click
-from agio.core.plugins.base.base_plugin_command import ACommandPlugin, AGroupCommandPlugin
+from agio.core.plugins.base.base_plugin_command import ACommandPlugin, ASubCommand
 from agio.core.workspace.workspace import AWorkspace
 
 
-class InstallWorkspaceCommand(ACommandPlugin):
+class InstallWorkspaceCommand(ASubCommand):
     command_name = 'install'
     arguments = [
         click.argument('workspace_id'),
@@ -18,7 +18,7 @@ class InstallWorkspaceCommand(ACommandPlugin):
 
 
 
-class UninstallWorkspaceCommand(ACommandPlugin):
+class UninstallWorkspaceCommand(ASubCommand):
     command_name = 'uninstall'
     arguments = [
         click.argument('workspace_id'),
@@ -30,7 +30,7 @@ class UninstallWorkspaceCommand(ACommandPlugin):
         AWorkspace(workspace_id).remove()
 
 
-class ListWorkspaceCommand(ACommandPlugin):
+class ListWorkspaceCommand(ASubCommand):
     command_name = 'ls'
     help = 'List workspaces'
 
@@ -40,7 +40,7 @@ class ListWorkspaceCommand(ACommandPlugin):
             print(ws.name)
 
 
-class ShowWorkspaceDetailCommand(ACommandPlugin):
+class ShowWorkspaceDetailCommand(ASubCommand):
     command_name = 'show'
     arguments = [
         click.argument('workspace_id'),
@@ -51,7 +51,7 @@ class ShowWorkspaceDetailCommand(ACommandPlugin):
         print('Show workspace details:', workspace_id)
 
 
-class UpdateWorkspaceCommand(ACommandPlugin):
+class UpdateWorkspaceCommand(ASubCommand):
     command_name = 'update'
     arguments = [
         click.argument('workspace_id', envvar='AGIO_WORKSPACE_ID'),
@@ -63,13 +63,16 @@ class UpdateWorkspaceCommand(ACommandPlugin):
         AWorkspace(workspace_id).update()
 
 
-class WorkspaceCommandGroup(AGroupCommandPlugin):
+class WorkspaceCommandGroup(ACommandPlugin):
     command_name = "ws"
-    commands = [InstallWorkspaceCommand,
-                UninstallWorkspaceCommand,
-                ListWorkspaceCommand,
-                UpdateWorkspaceCommand,
-                ShowWorkspaceDetailCommand,
+    commands = [InstallWorkspaceCommand(),
+                UninstallWorkspaceCommand(),
+                ListWorkspaceCommand(),
+                UpdateWorkspaceCommand(),
+                ShowWorkspaceDetailCommand(),
                ]
     help = 'Manage workspaces'
+
+    def execute(self, *args, **kwargs):
+        pass
 
