@@ -48,6 +48,6 @@ class InfoCommand(ACommand):
         from agio.core.main import plugin_hub
         print('PLUGINS:')
         print()
-        for plugin in plugin_hub.iter_loaded_plugins():
-            print(f"{plugin.name}")
+        for plugin in plugin_hub.iter_plugins():
+            print(f"{plugin!r}")
         print()
