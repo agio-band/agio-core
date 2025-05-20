@@ -63,7 +63,8 @@ class UpdateWorkspaceCommand(ASubCommand):
         AWorkspace(workspace_id).update()
 
 
-class WorkspaceCommandGroup(ACommandPlugin):
+class WorkspaceCommand(ACommandPlugin):
+    name = 'workspace_command'
     command_name = "ws"
     commands = [InstallWorkspaceCommand(),
                 UninstallWorkspaceCommand(),

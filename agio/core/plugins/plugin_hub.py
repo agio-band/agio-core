@@ -27,10 +27,10 @@ class APluginHub(metaclass=Singleton):
                     raise ValueError(f"Plugin name must be defined: {plugin}")
 
                 if plugin.name in self.plugins[plugin.plugin_type]:
+                    if plugin in self.plugins[plugin.plugin_type].values():
+                        continue
                     existing_plugin = self.plugins[plugin.plugin_type][plugin.name]
-                    # if plugin in self.plugins.values():
-                    #     continue
-                    logger.warning(f"Plugin {plugin.path}:{plugin.name} will be overridden by: {existing_plugin.path}:{existing_plugin.name}")
+                    logger.warning(f"Plugin will be overridden by: {plugin.__class__.__name__}.{plugin.name} => {plugin.__class__.__name__}.{existing_plugin.name}")
                     self._overridden_plugins.append(f'{plugin.plugin_type}.{plugin.name}')
                 self.plugins[plugin.plugin_type][plugin.name] = plugin
 

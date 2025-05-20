@@ -77,9 +77,10 @@ class PackageRegisterCommand(ASubCommand):
         print(resp)
 
 
-class PackageCommandGroup(ACommandPlugin):
+class PackageCommand(ACommandPlugin):
+    name = 'package_command'
     command_name = "pkg"
-    subcommands = [PackageNewCommand(), PackageBuildCommand(), PackageReleaseCommand(), PackageRegisterCommand()]
+    subcommands = [PackageNewCommand, PackageBuildCommand, PackageReleaseCommand, PackageRegisterCommand]
     help = 'Manage packages'
     arguments = [
         click.option('-i', '--info', is_flag=True, default=False, help='Show package information'),
@@ -91,4 +92,3 @@ class PackageCommandGroup(ACommandPlugin):
         else:
             click.echo("ERROR: Arguments not pass", err=True)
             self.context.exit(1)
-

@@ -7,6 +7,7 @@ from agio.core.plugins.base.base_plugin_command import ACommandPlugin
 
 
 class InfoCommand(ACommandPlugin):
+    name = 'info_command'
     command_name = 'info'
     arguments = [
         click.option('-g', '--packages', is_flag=True, help='Show packages info', type=bool),

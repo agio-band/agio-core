@@ -20,45 +20,37 @@ callbacks:
 
 plugins:
   # commands
-  - name: info_command
-    label: Info Command
+  - label: Info Command
     implementations:
       - module: plugins/commands/info_cmd.py
 
-  - name: workspace_command
-    label: Workspace Command
+  - label: Workspace Command
     implementations:
       - module: plugins/commands/workspace_cmd.py
 
-  - name: run_command
-    label: Run Command
+  - label: Run Command
     implementations:
       - module: plugins/commands/run_cmd.py
 
-  - name: package_command
-    label: Manage agio packages command
+  - label: Manage agio packages command
     implementations:
       - module: plugins/commands/package_cmd.py
 
   # auth
-  - name: auth_commands
-    label: agio auth commands
+  - label: Auth command
     implementations:
       - module: plugins/commands/auth_cmd.py
 
   # release repository
-  - name: github_release_repository
-    label: GitHub release repository
+  - label: GitHub release repository
     implementations:
       - module: plugins/release_repository/github_release_repository.py
 
-  - name: gitlab_release_repository
-    label: GitLab Release repository
+  - label: GitLab Release repository
     implementations:
       - module: plugins/release_repository/gitlab_release_repository.py
 
-  - name: gitea_release_repository
-    label: Gitea Release repository
+  - label: Gitea Release repository
     implementations:
       - module: plugins/release_repository/gitea_release_repository.py
 

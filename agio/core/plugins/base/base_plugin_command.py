@@ -1,3 +1,4 @@
+import inspect
 from abc import ABC
 import click
 
@@ -57,6 +58,8 @@ class AbstractCommandPlugin(ABC):
 
         if self.subcommands:
             for subcmd in self.subcommands:
+                if inspect.isclass(subcmd):
+                    subcmd = subcmd()
                 if not isinstance(subcmd, ASubCommand):
                     raise TypeError(
                         f"Subcommand {subcmd} must be an instance of ASubCommand"

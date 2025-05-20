@@ -60,7 +60,7 @@ def register_new_package_release(pkg: APackageRepository, data: dict = None, **k
 
 def register_package(package_repository_path: str):
     pkg = APackageRepository(package_repository_path)
-    url = 'http://localhost:8002/package'
+    url = 'http://localhost:8002/package'    # TODO: get global registry from settings
     data = dict(
         name=pkg.name,
         label=pkg.label,

@@ -7,6 +7,7 @@ from agio.core.utils.process_utils import start_process
 
 
 class RunCommand(ACommandPlugin):
+    name = 'run_command'
     command_name = 'run'
     arguments = [
         click.option("-e", "--env", help='Custom Environments', type=Env(), multiple=True),

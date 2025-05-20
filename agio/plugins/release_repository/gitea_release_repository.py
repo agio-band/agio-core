@@ -5,6 +5,7 @@ logger = logging.getLogger(__name__)
 
 
 class GiteaRepositoryPlugin(GitHubRepositoryPlugin):
+    name = 'gitea_release_repository'
     repository_api = 'gitea'
     check_url_pattern=  None
 

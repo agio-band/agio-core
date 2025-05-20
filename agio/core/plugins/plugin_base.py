@@ -21,6 +21,8 @@ class _APluginAbstract(ABC):
 
 
 class APlugin(_APluginAbstract):
+    name = None
+    label = None
 
     def __init__(self, package: APackage, plugin_info: dict):
         self._plugin_info = plugin_info
@@ -28,16 +30,11 @@ class APlugin(_APluginAbstract):
         self._package = package
         self.on_load()
 
-    @property
-    def name(self):
-        return self._plugin_info['name']
-
-    @property
-    def label(self):
-        return self._plugin_info.get('label') or unslugify(self.name)
+    def get_label(self):
+        return self.label or unslugify(self.name)
 
     def __repr__(self):
-        return f"{self.name} [{self.package.name}]"
+        return f"{self.package.name}.{self.name}"
 
     def __str__(self):
         return self.name
@@ -66,7 +63,7 @@ class APlugin(_APluginAbstract):
             if not module:
                 raise ValueError(f"Module is required")
             full_path = Path(manifest_file_path).parent / module
-            logger.debug(f'Load implementation for plugin {plugin_info['name']}: {module}')
+            logger.debug(f'Load implementation for plugin: {module}')
             if not full_path.exists():
                 raise ValueError(f"Module file not found: {full_path}")
             try:
@@ -80,6 +77,8 @@ class APlugin(_APluginAbstract):
                     if issubclass(obj, APlugin) and not obj.__name__ == APlugin.__name__:
                         if not getattr(obj, 'is_base_class', True):
                             if obj.__module__ == plugin_module.__name__:
+                                if not obj.name:
+                                    raise ValueError('Plugin name is required')
                                 yield obj
 
     @property

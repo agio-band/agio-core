@@ -6,12 +6,13 @@ import logging
 import requests
 from agio.core.plugins.base.base_plugin_release_repository import ReleaseRepositoryPlugin
 from urllib.parse import urlparse
-from fnmatch import fnmatch
+
 
 logger = logging.getLogger(__name__)
 
 
 class GitHubRepositoryPlugin(ReleaseRepositoryPlugin):
+    name = 'github_release_repository'
     repository_api = 'github'
     check_url_pattern = r'https://github\.com.*'
 
