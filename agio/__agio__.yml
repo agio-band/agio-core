@@ -4,6 +4,8 @@ label: agio Core
 description: |
   Main agio-pipeline package
 icon: 'core/agio-logo.png'
+tags:
+  - core
 
 urls:
   home_page: ""
@@ -53,4 +55,13 @@ plugins:
   - label: Gitea Release repository
     implementations:
       - module: plugins/release_repository/gitea_release_repository.py
+
+settings:
+  local:
+    - model: package_settings.core_local_settings
+      layout:
+  workspace:
+    - model: package_settings.core_workspace_settings
+      layout:
+
 

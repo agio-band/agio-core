@@ -1,6 +1,6 @@
 import inspect
 import re
-from abc import ABC
+from abc import ABC, ABCMeta
 from functools import cached_property
 from typing import Any, Callable, Type, Union
 from weakref import ref
@@ -15,11 +15,17 @@ from agio.core.settings.validators import ValidatorBase
 ValidatorType = Union[Type[ValidatorBase], ValidatorBase, Callable]
 
 
-class BaseField(ABC):
+class BaseFieldMeta(ABCMeta):
+    def __new__(mcs, name, bases, namespace, **kwargs):
+        cls = super().__new__(mcs, name, bases, namespace)
+        cls._creation_flags = kwargs
+        return cls
+
+
+class BaseField(ABC, metaclass=BaseFieldMeta):
     field_type: Any = None
     default_validators: list[ValidatorType] = []
-    # __name_pattern = re.compile(r'^[a-z][a-z0-9_]+\.[a-z0-9_]+$')
-    __name_pattern = re.compile(r'^[a-z][a-z0-9_]+$')
+    __name_pattern = re.compile(r'^[a-z][a-z0-9_]+[a-z0-9]$')
 
     def __init__(
         self,
@@ -55,6 +61,9 @@ class BaseField(ABC):
         self._name: str = ''
         self.__parent_settings = None   # settings class
         self._init_default(default_value)
+
+    def _get_class_config_value(self, name: str, default=None) -> Any:
+        return self.__class__._creation_flags.get(name, default)
 
     def _set_parent_settings(self, settings):
         from ..package_settings import APackageSettings

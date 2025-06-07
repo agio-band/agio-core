@@ -1,6 +1,5 @@
 import os
 import sys
-
 from agio.core.packages.package import APackage
 from agio.core.utils.singleton import Singleton
 from agio.core.workspace.workspace import AWorkspace
@@ -46,23 +45,22 @@ class APackageHub(metaclass=Singleton):
     @classmethod
     def iter_packages(cls) -> list[APackage]:
         # TODO support zip packages
+
+        def iter_importable_packages():
+            seen = set()
+            for sys_path in sys.path:
+                if not os.path.isdir(sys_path):
+                    continue
+                for entry in os.listdir(sys_path):
+                    if entry.startswith(('_', '.')):
+                        continue
+                    full_path = os.path.join(sys_path, entry)
+                    if os.path.isdir(full_path) and entry not in seen:
+                        seen.add(entry)
+                        yield full_path
+
         loaded = set()
-        for path in sys.path:
-            if os.path.exists(path):
-                if os.path.isdir(path):
-                    for _path, _dirs, _files in os.walk(path):
-                        to_delete_dirs = [d for d in _dirs if d.startswith('_') or d.startswith('.')]
-                        for d in to_delete_dirs:
-                            _dirs.remove(d)
-                        path_name = os.path.basename(_path)
-                        if path_name.startswith('_') or path_name.startswith('.'):
-                            continue
-                        if APackage.is_package_root(_path):
-                            if _path in loaded:
-                                continue
-                            # logger.debug(f"Found package at {_path}")
-                            yield APackage(_path)
-                            loaded.add(_path)
-                            _dirs.clear()
-
-
+        for pkg_path in iter_importable_packages():
+            if APackage.is_package_root(pkg_path) and pkg_path not in loaded:
+                yield APackage(pkg_path)
+                loaded.add(pkg_path)

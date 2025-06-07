@@ -24,35 +24,25 @@ class AbstractCommandPlugin(ABC):
         if not self.command_name:
             raise ValueError(f"{self.__class__.__name__}: Command name must be defined.")
 
+        @click.pass_context
+        def _callback(ctx, **kwargs):
+            self.context = ctx
+            return self.execute(**kwargs)
+        for decorator in reversed(self.arguments):
+            _callback = decorator(_callback)
         if self.subcommands:
-            @click.group(
+            cmd = click.group(
                 name=self.command_name,
                 context_settings=self.context_settings,
                 help=self.help,
-                invoke_without_command=True  # <-- вот это добавлено
-            )
-            @click.pass_context
-            def group_wrapper(ctx, **kwargs):
-                self.context = ctx
-                if ctx.invoked_subcommand is None:
-                    return self.execute(**kwargs)
-
-            cmd = group_wrapper
+                invoke_without_command=True
+            )(_callback)
         else:
-            @click.command(
+            cmd = click.command(
                 name=self.command_name,
                 context_settings=self.context_settings,
-                help=self.help,
-            )
-            @click.pass_context
-            def command_wrapper(ctx, **kwargs):
-                self.context = ctx
-                return self.execute(**kwargs)
-
-            cmd = command_wrapper
-
-        for arg in self.arguments:
-            cmd = arg(cmd)
+                help=self.help
+            )(_callback)
 
         self.command = cmd
 
@@ -61,16 +51,20 @@ class AbstractCommandPlugin(ABC):
                 if inspect.isclass(subcmd):
                     subcmd = subcmd()
                 if not isinstance(subcmd, ASubCommand):
-                    raise TypeError(
-                        f"Subcommand {subcmd} must be an instance of ASubCommand"
-                    )
+                    raise TypeError(f"Subcommand {subcmd} must be an instance of ASubCommand")
                 self.command.add_command(subcmd.command)
 
         if parent_group:
             parent_group.add_command(self.command)
 
-    def execute(self, *args, **kwargs):
-        raise NotImplementedError(f'Not implemented in {self.__class__.__name__}')
+    # def _call_execute(self, ctx, **kwargs):
+    #     self.context = ctx
+    #     return self.execute(**kwargs)
+
+    def execute(self, **kwargs):
+        print("Received kwargs:", kwargs)
+    # def execute(self, *args, **kwargs):
+    #     raise NotImplementedError(f'Not implemented in {self.__class__.__name__}')
 
 
 class ACommandPlugin(BasePluginClass, AbstractCommandPlugin, APlugin):

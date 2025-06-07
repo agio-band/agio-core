@@ -1,8 +1,6 @@
 import sys
-
 import click
-
-
+from pprint import pprint
 from agio.core.plugins.base.base_plugin_command import ACommandPlugin
 
 
@@ -10,32 +8,42 @@ class InfoCommand(ACommandPlugin):
     name = 'info_command'
     command_name = 'info'
     arguments = [
-        click.option('-g', '--packages', is_flag=True, help='Show packages info', type=bool),
-        click.option("-p", "--plugins", is_flag=True, help='Show plugins info.', type=bool),
+        click.option('-g', '--packages', is_flag=True, help='Show packages info'),
+        click.option("-p", "--plugins", is_flag=True, help='Show plugins info'),
+        click.option("-s", "--settings", is_flag=True, help='Show settings'),
     ]
     help = 'Show info about current workspace'
 
-    def execute(self, packages, plugins):
-        from agio.core.workspace.workspace import AWorkspace
-
+    def execute(self, packages, plugins, settings):
         line = lambda: print('='*70)
-        ws = AWorkspace.current()
         line()
-        print('Workspace:', ws or '[Not set]', f'[{ws.id if ws else "N/A"}]')
-        # print(ws.root.as_posix())
+        self._show_workspace_info()
         line()
-        print('Python', sys.version)
-        # print(ws.venv_manager.python_executable.replace(ws.id, '<ID>'))
+        self._show_python_info()
         line()
-        if any([packages, plugins]):
+        if any([packages, plugins, settings]):
             if packages:
                 self._show_packages_info()
             if plugins:
                 self._show_plugins_info()
+            if settings:
+                self._show_settings()
         else:
             self._show_packages_info()
             self._show_plugins_info()
         line()
+
+    def _show_workspace_info(self):
+        from agio.core.workspace.workspace import AWorkspace
+        ws = AWorkspace.current()
+        if ws:
+            print(f'Workspace: {ws} [{ws.id}]' )
+        else:
+            print('Workspace: [Not set]')
+
+    def _show_python_info(self):
+        print('Python', sys.version)
+        print(sys.executable)
 
     def _show_packages_info(self):
         from agio.core.main import package_hub
@@ -52,3 +60,11 @@ class InfoCommand(ACommandPlugin):
         for plugin in plugin_hub.iter_plugins():
             print(f"{plugin.name}")
         print()
+
+    def _show_settings(self):
+        from agio import local_settings, workspace_settings
+        print('LOCAL SETTINGS:')
+        pprint(local_settings)
+        print()
+        print('WORKSPACE SETTINGS:')
+        pprint(workspace_settings)

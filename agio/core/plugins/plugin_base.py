@@ -78,7 +78,7 @@ class APlugin(_APluginAbstract):
                         if not getattr(obj, 'is_base_class', True):
                             if obj.__module__ == plugin_module.__name__:
                                 if not obj.name:
-                                    raise ValueError('Plugin name is required')
+                                    raise ValueError(f'Plugin name is required: {full_path}')
                                 yield obj
 
     @property

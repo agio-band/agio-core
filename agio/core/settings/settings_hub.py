@@ -5,7 +5,7 @@ from agio.core.workspace.workspace import AWorkspace
 from agio.core.main import package_hub
 
 
-class AWorkspaceSettings:
+class ASettingsHub:
     def __init__(self, settings_data: dict[str, Any], **kwargs):
         package_names = set()
         for key in settings_data.keys():

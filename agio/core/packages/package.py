@@ -18,6 +18,7 @@ from agio.core.workspace.request_data import get_package, get_release
 logger = logging.getLogger(__name__)
 
 STORE_HOST = 'http://localhost:8002'
+STORE_DOMAIN =  'localhost:8082'    # TODO
 
 
 class APackage:
@@ -156,7 +157,6 @@ class APackage:
             raise ValueError(f"Manifest file is not a dictionary [{self._info_file}]")
         return info_data
 
-STORE_DOMAIN =  'localhost:8082'    # TODO
 
 class AReleaseInfo:
     """
