@@ -38,6 +38,10 @@ plugins:
     implementations:
       - module: plugins/commands/package_cmd.py
 
+  - label: Settings command
+    implementations:
+      - module: plugins/commands/settings_cmd.py
+
   # auth
   - label: Auth command
     implementations:
@@ -58,10 +62,10 @@ plugins:
 
 settings:
   local:
-    - model: package_settings.core_local_settings
-      layout:
+    model: agio.package_settings.local.CoreLocalSettings
+    layout: package_settings.local
   workspace:
-    - model: package_settings.core_workspace_settings
-      layout:
+    model: agio.package_settings.workspace.CoreWorkspaceSettings
+    layout:
 
 

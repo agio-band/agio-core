@@ -136,7 +136,7 @@ class _SettingsMeta(type):
 
 
 class APackageSettings(metaclass=_SettingsMeta):
-    __name_pattern = re.compile(r"^[a-z][a-z0-9_][a-z0-9]+$")
+    __name_pattern = re.compile(r"^[a-z][a-z0-9_]+[a-z0-9]+$")
 
     def __init__(self, **kwargs):
         class_kwargs = {k: v for k, v in kwargs.items() if k.startswith('_')}
@@ -212,8 +212,6 @@ class APackageSettings(metaclass=_SettingsMeta):
         if not self.__name_pattern.match(name):
             raise ValueError(f"Invalid name: {name}")
         self._name = name
-        # for field_name, field in self._fields_data.items():
-        #     field.set_name(f"{name}.{field_name}")
 
     def find_parameter(self, name: str) -> BaseField:
         """Find a field by name"""
@@ -222,6 +220,9 @@ class APackageSettings(metaclass=_SettingsMeta):
     def _get_fields(self) -> dict:
         """Return a dictionary of field names to field instances"""
         return getattr(self, '_fields', {})
+
+    def iter_fields(self):
+        yield from self._fields_data.items()
 
     def __dump_values__(self, serialized:bool = False) -> dict:
         result = {}

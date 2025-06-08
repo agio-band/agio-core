@@ -32,6 +32,7 @@ class ASettingsHub:
                 package_settings = {k.split('.')[-1]: v for k, v in settings_data.items() if k.startswith(package_name)}
                 self._package_settings[package_name] = package_settings_cls(
                     **package_settings,
+                    _package_name=package_name,
                     _get_other_parm_func=self.get_parameter,
                 )
 
