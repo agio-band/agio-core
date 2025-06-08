@@ -109,7 +109,7 @@ ColorInput = Union[str, tuple[Real, ...], list[Real]]
 
 
 class ColorField(BaseField):
-    field_type = ColorRGB  # Всегда храним как RGB tuple[int, int, int]
+    field_type = ColorRGB  # RGB tuple[int, int, int]
 
     def set(self, value: ColorInput) -> None:
         """Автоматически определяет формат и вызывает соответствующий метод"""
@@ -135,7 +135,6 @@ class ColorField(BaseField):
         if not all(c in '0123456789abcdef' for c in hex_part):
             raise ValueError("HEX string contains invalid characters")
 
-        # Конвертируем в RGB и сохраняем
         rgb = self._hex_to_rgb(hex_str)
         super().set(rgb)
 
@@ -201,7 +200,12 @@ class ColorField(BaseField):
 class PathField(BaseField):
     field_type = Path|str
 
+
 class DirectoryField(BaseField):
+    field_type = Path|str
+
+
+class PathPatternField(BaseField):
     field_type = Path|str
 
 

@@ -149,7 +149,7 @@ class APackageSettings(metaclass=_SettingsMeta):
         self._get_other_parm_func = class_kwargs.pop('_get_other_parm_func', None)
         self._class_kwargs = class_kwargs
         # Initialize fields from class
-        package_name = kwargs.pop('_name', '')
+        package_name = kwargs.pop('_package_name', '')
         for name, field in self._get_fields().items():
             self._fields_data[name] = copy.deepcopy(field)
             # self._fields_data[name]._set_parent_settings(self)
@@ -163,9 +163,17 @@ class APackageSettings(metaclass=_SettingsMeta):
             raise RequiredValueNotSetError(f"Missing required fields: {', '.join(missing)}")
 
         # Set values
-        for name, value in kwargs.items():
+        for name, value_data in kwargs.items():
             if name in self._fields_data:
-                self._fields_data[name].set(value)
+                if isinstance(value_data, dict):
+                    # from settings file
+                    if 'value' in value_data:
+                        self._fields_data[name].set(value_data['value'])
+                    if 'dependency' in value_data:
+                        self._fields_data[name].dependency(value_data['dependency'])
+                else:
+                    # from simple values without extra parameters
+                    self._fields_data[name].set(value_data)
 
         if package_name:
             self.set_name(package_name)
@@ -215,7 +223,7 @@ class APackageSettings(metaclass=_SettingsMeta):
         """Return a dictionary of field names to field instances"""
         return getattr(self, '_fields', {})
 
-    def __dump__(self, serialized:bool = False) -> dict:
+    def __dump_values__(self, serialized:bool = False) -> dict:
         result = {}
         for name, field in self._fields_data.items():
             try:
@@ -227,9 +235,15 @@ class APackageSettings(metaclass=_SettingsMeta):
                     raise ValueError(f"Field '{name}' is required but has no value") from e
         return result
 
+    def __dump_settings__(self) -> dict:
+        result = {}
+        for name, field in self._fields_data.items():
+            result[name] = field.get_settings()
+        return result
+
     def __to_json__(self, serialize_hook=None, **kwargs) -> str:
         JsonSerializer.custom_hook= serialize_hook
-        return json.dumps(self.__dump__(serialized=True), cls=JsonSerializer, **kwargs)
+        return json.dumps(self.__dump_values__(serialized=True), cls=JsonSerializer, **kwargs)
 
     def __schema__(self) -> dict:
         parameters = {}

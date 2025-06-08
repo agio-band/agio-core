@@ -70,9 +70,12 @@ class RangeLimitValidator(ValidatorBase, Generic[ComparableType]):
 class RegexValidator(ValidatorBase):
     name = "regex"
 
-    def __init__(self, pattern: str):
+    def __init__(self, pattern: str|re.Pattern):
         super().__init__(pattern=pattern)
-        self.regex = re.compile(pattern)
+        if isinstance(pattern, str):
+            self.regex = re.compile(pattern)
+        else:
+            self.regex = pattern
 
     def validate(self, value):
         if not isinstance(value, str):
@@ -87,10 +90,10 @@ class ChoiceValidator(ValidatorBase):
 
     def __init__(self, choices: Collection):
         super().__init__(choices=choices)
+        if not isinstance(choices, Collection):
+            raise ValueError(f"Expected collection, got {type(choices)}")
 
     def validate(self, value):
         if value not in self.options['choices']:
             raise ValueError(f"Value {value} is not in allowed choices: {self.options['choices']}")
         return value
-
-

@@ -46,7 +46,9 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
             'default': None,
             'validators': list(self.default_validators) + (validators or []),
             'dependency': {
-                'value': None,  # ref|exp|pdg
+                'type': None,  # ref|exp|pdg
+                'value': None,
+                'options': None,
                 'enabled': False, # for disable in overrides
             },
             'kwargs': kwargs,
@@ -145,6 +147,15 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
         if not self._data['required']:
             return self._data['default']
         raise ValueError("Field is required but value is not set")
+
+    def get_settings(self):
+        result = dict(value=self.get())
+        if self._data['dependency']['type'] is not None:
+            result['dependency'] = self._data['dependency']
+        return result
+
+    def set_dependency(self, dependency_value: dict) -> None:
+        self._data['dependency'] = dependency_value
 
     def set_reference_to(self, parm: Type['BaseField']) -> None:
         if not parm.name:

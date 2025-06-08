@@ -110,18 +110,29 @@ class APackage:
         return self._get_settings_class('local')
 
     def _get_settings_class(self, settings_type: str):
-        required = True
-        settings_path = self._info_data.get('settings', {}).get(settings_type)
-        if not settings_path:
-            required = False
+        # get settings config
+        settings_conf = self._info_data.get('settings', {})
+        # settings type is defined and required
+        if settings_type in settings_conf:
+            settings_conf = settings_conf[settings_type]
+            if 'model' in settings_conf:
+                settings_path = settings_conf.get('model')
+                if not settings_path:
+                    raise PackageError(f"Settings model for '{settings_type}' is not specified")
+                try:
+                    return import_object_by_dotted_path(settings_path)
+                except ModuleNotFoundError:
+                    raise PackageError(f"Settings class not found: {settings_path}")
+            else:
+                raise PackageError(f"Settings model for '{settings_type}' is not specified")
+        else:
+            # try to get default name
             settings_path = self.import_path(f'settings.{settings_type}.Settings')
-        try:
-            cls = import_object_by_dotted_path(settings_path)
-        except ModuleNotFoundError:
-            if not required:
-                return None
-            raise PackageError(f"Settings class not found: {settings_path}")
-        return cls
+            # try to load
+            try:
+                return import_object_by_dotted_path(settings_path)
+            except ModuleNotFoundError:
+                raise PackageError(f"Settings class not found: {settings_path}")
 
     @classmethod
     def is_package_root(cls, path: str) -> bool:
