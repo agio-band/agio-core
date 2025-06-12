@@ -43,7 +43,7 @@ class ASettingsHub:
         return f"<{self}>"
 
     def iter_package_settings(self):
-        yield from self._package_settings.values()
+        yield from self._package_settings.items()
 
     def get(self, param_name: str) -> Any:
         if param_name.count('.') != 1:

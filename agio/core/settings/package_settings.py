@@ -150,6 +150,8 @@ class APackageSettings(metaclass=_SettingsMeta):
         self._class_kwargs = class_kwargs
         # Initialize fields from class
         package_name = kwargs.pop('_package_name', '')
+        if package_name:
+            self.set_name(package_name)
         for name, field in self._get_fields().items():
             self._fields_data[name] = copy.deepcopy(field)
             # self._fields_data[name]._set_parent_settings(self)
@@ -160,7 +162,7 @@ class APackageSettings(metaclass=_SettingsMeta):
         missing = [name for name in required_fields if name not in kwargs and not self._fields_data[name].has_value()]
 
         if missing:
-            raise RequiredValueNotSetError(f"Missing required fields: {', '.join(missing)}")
+            raise RequiredValueNotSetError(f"Missing required fields in package settings \"{self.name}\": {', '.join(missing)}")
 
         # Set values
         for name, value_data in kwargs.items():
@@ -175,8 +177,7 @@ class APackageSettings(metaclass=_SettingsMeta):
                     # from simple values without extra parameters
                     self._fields_data[name].set(value_data)
 
-        if package_name:
-            self.set_name(package_name)
+
 
     def __str__(self):
         return f"({', '.join(f'{name}={repr(getattr(self, name))}' for name in self._fields_data)})"

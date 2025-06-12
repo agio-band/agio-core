@@ -8,7 +8,7 @@ from pydantic import EmailStr, AnyUrl
 from agio.core.settings.fields.base_field import BaseField
 from agio.core.settings.fields.generic_fields import StringField
 from agio.core.settings.fields.compaund_fields import ListField
-
+from agio.core.settings.validators import RegexValidator
 
 
 class DateTimeField(BaseField):
@@ -94,13 +94,27 @@ class VectorField(ListField[float]):
 class Vector2Field(VectorField):
     element_count = 2
 
+    @property
+    def x(self):
+        return self.get()[0]
+    @property
+    def y(self):
+        return self.get()[1]
 
-class Vector3Field(VectorField):
+
+class Vector3Field(Vector2Field):
     element_count = 3
+    @property
+    def z(self):
+        return self.get()[2]
 
 
-class Vector4Field(VectorField):
+class Vector4Field(Vector3Field):
     element_count = 4
+
+    @property
+    def w(self):
+        return self.get()[3]
 
 
 ColorRGB = tuple[int, int, int]
@@ -198,14 +212,18 @@ class ColorField(BaseField):
 
 
 class PathField(BaseField):
-    field_type = Path|str
+    field_type = str
 
 
 class DirectoryField(BaseField):
-    field_type = Path|str
+    field_type = str
 
 
 class PathPatternField(BaseField):
-    field_type = Path|str
+    field_type = str
 
 
+class SlugField(StringField):
+    default_validators = (
+        RegexValidator(pattern=r'^[a-z][a-z0-9_]+$'),
+    )

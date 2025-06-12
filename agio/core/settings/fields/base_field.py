@@ -1,5 +1,7 @@
+import builtins
 import inspect
 import re
+import types
 from abc import ABC, ABCMeta
 from functools import cached_property
 from typing import Any, Callable, Type, Union
@@ -24,6 +26,7 @@ class BaseFieldMeta(ABCMeta):
 
 class BaseField(ABC, metaclass=BaseFieldMeta):
     field_type: Any = None
+    value_type: Any = None
     default_validators: list[ValidatorType] = []
     __name_pattern = re.compile(r'^[a-z][a-z0-9_]+[a-z0-9]$')
 
@@ -40,6 +43,10 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
         order: dict = None,
         **kwargs
     ):
+        # if isinstance(self.field_type, types.UnionType):
+        #     raise TypeError('Field value_type not supported for union type. You need to specify only one single type.')
+        # if self.field_type not in builtins.__dict__.values():
+        #     raise ValueTypeError('Field value type not supported. Use ')
         self._data: dict[str, Any] = {
             'value': NOT_SET,
             'required': default_value is REQUIRED,
@@ -190,9 +197,10 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
         return value
 
     def get_schema(self) -> dict:
+        print(type(self.field_type))
         schema = {
-            'type': self.field_type.__name__,
-            'type_str': str(self.field_type),
+            'type': self.value_type.__name__,
+            'type_str': str(self.value_type),
             'required': self.is_required(),
             'default': self._serialize_value(self._data['default']),
             'validators': self._get_validators_schema(),

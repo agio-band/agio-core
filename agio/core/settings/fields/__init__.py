@@ -12,5 +12,6 @@ from .extended_fields import (
     PathField,
     DirectoryField,
     PathPatternField,
+    SlugField,
 )
 from .model_fields import ModelField

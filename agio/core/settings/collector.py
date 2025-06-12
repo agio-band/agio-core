@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 from agio.core.settings import LocalSettingsHub, WorkspaceSettingsHub
-from install_dir.agio.core.workspace.workspace import AWorkspace
 
 
 settings_root = Path('~/.agio/settings').expanduser()
@@ -15,6 +14,7 @@ def collect_local_settings() -> LocalSettingsHub:
 
 
 def collect_workspace_settings() -> WorkspaceSettingsHub|None:
+    from agio.core.workspace.workspace import AWorkspace
     # create workspace instance
     ws = AWorkspace.current()
     if not ws:
