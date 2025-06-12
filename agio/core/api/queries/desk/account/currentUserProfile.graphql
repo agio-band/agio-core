@@ -1,0 +1,18 @@
+query {
+    currentUser {
+        id
+        email
+        firstName
+        lastName
+        avatar(params: {type: "fit", width: 480, height: 480})
+        language {
+            code
+            name
+            nativeName
+        }
+        groups {
+            id
+            name
+        }
+    }
+}

@@ -1,0 +1,17 @@
+query projectInfoDetails($id: ID!) {
+  project(id: $id) {
+    id
+    name
+    code
+    state
+    facilities {
+      ...ProjectInfoFacility
+    }
+  }
+}
+
+
+fragment ProjectInfoFacility on Facility {
+  id
+  name: label
+}

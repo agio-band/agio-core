@@ -1,0 +1,26 @@
+# TODO add other field
+query {
+    currentUser {
+        id
+        email
+        firstName
+        lastName
+        avatar(params: {type: "fit", width: 480, height: 480})
+        language {
+            code
+            name
+            nativeName
+        }
+        companies {
+            id
+            name
+        }
+        createdCompanies {
+            id
+        }
+        groups {
+            id
+            name
+        }
+    }
+}

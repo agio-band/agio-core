@@ -1,0 +1,10 @@
+query {
+    currentCompany {
+        id
+        name
+        code
+        email
+        logo(params: {type: "fit", width: 480, height: 480})
+        legalName
+    }
+}

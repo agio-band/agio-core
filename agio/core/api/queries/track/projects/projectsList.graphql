@@ -1,0 +1,18 @@
+query projectsList($limit: Int!, $filter: ProjectFilter) {
+  projects(first: $limit, filter: $filter) {
+    edges {
+      node {
+        id
+        name
+        company {
+          id
+          name
+          hostUser {
+            id
+          }
+          logo(params: {type: "fit", width: 250, height: 250})
+        }
+      }
+    }
+  }
+}
