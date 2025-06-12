@@ -4,7 +4,7 @@ from pprint import pprint
 from agio.core.plugins.base.base_plugin_command import ACommandPlugin
 
 
-class InfoCommand(ACommandPlugin):
+class SettingsCommand(ACommandPlugin):
     name = 'settings_command'
     command_name = 'settings'
     arguments = [
@@ -25,10 +25,10 @@ class InfoCommand(ACommandPlugin):
         print(title)
         line()
         max_len = 0
-        for pkg in hub.iter_package_settings():
+        for name, pkg in hub.iter_package_settings():
             for field_name, field in pkg.iter_fields():
                 max_len = max(max_len, len(field_name))
-        for pkg in hub.iter_package_settings():
+        for name, pkg in hub.iter_package_settings():
             print(f"{pkg.name}:")
             print('-' * 50)
             for field_name, field in pkg.iter_fields():
