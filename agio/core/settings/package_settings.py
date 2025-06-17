@@ -156,7 +156,8 @@ class APackageSettings(metaclass=_SettingsMeta):
             self._fields_data[name] = copy.deepcopy(field)
             # self._fields_data[name]._set_parent_settings(self)
             setattr(self, name, self._fields_data[name])
-
+        if self._class_kwargs.get('_init_only'):
+            return
         # Check required fields first
         required_fields = getattr(self, '_required_fields', [])
         missing = [name for name in required_fields if name not in kwargs and not self._fields_data[name].has_value()]
@@ -247,15 +248,17 @@ class APackageSettings(metaclass=_SettingsMeta):
         JsonSerializer.custom_hook= serialize_hook
         return json.dumps(self.__dump_values__(serialized=True), cls=JsonSerializer, **kwargs)
 
-    def __schema__(self) -> dict:
+    @classmethod
+    def __schema__(cls) -> dict:
+        obj = cls(_init_only=True)
         parameters = {}
-        for name, field in self._fields_data.items():
+        for name, field in obj._fields_data.items():
             field_schema = field.get_schema()
             field_schema['field_type'] = field.__class__.__name__
             parameters[name] = field_schema
         return {
             'parameters': parameters,
-            'name': self.name
+            'name': obj.name
         }
 
 
