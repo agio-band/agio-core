@@ -9,7 +9,7 @@ from agio.core.settings.generic_types import REQUIRED
 
 class ModelField(BaseField):
     def __init__(self, default_value: Any = REQUIRED, model: Type[BaseModel] = None):
-        self.model = model
+        self.field_type = self.model = model
         super().__init__(default_value)
 
     def _validate(self, value: Any) -> Any:

@@ -117,15 +117,15 @@ class Vector4Field(Vector3Field):
         return self.get()[3]
 
 
-ColorRGB = tuple[int, int, int]
-ColorRGBA = tuple[int, int, int, int]
-ColorInput = Union[str, tuple[Real, ...], list[Real]]
+ColorRGBType = tuple[int, int, int]
+ColorRGBAType = tuple[int, int, int, int]
+ColorInputType = Union[str, tuple[Real, ...], list[Real]]
 
 
-class ColorField(BaseField):
-    field_type = ColorRGB  # RGB tuple[int, int, int]
+class RGBColorField(BaseField):
+    field_type = ColorRGBType  # RGB tuple[int, int, int]
 
-    def set(self, value: ColorInput) -> None:
+    def set(self, value: ColorInputType) -> None:
         """Автоматически определяет формат и вызывает соответствующий метод"""
         if isinstance(value, str):
             self.set_hex(value)
@@ -179,7 +179,7 @@ class ColorField(BaseField):
             raise ValueError(f"{name} value {value} out of range (0-255 or 0.0-1.0)")
 
     @staticmethod
-    def _hex_to_rgb(hex_str: str) -> ColorRGB:
+    def _hex_to_rgb(hex_str: str) -> ColorRGBType:
         """Конвертирует HEX строку в RGB tuple"""
         hex_str = hex_str.lstrip('#')
         if len(hex_str) == 3:
@@ -195,10 +195,10 @@ class ColorField(BaseField):
         r, g, b = self.get()
         return f"#{r:02x}{g:02x}{b:02x}"
 
-    def get_rgb(self) -> ColorRGB:
+    def get_rgb(self) -> ColorRGBType:
         return self.get()
 
-    def get_rgba(self, alpha: int = 255) -> ColorRGBA:
+    def get_rgba(self, alpha: int = 255) -> ColorRGBAType:
         r, g, b = self.get()
         return (r, g, b, alpha)
 

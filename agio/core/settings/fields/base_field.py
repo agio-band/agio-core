@@ -4,17 +4,22 @@ import re
 import types
 from abc import ABC, ABCMeta
 from functools import cached_property
-from typing import Any, Callable, Type, Union
+from typing import Any, Callable, Type, Union, Sequence, List
 from weakref import ref
 from pydantic import TypeAdapter, BaseModel
 from pydantic_core import ValidationError
 
 from agio.core.settings.exceptions import ValueTypeError
+from agio.core.settings.fields.js_types import to_js_type
 from agio.core.settings.generic_types import REQUIRED, NOT_SET
 from agio.core.settings.validators import ValidatorBase
+from agio.core.utils.text_utils import unslugify
 
+ValidatorInstance = ValidatorBase
+ValidatorFactory = Callable[..., ValidatorBase]
+ValidatorClass = Type[ValidatorBase]
 
-ValidatorType = Union[Type[ValidatorBase], ValidatorBase, Callable]
+ValidatorType = Union[ValidatorInstance, ValidatorFactory, ValidatorClass]
 
 
 class BaseFieldMeta(ABCMeta):
@@ -26,48 +31,45 @@ class BaseFieldMeta(ABCMeta):
 
 class BaseField(ABC, metaclass=BaseFieldMeta):
     field_type: Any = None
-    value_type: Any = None
-    default_validators: list[ValidatorType] = []
-    __name_pattern = re.compile(r'^[a-z][a-z0-9_]+[a-z0-9]$')
+    # value_type: Any = None
+    default_validators: list[ValidatorBase, ...] = []
+    __name_pattern = re.compile(r'^[a-zA-Z](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$')
 
     def __init__(
         self,
         default_value: Any = REQUIRED,
         *,
-        validators: list[ValidatorType] = None,
+        validators: list[ValidatorBase, ...] = None,
         label: str = None,
         description: str = None,
         docs_url: str = None,
-        layout: dict = None,
         widget: str|dict = None,
         order: dict = None,
+        hint: str = None,
         **kwargs
     ):
-        # if isinstance(self.field_type, types.UnionType):
-        #     raise TypeError('Field value_type not supported for union type. You need to specify only one single type.')
-        # if self.field_type not in builtins.__dict__.values():
-        #     raise ValueTypeError('Field value type not supported. Use ')
         self._data: dict[str, Any] = {
             'value': NOT_SET,
             'required': default_value is REQUIRED,
             'default': None,
             'validators': list(self.default_validators) + (validators or []),
             'dependency': {
-                'type': None,  # ref|exp|pdg
+                'type': None,  # dependency type:  ref (reference)|exp (expression)|pdg
                 'value': None,
                 'options': None,
                 'enabled': False, # for disable in overrides
             },
             'kwargs': kwargs,
+
+            # ui options
             'description': description,
             'label': label,
             'docs_url': docs_url,
-            'layout': layout,
             'widget': widget,
             'order': order,
-            'comment': ''   # set from UI only
+            'hint': hint,
         }
-        self._name: str = ''
+        self._name: str = kwargs.pop('field_name', '')
         self.__parent_settings = None   # settings class
         self._init_default(default_value)
 
@@ -81,38 +83,11 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
             raise ValueError("Parent settings must be an instance of APackageSettings")
         self.__parent_settings = ref(settings)
 
-    @property
-    def settings_instance(self):
-        return self.__parent_settings()
-
-    def set_name(self, namespace: str) -> None:
-        if not self.__name_pattern.match(namespace):
-            raise ValueTypeError(f"Invalid namespace: {namespace}")
-        self._name = namespace
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def namespace(self) -> str:
-        return self._name.split('.')[0]
-
     def __str__(self):
         return f"{self._data['value']}"
 
     def __repr__(self):
         return f"<{self.__class__.__name__} [{self.field_type}] ({self._data['value']})>"
-
-    def get_additional_info(self) -> dict:
-        return {
-            'label': self._data['label'],
-            'layout': self._data['layout'],
-            'widget': self._data['widget'],
-            'docs_url': self._data['docs_url'],
-            'description': self._data['description'],
-            'comment': self._data['comment'],
-        }
 
     @cached_property
     def type_adapter(self) -> TypeAdapter:
@@ -144,6 +119,23 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
             return v
         except ValidationError as e:
             raise ValueError(f"Validation error: {e}")
+
+    @property
+    def settings_instance(self):
+        return self.__parent_settings()
+
+    def set_name(self, namespace: str) -> None:
+        if not self.__name_pattern.match(namespace):
+            raise ValueTypeError(f"Invalid namespace: {namespace}")
+        self._name = namespace
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def namespace(self) -> str:
+        return self._name.split('.')[0]
 
     def set(self, value: Any) -> None:
         self._data['value'] = self._validate(value)
@@ -197,20 +189,27 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
         return value
 
     def get_schema(self) -> dict:
-        print(type(self.field_type))
         schema = {
-            'type': self.value_type.__name__,
-            'type_str': str(self.value_type),
+            'field_type': to_js_type(self.field_type),
+            'field_name': self.__class__.__name__,
             'required': self.is_required(),
             'default': self._serialize_value(self._data['default']),
             'validators': self._get_validators_schema(),
             'dependency': self._data['dependency'],
             **self.get_additional_info()
         }
-
         if self._data['description']:
             schema['description'] = self._data['description']
         return schema
+
+    def get_additional_info(self) -> dict:
+        return {
+            'label': self._data.get('label') or unslugify(self.name),
+            'widget': self._data['widget'],
+            'docs_url': self._data['docs_url'],
+            'description': self._data['description'],
+            'hint': self._data['hint'],
+        }
 
     def _get_validators_schema(self) -> list[dict]:
         validators_schema = []

@@ -4,7 +4,7 @@ from .extended_fields import (
     Vector2Field,
     Vector3Field,
     Vector4Field,
-    ColorField,
+    RGBColorField,
     EmailField,
     UrlField,
     DateTimeField,
