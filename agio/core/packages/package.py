@@ -77,7 +77,7 @@ class APackage:
     def get_resource_dir(self):
         return self.root / self._info_data.get('resources_dir', 'resources')
 
-    def import_path(self, dotted_path: str) -> str:
+    def get_import_path(self, dotted_path: str) -> str:
         package_name = self.root.stem
         module_path = f"{package_name}.{dotted_path}"
         return module_path
@@ -104,35 +104,65 @@ class APackage:
         yield from plugins
 
     def get_workspace_settings_class(self):
-        return self._get_settings_class('workspace')
+        return self.get_settings_class('workspace')
 
     def get_local_settings_class(self):
-        return self._get_settings_class('local')
+        return self.get_settings_class('local')
 
-    def _get_settings_class(self, settings_type: str):
-        # get settings config
+    def _get_settings_field(self, field_path: str) -> str|dict|None:
         settings_conf = self._info_data.get('settings', {})
-        # settings type is defined and required
-        if settings_type in settings_conf:
-            settings_conf = settings_conf[settings_type]
-            if 'model' in settings_conf:
-                settings_path = settings_conf.get('model')
-                if not settings_path:
-                    raise PackageError(f"Settings model for '{settings_type}' is not specified")
-                try:
-                    return import_object_by_dotted_path(settings_path)
-                except ModuleNotFoundError:
-                    raise PackageError(f"Settings class not found: {settings_path}")
-            else:
-                raise PackageError(f"Settings model for '{settings_type}' is not specified")
+        parts = field_path.split('.')
+        current_level = settings_conf.copy()
+        while parts:
+            next_part = parts.pop(0)
+            if not isinstance(current_level, dict):
+                raise ValueError(f'Wrong field_path {field_path}')
+            current_level = current_level.get(next_part, None)
+            if current_level is None:
+                return None
+        return current_level
+
+    def get_settings_class(self, settings_type: str):
+        required = False
+        settings_path = self._get_settings_field(f'{settings_type}.model')
+        if settings_path is None:
+            # default path
+            settings_path = f'package_settings.{settings_type}_settings.Settings'
         else:
-            # try to get default name
-            settings_path = self.import_path(f'settings.{settings_type}.Settings')
-            # try to load
-            try:
-                return import_object_by_dotted_path(settings_path)
-            except ModuleNotFoundError:
+            required = True
+        import_path = self.get_import_path(settings_path)
+        try:
+            return import_object_by_dotted_path(import_path)
+        except ModuleNotFoundError:
+            if required:
                 raise PackageError(f"Settings class not found: {settings_path}")
+
+    def get_local_layout_config(self):
+        return self.get_layout_configs('local')
+
+    def get_workspace_layout_config(self):
+        return self.get_layout_configs('workspace')
+
+    def get_layout_configs(self, layout_type: str) -> dict | None:
+        required = False
+        rel_path = self._get_settings_field(f'{layout_type}.layout')
+        if rel_path is None:
+            rel_path = f'package_settings/{layout_type}_layout.yml'
+        else:
+            required = True
+        if not rel_path.strip():
+            raise ValueError(f"Layout layout file not set or empty")
+        layout_config_full_path = self.root / rel_path
+        if not layout_config_full_path.exists():
+            if required:
+                raise LookupError(f"Layout config file for '{layout_type}' not found: {layout_config_full_path}")
+            else:
+                return
+        if layout_config_full_path.is_dir():
+            raise TypeError(f'Layout path is directory {layout_config_full_path}')
+        with layout_config_full_path.open(encoding='utf-8') as layout_file:
+            layout_config = yaml.safe_load(layout_file)
+        return layout_config
 
     @classmethod
     def is_package_root(cls, path: str) -> bool:
