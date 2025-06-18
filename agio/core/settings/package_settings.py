@@ -301,6 +301,7 @@ class APackageSettings(metaclass=_SettingsMeta):
         if package_name:
             self.set_name(package_name)
         for name, field in self._get_fields().items():
+            field.set_name(name)
             self._fields_data[name] = copy.deepcopy(field)
             # self._fields_data[name]._set_parent_settings(self)
             setattr(self, name, self._fields_data[name])
@@ -401,12 +402,7 @@ class APackageSettings(metaclass=_SettingsMeta):
         obj = cls(_init_only=True)
         parameters = {}
         for name, field in obj._fields_data.items():
-            field_schema = field.get_schema()
-            # field_schema['field_type'] = field.__class__.__name__
-            parameters[name] = field_schema
-        return {
-            'parameters': parameters,
-            'name': obj.name
-        }
+            parameters[name] = field.get_schema()
+        return parameters
 
 
