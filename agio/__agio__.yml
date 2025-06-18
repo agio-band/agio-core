@@ -61,11 +61,10 @@ plugins:
       - module: plugins/release_repository/gitea_release_repository.py
 
 settings:
-  local:
-    model: agio.package_settings.local.CoreLocalSettings
-    layout: package_settings.local
   workspace:
-    model: agio.package_settings.workspace.CoreWorkspaceSettings
-    layout:
+    layout: package_settings/workspace_layout.yml
+#    model: agio.package_settings.workspace.CoreWorkspaceSettings
+#  local:
+#    model: agio.package_settings.local.CoreLocalSettings
 
 

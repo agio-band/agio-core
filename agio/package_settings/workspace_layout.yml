@@ -1,0 +1,19 @@
+sections:
+  - help:
+      label: Help
+      order: last
+
+layouts:
+  help:
+  - type: GroupBox
+    name: main_help_box
+    content:
+      - type: Text
+        text: 'Go to the documentation site to learn how to work with pipeline settings'
+      - type: Link
+        url: 'doki.agio.services/agio/settings'
+        label: Main Docs
+      - type: Link
+        url: 'doki.agio.services/agio/settings/packages'
+        label: Packages settings
+      # each package can put itself doks link here

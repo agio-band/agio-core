@@ -1,0 +1,7 @@
+sections:
+  - help:
+      label: Help
+      order: last
+      content:
+        - type: Text
+          text: 'Help section'
