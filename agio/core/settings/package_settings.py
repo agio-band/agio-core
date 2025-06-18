@@ -264,7 +264,8 @@ class _SettingsMeta(type):
             if attr_name in fields:
                 continue
             default_value = namespace.get(attr_name, REQUIRED)
-            if issubclass(annotation, BaseField):
+            print(repr(annotation))
+            if inspect.isclass(annotation) and issubclass(annotation, BaseField):
                 annotation = annotation.field_type
             try:
                 fields[attr_name] = _create_field_from_annotation(attr_name, annotation, default_value)

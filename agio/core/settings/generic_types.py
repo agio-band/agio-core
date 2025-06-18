@@ -14,3 +14,7 @@ NOT_SET = type('NOT_SET', (object,), {
 
 ComparableType = TypeVar('ComparableType', int, float, datetime, str)
 
+
+class SettingsType:
+    LOCAL = 'local'
+    WORKSPACE = 'workspace'

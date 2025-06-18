@@ -133,7 +133,7 @@ class APackage:
         import_path = self.get_import_path(settings_path)
         try:
             return import_object_by_dotted_path(import_path)
-        except ModuleNotFoundError:
+        except (ModuleNotFoundError, AttributeError):
             if required:
                 raise PackageError(f"Settings class not found: {settings_path}")
 
