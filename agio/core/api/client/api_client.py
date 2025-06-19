@@ -1,10 +1,11 @@
 from pathlib import Path
 
+from agio.core import config
 from agio.core.api.client.base import _ApiClientAuth
 
 
 class ApiClient(_ApiClientAuth):
-    _base_api_url = f'{_ApiClientAuth.platform_url}/graphql'
+    _base_api_url = f'{config.api.PLATFORM_URL}/graphql'
     queries_root = Path(__file__).parent.joinpath('queries')
 
     def make_query(self, query_file: str, **variables) -> dict:

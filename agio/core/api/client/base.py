@@ -1,4 +1,3 @@
-import os
 import base64
 import logging
 import time
@@ -10,7 +9,8 @@ import webbrowser
 import requests
 from requests_oauthlib import OAuth2Session
 
-from agio.core.api._utils import session_utils
+from agio.core import config
+from agio.core.api.utils import session_utils
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +32,12 @@ def _error_page_text():
 
 
 class _ApiClientAuth:
-    platform_url = os.getenv('AGIO_PLATFORM_URL') or 'https://platform.agio.services'
-    authorization_base_url = f'{platform_url}/.ory/hydra/public/oauth2/auth'
-    token_url = f'{platform_url}/.ory/hydra/public/oauth2/token'
-    redirect_uri = 'http://localhost:9082/oauth_callback'
+    platform_url = config.api.PLATFORM_URL
+    authorization_base_url = f'{config.api.PLATFORM_URL}/.ory/hydra/public/oauth2/auth'
+    token_url = f'{config.api.PLATFORM_URL}/.ory/hydra/public/oauth2/token'
+    redirect_uri = 'http://localhost:9082/oauth_callback' # todo: use random port
     scope = ['openid', 'offline']
-    default_client_id = 'b5431a17-4c52-43cf-b71b-ac700b43985f'
+    default_client_id = config.api.DEFAULT_CLIENT_ID
 
     def __init__(self):
         self._expire_time = None

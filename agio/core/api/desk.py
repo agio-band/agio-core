@@ -2,17 +2,18 @@ from uuid import UUID
 
 from . import client
 from .schemas.desk import UserProfileResponseSchema, CurrentCompanyResponseSchema, CompanyResponseSchema
+from .utils.response_typing import response_schema
 
 
 # User and profile
 
-def get_profile() -> UserProfileResponseSchema:
+@response_schema(UserProfileResponseSchema)
+def get_profile() -> dict:
     """
     Return current user profile. Auth required.
     """
-    return UserProfileResponseSchema(
-        **client.make_query('desk/account/currentUser')['data']['currentUser']
-    )
+    return client.make_query('desk/account/currentUser')['data']['currentUser']
+
 
 
 def update_profile(update_data: dict):
@@ -21,14 +22,12 @@ def update_profile(update_data: dict):
 
 # Company
 
-
-def get_current_company() -> CurrentCompanyResponseSchema:
+@response_schema(CurrentCompanyResponseSchema)
+def get_current_company() -> dict:
     """
     Get current active company.
     """
-    return CurrentCompanyResponseSchema(
-        **client.make_query('desk/company/currentCompany')['data']['currentCompany']
-    )
+    return client.make_query('desk/company/currentCompany')['data']['currentCompany']
 
 
 def get_company(company_id: UUID) -> CompanyResponseSchema:

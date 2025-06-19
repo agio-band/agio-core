@@ -5,6 +5,7 @@ from uuid import UUID
 def get_task_types():
     pass
 
+
 def get_tasks(entity_id: UUID):
     pass
 
@@ -12,6 +13,10 @@ def get_tasks(entity_id: UUID):
 # Product
 
 def get_products():
+    pass
+
+
+def get_product(entity_id: UUID):
     pass
 
 
