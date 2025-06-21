@@ -17,9 +17,6 @@ dependencies: []
 
 repository_api: gitea
 
-callbacks:
-  - "callbacks/*"
-
 plugins:
   # commands
   - label: Info Command
@@ -63,8 +60,7 @@ plugins:
 settings:
   workspace:
     layout: package_settings/workspace_layout.yml
-#    model: agio.package_settings.workspace.CoreWorkspaceSettings
-#  local:
-#    model: agio.package_settings.local.CoreLocalSettings
-
+#   model: none
+# local:
+#   model: none
 
