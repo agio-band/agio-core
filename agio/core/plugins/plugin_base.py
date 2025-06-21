@@ -5,6 +5,8 @@ from abc import ABC
 from pathlib import Path
 from typing import TYPE_CHECKING, Generator
 import logging
+
+from agio.core.exceptions import PluginLoadingError
 from agio.core.utils.import_utils import import_module_by_path
 from agio.core.utils.text_utils import unslugify
 
@@ -47,7 +49,7 @@ class APlugin(_APluginAbstract):
                 if isinstance(supported_apps, str):
                     supported_apps = (supported_apps,)
                 if not isinstance(supported_apps, (list, tuple, set)):
-                    raise ValueError(f"Supported apps must be a iterable [{manifest_file_path}]")
+                    raise PluginLoadingError(f"Supported apps must be a iterable [{manifest_file_path}]")
                 if app_context.app_name not in supported_apps:
                     logger.debug(f'Skip implementation for {supported_apps}')
                     continue
@@ -55,30 +57,30 @@ class APlugin(_APluginAbstract):
                 if isinstance(supported_app_groups, str):
                     supported_app_groups = (supported_app_groups,)
                 if not isinstance(supported_app_groups, (list, tuple, set)):
-                    raise ValueError(f"Supported app groups must be a iterable [{manifest_file_path}]")
+                    raise PluginLoadingError(f"Supported app groups must be a iterable [{manifest_file_path}]")
                 if app_context.app_group not in supported_app_groups:
                     logger.debug(f'Skip implementation for {supported_app_groups}')
                     continue
             module = imp.get('module')
             if not module:
-                raise ValueError(f"Module is required")
+                raise PluginLoadingError(f"Module is required")
             full_path = Path(manifest_file_path).parent / module
             logger.debug(f'Load implementation for plugin: {module}')
             if not full_path.exists():
-                raise ValueError(f"Module file not found: {full_path}")
+                raise PluginLoadingError(f"Module file not found: {full_path}")
             try:
                 module_name = module.split('.')[0].replace('/', '.')
                 # todo: add from package root
                 plugin_module = import_module_by_path(full_path, module_name)
             except Exception as e:
-                raise ValueError(f"Error loading plugin: {full_path}") from e
+                raise PluginLoadingError(f"Error loading plugin: {full_path}") from e
             for obj in plugin_module.__dict__.values():
                 if inspect.isclass(obj):
                     if issubclass(obj, APlugin) and not obj.__name__ == APlugin.__name__:
                         if not getattr(obj, 'is_base_class', True):
                             if obj.__module__ == plugin_module.__name__:
                                 if not obj.name:
-                                    raise ValueError(f'Plugin name is required: {full_path}')
+                                    raise PluginLoadingError(f'Plugin name is required: {full_path}')
                                 yield obj
 
     @property

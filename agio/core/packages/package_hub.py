@@ -1,3 +1,4 @@
+import glob
 import os
 import sys
 from agio.core.packages.package import APackage
@@ -64,3 +65,10 @@ class APackageHub(metaclass=Singleton):
             if APackage.is_package_root(pkg_path) and pkg_path not in loaded:
                 yield APackage(pkg_path)
                 loaded.add(pkg_path)
+
+    def collect_callbacks(self):
+        for pkg in self.iter_packages():
+            for pattern in pkg.get_callbacks():
+                for file in glob.glob(pattern, recursive=True):
+                    if os.path.isfile(file):
+                        yield file

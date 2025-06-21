@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from agio.core.settings.exceptions import NotSupportedTypeError
+from agio.core.exceptions import NotSupportedTypeError
 
 
 class JsonSerializer(json.JSONEncoder):

@@ -28,7 +28,6 @@ def get_class_attrib_value(filepath: str, attribute: str, base_class_name: str):
                                 and isinstance(stmt.value.value, str)
                             ):
                                 attr_value = stmt.value.value
-                print(attr_value)
                 if attr_value:
                     result[class_name] = attr_value
                 else:

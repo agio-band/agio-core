@@ -9,7 +9,7 @@ from weakref import ref
 from pydantic import TypeAdapter, BaseModel
 from pydantic_core import ValidationError
 
-from agio.core.settings.exceptions import ValueTypeError
+from agio.core.exceptions import ValueTypeError
 from agio.core.settings.fields.js_types import to_js_type
 from agio.core.settings.generic_types import REQUIRED, NOT_SET
 from agio.core.settings.validators import ValidatorBase

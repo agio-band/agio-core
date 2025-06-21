@@ -3,16 +3,16 @@ import re
 import types
 import copy
 import inspect
-from typing import Any, Iterator, get_origin, get_args, Union, Type, List, Dict, Optional
-from pydantic import BaseModel, Field
-from pydantic_core._pydantic_core import PydanticUndefined
+from typing import Any, Iterator, get_origin, get_args, Union, Type
+from pydantic import BaseModel
 
-from .exceptions import RequiredValueNotSetError
-from .fields.base_field import BaseField
-from .fields.compaund_fields import CollectionField
-from .fields.model_fields import ModelField
-from .generic_types import REQUIRED
-from .serializers import JsonSerializer
+from agio.core.exceptions import SettingsInitError
+from agio.core.exceptions import RequiredValueNotSetError
+from agio.core.settings.fields.base_field import BaseField
+from agio.core.settings.fields.compaund_fields import CollectionField
+from agio.core.settings.fields.model_fields import ModelField
+from agio.core.settings.generic_types import REQUIRED
+from agio.core.settings.serializers import JsonSerializer
 
 
 def _get_field_class_for_type(python_type: type, args: tuple = None) -> Type[BaseField] | None:
@@ -42,13 +42,6 @@ def _iterate_pydantic_type_hints(model_class: Type[BaseModel]) -> Iterator[Any]:
     Recursively iterates through all type hints of a Pydantic BaseModel's fields.
     This includes nested Pydantic models, generic types (list, dict, tuple),
     and their contained type arguments.
-
-    Args:
-        model_class: The Pydantic BaseModel class to inspect.
-
-    Yields:
-        Each type hint encountered (e.g., str, int, list[str], Optional[MyNestedModel],
-        and also the 'str' and 'int' from dict[str, int]).
     """
     if not (isinstance(model_class, type) and issubclass(model_class, BaseModel)):
         raise TypeError("Input must be a Pydantic BaseModel class.")
@@ -56,43 +49,33 @@ def _iterate_pydantic_type_hints(model_class: Type[BaseModel]) -> Iterator[Any]:
     for field_name, field_info in model_class.model_fields.items():
         type_hint = field_info.annotation
 
-        # Yield the top-level type hint for the current field
         yield type_hint
 
-        # Get the origin and arguments of the type hint
         origin = get_origin(type_hint)
         args = get_args(type_hint)
 
-        if origin:  # This indicates a generic type (e.g., List, Dict, Union, Optional, Tuple)
+        if origin:
             if origin is Union or origin is types.UnionType:
                 for arg in args:
-                    # Skip NoneType when iterating Union arguments for practical purposes,
-                    # as it's typically handled by Optional.
                     if arg is type(None):
                         continue
 
                     if isinstance(arg, type) and issubclass(arg, BaseModel):
                         yield from _iterate_pydantic_type_hints(arg)
                     else:
-                        # Recursively process and yield arguments of nested generics
                         yield from _process_nested_type_hint(arg)
 
             elif origin is tuple:
                 for arg in args:
                     # tuple[Type, ...] -> arg will be 'Type' and then '...'
                     if arg is Ellipsis:  # Handle Tuple[Type, ...]
-                        continue  # The 'Type' was already processed in the previous iteration
+                        continue
 
                     if isinstance(arg, type) and issubclass(arg, BaseModel):
                         yield from _iterate_pydantic_type_hints(arg)
                     else:
-                        # Recursively process and yield arguments of nested generics
                         yield from _process_nested_type_hint(arg)
-
-            # Handles List, Dict, Set, and any other generic where the origin itself
-            # might be a BaseModel (less common, but covered) or for which we need
-            # to iterate through its arguments.
-            else:  # Covers list, dict, set, etc.
+            else:
                 # If the origin itself is a BaseModel (e.g., if a generic was defined with a BaseModel as origin)
                 if isinstance(origin, type) and issubclass(origin, BaseModel):
                     yield from _iterate_pydantic_type_hints(origin)
@@ -111,14 +94,12 @@ def _iterate_pydantic_type_hints(model_class: Type[BaseModel]) -> Iterator[Any]:
 
 
 def _process_nested_type_hint(nested_hint: Any) -> Iterator[Any]:
-    """Helper function to process and yield from nested type hints."""
-    yield nested_hint  # Yield the nested hint itself
+    yield nested_hint
 
     nested_origin = get_origin(nested_hint)
     nested_args = get_args(nested_hint)
 
     if nested_origin:
-        # Handle cases like List[Union[str, int]]
         if nested_origin is Union or nested_origin is types.UnionType:
             for nested_arg in nested_args:
                 if nested_arg is type(None):
@@ -126,15 +107,15 @@ def _process_nested_type_hint(nested_hint: Any) -> Iterator[Any]:
                 if isinstance(nested_arg, type) and issubclass(nested_arg, BaseModel):
                     yield from _iterate_pydantic_type_hints(nested_arg)
                 else:
-                    yield from _process_nested_type_hint(nested_arg)  # Recurse for deeper nesting
-        elif nested_origin is tuple:  # Special handling for tuples within other generics
+                    yield from _process_nested_type_hint(nested_arg)
+        elif nested_origin is tuple:
             for nested_arg in nested_args:
                 if nested_arg is Ellipsis:
                     continue
                 if isinstance(nested_arg, type) and issubclass(nested_arg, BaseModel):
                     yield from _iterate_pydantic_type_hints(nested_arg)
                 else:
-                    yield from _process_nested_type_hint(nested_arg)  # Recurse for deeper nesting
+                    yield from _process_nested_type_hint(nested_arg)
         else:  # Other generics (list, dict, set)
             if isinstance(nested_origin, type) and issubclass(nested_origin, BaseModel):
                 yield from _iterate_pydantic_type_hints(nested_origin)
@@ -142,26 +123,15 @@ def _process_nested_type_hint(nested_hint: Any) -> Iterator[Any]:
                 if isinstance(nested_arg, type) and issubclass(nested_arg, BaseModel):
                     yield from _iterate_pydantic_type_hints(nested_arg)
                 else:
-                    yield from _process_nested_type_hint(nested_arg)  # Recurse for deeper nesting
+                    yield from _process_nested_type_hint(nested_arg)
 
 
 def _create_field_from_annotation(name: str, annotation: Any, default_value: Any = REQUIRED) -> BaseField:
     """
     Creates a field instance (BaseField) based on a Python type annotation.
-
-    Args:
-        name: The name of the field.
-        annotation: The Python type annotation (e.g. int, list[str], Optional[MyModel]).
-        default_value: The default value for the field, or REQUIRED if the field is required.
-
-    Returns:
-        An instance of a class that extends BaseField.
-
-    Raises:
-        ValueError: If the annotation is not supported.
     """
     original_field_instance = None
-    # If the annotation is already a field instance (e.g., `x: IntField = IntField(...)`)
+    # If the annotation is already a field instance (`x: IntField = IntField(...)`)
     if isinstance(annotation, BaseField):
         original_field_instance = annotation
         # Use the field_type of the provided field instance for further processing
@@ -170,40 +140,33 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
     origin = get_origin(annotation) or annotation
     args = get_args(annotation)
 
-    # --- Handle Optional / Union types ---
+    # Handle Optional / Union types
     if origin in (Union, types.UnionType) and type(None) in args:
         non_none_args = [arg for arg in args if arg is not type(None)]
         if len(non_none_args) == 1:
-            # Recursively create the field for the non-None type
             field = _create_field_from_annotation(name, non_none_args[0], default_value)
-
             # Create a NullableField wrapper that allows None
             class NullableField(field.__class__):
                 def _validate(self, value: Any) -> Any:
                     if value is None:
                         return None
                     return super()._validate(value)
-
             # Ensure the NullableField retains the correct original field_type
             nullable_field = NullableField(default_value=default_value)
-            nullable_field.field_type = annotation  # Set to the original Union type
+            nullable_field.field_type = annotation
             return nullable_field
         # If Union has multiple non-None types, it's more complex and might need a dedicated UnionField
-        raise ValueError(f"Union types with multiple non-None arguments are not directly supported yet: {annotation}")
+        raise SettingsInitError(f"Union types with multiple non-None arguments are not directly supported yet: {annotation}")
 
-    # --- Handle Generic types (list[T], dict[K,V], set[T], tuple[T, ...], etc.) ---
-    # Check for __origin__ for typing.List, typing.Dict etc. or direct built-in types
+    # Handle Generic types (list[T], dict[K,V], set[T], tuple[T, ...], etc.)
     if hasattr(origin, '__origin__') or origin in (list, set, dict, tuple):
-        # Find the appropriate field class (e.g., ListField, DictField)
+        # Find the appropriate field class
         field_class = original_field_instance.__class__ if original_field_instance else _get_field_class_for_type(
             origin, args)
         if not field_class:
-            raise ValueError(f"Unsupported container type: {origin}")
-        # Create an instance of the specific collection field
+            raise SettingsInitError(f"Unsupported container type: {origin}")
         field = field_class(default_value)
-        # This ensures 'dict[str, int]' is stored, not just 'dict'
         field.field_type = annotation
-        # Set argument types for collections (e.g., element_type for list, key/value for dict)
         if args:
             if origin in (list, set):
                 field.element_type = args[0]
@@ -217,7 +180,7 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
 
         return field
 
-    # --- Handle Pydantic BaseModel types ---
+    # Handle Pydantic BaseModel types
     if inspect.isclass(annotation) and issubclass(annotation, BaseModel):
         for hint in _iterate_pydantic_type_hints(annotation):
             if inspect.isclass(hint) and issubclass(hint, BaseField):
@@ -226,25 +189,21 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
         field.field_type = annotation
         return field
 
-    # --- Handle Simple (non-generic, non-Pydantic) types ---
+    # Handle Simple (non-generic, non-Pydantic) types
     field_class = original_field_instance.__class__ if original_field_instance else _get_field_class_for_type(origin,
                                                                                                               args)
     if field_class:
         field = field_class(default_value=default_value)
-        # Ensure simple types also store their direct annotation as field_type
         field.field_type = annotation
         return field
 
-    # --- Handle cases where the annotation itself is a BaseField subclass ---
+    # Handle cases where the annotation itself is a BaseField subclass
     if inspect.isclass(annotation) and (
-    issubclass(annotation, BaseField)):  # Removed CollectionField as it's a BaseField subclass
-        # If the annotation is a field class, instantiate it.
+    issubclass(annotation, BaseField)):
         field = annotation(default_value=default_value)
         if not hasattr(field, 'field_type') or field.field_type is None:
-            # Attempt to infer if field_type wasn't set by the field's own init/class
             field.field_type = annotation.field_type if hasattr(annotation, 'field_type') else annotation
         return field
-
     raise ValueError(f"Unsupported annotation: {annotation}")
 
 
@@ -252,19 +211,16 @@ class _SettingsMeta(type):
     def __new__(mcs, name, bases, namespace):
         fields = {}
         annotations = namespace.get('__annotations__', {})
-
-        # Process explicit field instances
         for attr_name, attr_value in namespace.items():
             if isinstance(attr_value, BaseField):
                 field = copy.deepcopy(attr_value)
                 field.set_name(attr_name)
                 fields[attr_name] = field
-        # Process type annotations
+        # process type annotations
         for attr_name, annotation in annotations.items():
             if attr_name in fields:
                 continue
             default_value = namespace.get(attr_name, REQUIRED)
-            print(repr(annotation))
             if inspect.isclass(annotation) and issubclass(annotation, BaseField):
                 annotation = annotation.field_type
             try:
@@ -272,11 +228,11 @@ class _SettingsMeta(type):
             except ValueError as e:
                 raise ValueError(f"Error processing field '{attr_name}': {e}")
 
-        # Store fields in class
+        # store fields in class
         new_ns = {k: v for k, v in namespace.items() if not isinstance(v, BaseField)}
         new_ns['_fields'] = fields
 
-        # Store required fields in class
+        # store required fields in class
         required_fields = [name for name, field in fields.items() if field.is_required()]
         if required_fields:
             new_ns['_required_fields'] = required_fields
@@ -297,38 +253,34 @@ class APackageSettings(metaclass=_SettingsMeta):
         self._fields_data = {}
         self._get_other_parm_func = class_kwargs.pop('_get_other_parm_func', None)
         self._class_kwargs = class_kwargs
-        # Initialize fields from class
+        # initialize fields from class
         package_name = kwargs.pop('_package_name', '')
         if package_name:
             self.set_name(package_name)
         for name, field in self._get_fields().items():
             field.set_name(name)
             self._fields_data[name] = copy.deepcopy(field)
-            # self._fields_data[name]._set_parent_settings(self)
             setattr(self, name, self._fields_data[name])
         if self._class_kwargs.get('_init_only'):
+            # quite loading class only
             return
-        # Check required fields first
+        # check required fields first
         required_fields = getattr(self, '_required_fields', [])
         missing = [name for name in required_fields if name not in kwargs and not self._fields_data[name].has_value()]
 
         if missing:
             raise RequiredValueNotSetError(f"Missing required fields in package settings \"{self.name}\": {', '.join(missing)}")
 
-        # Set values
+        # set values
         for name, value_data in kwargs.items():
             if name in self._fields_data:
                 if isinstance(value_data, dict):
-                    # from settings file
                     if 'value' in value_data:
                         self._fields_data[name].set(value_data['value'])
                     if 'dependency' in value_data:
                         self._fields_data[name].dependency(value_data['dependency'])
                 else:
-                    # from simple values without extra parameters
                     self._fields_data[name].set(value_data)
-
-
 
     def __str__(self):
         return f"({', '.join(f'{name}={repr(getattr(self, name))}' for name in self._fields_data)})"
@@ -400,6 +352,7 @@ class APackageSettings(metaclass=_SettingsMeta):
 
     @classmethod
     def __schema__(cls) -> dict:
+        """Ui schema for current package settings"""
         obj = cls(_init_only=True)
         parameters = {}
         for name, field in obj._fields_data.items():

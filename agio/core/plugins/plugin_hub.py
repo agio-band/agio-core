@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict
 
+from agio.core.exceptions import PluginLoadingError, PluginNotFoundError
 from agio.core.packages.package import APackage
 from agio.core.plugins.plugin_base import APlugin
 from agio.core.utils.singleton import Singleton
@@ -24,7 +25,7 @@ class APluginHub(metaclass=Singleton):
         for pkg in packages:
             for plugin in pkg.collect_plugins():
                 if not plugin.name:
-                    raise ValueError(f"Plugin name must be defined: {plugin}")
+                    raise PluginLoadingError(f"Plugin name must be defined: {plugin}")
 
                 if plugin.name in self.plugins[plugin.plugin_type]:
                     if plugin in self.plugins[plugin.plugin_type].values():
@@ -39,14 +40,14 @@ class APluginHub(metaclass=Singleton):
 
     def get_plugin_by_name(self, plugin_type: str, name: str) -> 'APlugin':
         if plugin_type not in self.plugins:
-            raise ValueError(f"Plugin type '{plugin_type}' is not defined")
+            raise PluginNotFoundError(f"Plugin type '{plugin_type}' is not defined")
         for plugin in self.plugins[plugin_type].values():
             if plugin.name == name:
                 return plugin
 
     def plugin_exists(self, plugin_type: str, name: str) -> bool:
         if plugin_type not in self.plugins:
-            raise ValueError(f"Plugin type '{plugin_type}' is not defined")
+            raise PluginNotFoundError(f"Plugin type '{plugin_type}' is not defined")
         return name in self.plugins[plugin_type]
 
     def iter_plugins(self):

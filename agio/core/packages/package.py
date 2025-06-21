@@ -7,7 +7,7 @@ import logging
 from urllib.parse import urlparse
 import yaml
 
-from agio.core.exceptions import PackageError
+from agio.core.exceptions import PackageError, PackageRuntimeError, PackageMetadataError
 from agio.core.plugins.plugin_base import APlugin
 from agio.core.utils import git_utils
 from agio.core.utils.network import download_file
@@ -100,7 +100,7 @@ class APackage:
     def iter_plugin_descriptions(self) -> Generator[list[dict[str, Any]], None, None]:
         plugins = self._info_data.get('plugins') or []
         if not isinstance(plugins, list):
-            raise ValueError(f"Plugins must be a list")
+            raise PackageRuntimeError(f"Plugins must be a list")
         yield from plugins
 
     def get_workspace_settings_class(self):
@@ -109,14 +109,13 @@ class APackage:
     def get_local_settings_class(self):
         return self.get_settings_class('local')
 
-    def _get_settings_field(self, field_path: str) -> str|dict|None:
-        settings_conf = self._info_data.get('settings', {})
+    def _get_meta_data_field(self, field_path: str) -> Any:
         parts = field_path.split('.')
-        current_level = settings_conf.copy()
+        current_level = self._info_data.copy()
         while parts:
             next_part = parts.pop(0)
             if not isinstance(current_level, dict):
-                raise ValueError(f'Wrong field_path {field_path}')
+                raise PackageRuntimeError(f'Wrong field_path {field_path}')
             current_level = current_level.get(next_part, None)
             if current_level is None:
                 return None
@@ -124,7 +123,8 @@ class APackage:
 
     def get_settings_class(self, settings_type: str):
         required = False
-        settings_path = self._get_settings_field(f'{settings_type}.model')
+        settings_path = self._get_meta_data_field(f'settings.{settings_type}.model')
+        # settings_path = self._get_settings_field(f'{settings_type}.model')
         if settings_path is None:
             # default path
             settings_path = f'package_settings.{settings_type}_settings.Settings'
@@ -145,24 +145,29 @@ class APackage:
 
     def get_layout_configs(self, layout_type: str) -> dict | None:
         required = False
-        rel_path = self._get_settings_field(f'{layout_type}.layout')
+        rel_path = self._get_meta_data_field(f'settings.{layout_type}.layout')
         if rel_path is None:
             rel_path = f'package_settings/{layout_type}_layout.yml'
         else:
             required = True
         if not rel_path.strip():
-            raise ValueError(f"Layout layout file not set or empty")
+            raise PackageMetadataError(f"Layout layout file not set or empty")
         layout_config_full_path = self.root / rel_path
         if not layout_config_full_path.exists():
             if required:
-                raise LookupError(f"Layout config file for '{layout_type}' not found: {layout_config_full_path}")
+                raise PackageMetadataError(f"Layout config file for '{layout_type}' not found: {layout_config_full_path}")
             else:
                 return
         if layout_config_full_path.is_dir():
-            raise TypeError(f'Layout path is directory {layout_config_full_path}')
+            raise PackageMetadataError(f'Layout path is directory {layout_config_full_path}')
         with layout_config_full_path.open(encoding='utf-8') as layout_file:
             layout_config = yaml.safe_load(layout_file)
         return layout_config
+
+    def get_callbacks(self):
+        callbacks = self._get_meta_data_field('callbacks') or []
+        for path in callbacks:
+            yield self.root.joinpath(path).with_suffix('.py').as_posix()
 
     @classmethod
     def is_package_root(cls, path: str) -> bool:
@@ -192,10 +197,10 @@ class APackage:
     def __check_info_data(self, info_data: dict) -> dict:
         # data is not empty
         if not info_data:
-            raise ValueError(f"Manifest file is empty [{self._info_file}]")
+            raise PackageMetadataError(f"Manifest file is empty [{self._info_file}]")
         # data is dict
         if not isinstance(info_data, dict):
-            raise ValueError(f"Manifest file is not a dictionary [{self._info_file}]")
+            raise PackageMetadataError(f"Manifest file is not a dictionary [{self._info_file}]")
         return info_data
 
 
@@ -301,7 +306,7 @@ class APackageRepository:
     def data(self):
         agio_info_file = self.get_info_file_path()
         if not agio_info_file or not agio_info_file.exists():
-            raise Exception(f"Package info file not found: {agio_info_file}")
+            raise PackageMetadataError(f"Package info file not found: {agio_info_file}")
         with open(agio_info_file, 'r') as f:
             agio_data = yaml.safe_load(f)
         return agio_data
@@ -310,6 +315,6 @@ class APackageRepository:
     def get_info_file_path(self) -> Path:
         main_meta_file = next(self.root.rglob('__agio__.yml'), None)
         if not main_meta_file:
-            raise FileNotFoundError(f"Main info file not found: {self.root}")
+            raise PackageMetadataError(f"Main info file not found: {self.root}")
         logger.debug('Main info file: %s', main_meta_file)
         return main_meta_file
