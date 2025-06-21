@@ -11,26 +11,30 @@ class InfoCommand(ACommandPlugin):
         click.option('-g', '--packages', is_flag=True, help='Show packages info'),
         click.option("-p", "--plugins", is_flag=True, help='Show plugins info'),
         click.option("-s", "--settings", is_flag=True, help='Show settings'),
+        click.option("-c", "--callbacks", is_flag=True, help='Show callbacks'),
     ]
     help = 'Show info about current workspace'
 
-    def execute(self, packages, plugins, settings):
+    def execute(self, packages, plugins, settings, callbacks):
         line = lambda: print('='*70)
         line()
         self._show_workspace_info()
         line()
         self._show_python_info()
         line()
-        if any([packages, plugins, settings]):
+        if any([packages, plugins, settings, callbacks]):
             if packages:
                 self._show_packages_info()
             if plugins:
                 self._show_plugins_info()
             if settings:
                 self._show_settings()
+            if callbacks:
+                self.show_callbacks()
         else:
             self._show_packages_info()
             self._show_plugins_info()
+            self.show_callbacks()
         line()
 
     def _show_workspace_info(self):
@@ -68,3 +72,10 @@ class InfoCommand(ACommandPlugin):
         print()
         print('WORKSPACE SETTINGS:')
         pprint(workspace_settings)
+
+    def show_callbacks(self):
+        from agio.core.events import event_hub
+
+        print('CALLBACKS:')
+        print()
+        event_hub.print_event_list()
