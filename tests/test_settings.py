@@ -1,6 +1,6 @@
 import pytest
 from agio.core.settings import APackageSettings, IntField
-from agio.core.settings.exceptions import RequiredValueNotSetError, ValueTypeError
+from agio.core.exceptions import RequiredValueNotSetError, ValueTypeError
 
 
 def test_int_field():
