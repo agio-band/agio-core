@@ -11,6 +11,7 @@ from requests_oauthlib import OAuth2Session
 
 from agio.core import config
 from agio.core.api.utils import session_utils
+from agio.core.exceptions import AuthorizationError
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ class _ApiClientAuth:
             logger.info('Logged in')
             self._save_session(token, client_id)
         else:
-            raise Exception('Authorization failed')
+            raise AuthorizationError
 
     def logout(self):
         self.session.headers.pop('Authorization', None)
