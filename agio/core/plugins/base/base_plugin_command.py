@@ -57,14 +57,9 @@ class AbstractCommandPlugin(ABC):
         if parent_group:
             parent_group.add_command(self.command)
 
-    # def _call_execute(self, ctx, **kwargs):
-    #     self.context = ctx
-    #     return self.execute(**kwargs)
 
     def execute(self, **kwargs):
-        print("Received kwargs:", kwargs)
-    # def execute(self, *args, **kwargs):
-    #     raise NotImplementedError(f'Not implemented in {self.__class__.__name__}')
+        pass
 
 
 class ACommandPlugin(BasePluginClass, AbstractCommandPlugin, APlugin):
