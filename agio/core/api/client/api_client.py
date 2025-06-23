@@ -5,6 +5,7 @@ from uuid import UUID
 
 from agio.core import config
 from agio.core.api.client.base import _ApiClientAuth
+from agio.core.exceptions import RequestError
 
 
 class ApiClient(_ApiClientAuth):
@@ -29,11 +30,14 @@ class ApiClient(_ApiClientAuth):
         }
         if variables:
             data.update({
-                "variables": {k: v for k, v in variables if v is not None},
+                "variables": {k: v for k, v in variables.items() if v is not None},
             })
         response = self.session.post(self._base_api_url, json=data)
         response.raise_for_status()
-        return response.json()
+        result = response.json()
+        if 'errors' in result:
+            raise RequestError('\n'.join(x['message'] for x in result['errors']))
+        return result
 
     def _load_query(self, query_path: str) -> str:
         """

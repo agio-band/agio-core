@@ -20,12 +20,3 @@ mutation CreateWorkspaceRevision(
     }
 
 }
-
-#{
-# "workspaceId": "91eb2a3b-e2eb-4d8a-b0be-81e6e99d42ff",
-#  "isCurrent": true,
-#  "status": "ready",
-#  "packageReleaseIds": ["d71ec958-516f-499b-b822-ac2e103afc40"],
-#  "layout": {"key": "value"},
-#  "comment": "comment here"
-#}

@@ -106,3 +106,7 @@ class NotAuthorizedError(AException):
 
 class AuthorizationError(AException):
     detail = "Authorization error"
+
+
+class RequestError(AException):
+    detail = "Request error"

@@ -15,7 +15,3 @@ query GetSingleWorkspaceRevisionById($id: ID!) {
         }
     }
 }
-
-#{
-# "id": "5e277680-9950-4979-a0cb-81768a8420c4"
-#}

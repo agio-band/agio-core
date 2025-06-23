@@ -58,7 +58,7 @@ def create_package_release(
         description: str,
         assets: dict,
         meta_data: dict = None
-    ) -> dict:
+    ) -> str:
     return client.make_query(
         'workspace/release/createPackageRelease',
         packageId=package_id,
@@ -66,8 +66,8 @@ def create_package_release(
         label=label,
         description=description,
         assets=assets,
-        metaData=meta_data,
-    )["createPackageRelease"]["packageReleaseId"]
+        metadata=meta_data,
+    )["data"]["createPackageRelease"]["packageReleaseId"]
 
 
 def get_package_release(release_id: UUID) -> dict:

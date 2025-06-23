@@ -8,12 +8,12 @@ def get_workspace(workspace_id: UUID|str, full: bool = False) -> dict:
     else:
         query_file = 'workspace/ws/getWorkspace'
     resp = client.make_query(query_file, id=workspace_id)
-    return resp
+    return resp['data']['workspace']
 
 
 def get_workspace_list(company_id: UUID, items_per_page: int = 10,  after: str = None) -> dict:
     response = client.make_query(
-        'workspace/ws/getWorkspaces',
+        'workspace/ws/getWorkspaceList',
         companyId=company_id,
         first=items_per_page,
         afterCursor=after,
@@ -59,31 +59,31 @@ def create_revision(
         status: str = None,
         layout: dict = None,
         comment: str = None,
-    ) -> dict:
+    ) -> str:
     return client.make_query(
-        'workspace/ws/createWorkspaceRevision',
+        'workspace/revision/createWorkspaceRevision',
         workspaceId=workspace_id,
         packageReleaseIds=package_release_ids,
         isCurrent=set_current,
         status=status,
         layout=layout,
         comment=comment,
-    )
+    )['data']['createWorkspaceRevision']['workspaceRevisionId']
 
 
 def update_revision(
         revision_id: UUID|str,
-        set_current: str = None,
+        set_current: bool = None,
         layout: dict = None,
         status: str = None
-    ) -> dict:
+    ) -> str:
     return client.make_query(
-        'workspace/ws/updateWorkspaceRevision',
+        'workspace/revision/updateWorkspaceRevision',
         id=revision_id,
         isCurrent=set_current,
         layout=layout,
         status=status,
-    )
+    )['data']['updateWorkspaceRevision']['ok']
 
 
 def get_revision_list(
@@ -101,7 +101,7 @@ def set_revision_settings(
         comment: str = None,
     ):
     return client.make_query(
-        'workspace/ws/createWorkspaceRevisionSettings',
+        'workspace/settings/createWorkspaceRevisionSettings',
         workspaceRevisionId=revision_id,
         data=data,
         isCurrent=set_current,
@@ -111,7 +111,7 @@ def set_revision_settings(
 
 def get_revision_settings(revision_id: UUID) -> dict:
     return client.make_query(
-        'workspace/ws/getWorkspaceRevisionSettings',
+        'workspace/settings/getWorkspaceRevisionSettings',
         id=revision_id
     )
 

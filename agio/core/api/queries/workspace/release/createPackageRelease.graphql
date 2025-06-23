@@ -19,12 +19,3 @@ mutation CreatePackageRelease (
     packageReleaseId
   }
 }
-
-#{
-# "packageId": "1ca37a81-dd77-4a61-9491-07c22b8ea5f5",
-#  "name": "0.1",
-#  "label": "test pkg",
-#  "description": "dsadsa",
-#  "assets": {},
-#  "metadata": {}
-#}
