@@ -31,8 +31,8 @@ class CompanyResponseSchema(BaseModel):
     name: str
     code: str
     legalName: str
-    email: str
-    logo: HttpUrl
+    email: str | None
+    logo: HttpUrl | None
 
 
 class CurrentCompanyResponseSchema(CompanyResponseSchema):

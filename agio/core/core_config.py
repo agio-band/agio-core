@@ -25,6 +25,8 @@ class ApiSettings(_BaseSettings):
     PLATFORM_URL: str = "https://platform.agio.services"
     # default api client
     DEFAULT_CLIENT_ID: str = "b5431a17-4c52-43cf-b71b-ac700b43985f"
+    # auth local server port
+    AUTH_LOCAL_PORT: int = 9082
 
 
 

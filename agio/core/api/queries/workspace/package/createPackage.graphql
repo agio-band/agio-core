@@ -1,0 +1,11 @@
+mutation CreateNewPackage ($name: String!) {
+  createPackage(input: {
+    name: $name
+    hidden: false,
+    disabled: false,
+    verified: false
+  })
+  {
+    packageId
+  }
+}

@@ -1,0 +1,11 @@
+query GetWorkspaceSettings($id: ID!,
+) {
+    workspaceSettings(id: $id)
+    {
+        id
+        workspaceRevisionId
+        isCurrent
+        data
+        comment
+    }
+}

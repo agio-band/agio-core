@@ -1,0 +1,20 @@
+mutation UpdatePackageRelease(
+  $id: ID!,
+  $name: String,
+  $label: String,
+  $description: String,
+  $assets: Map,
+  $metadata: Map
+) {
+    updatePackageRelease(
+      id: $id,
+      input: {
+        name: $name,
+        label: $label,
+        description: $description,
+        assets: $assets,
+        metadata: $metadata,
+      }) {
+        ok
+    }
+}

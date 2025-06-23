@@ -1,0 +1,23 @@
+query GetPackagesList($first: Int!, $afterCursor: String){
+  packages(
+    first: $first,
+    after: $afterCursor
+  )
+  {
+    edges{
+      node{
+        id
+        name
+        hidden
+        disabled
+        verified
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+  }
+  }
+}

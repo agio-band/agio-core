@@ -1,0 +1,5 @@
+mutation DeleteExistingWorkspaceRevision($id: ID!) {
+  deleteWorkspaceRevision(id: $id) {
+    ok
+  }
+}

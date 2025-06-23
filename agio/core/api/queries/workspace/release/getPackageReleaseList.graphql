@@ -1,0 +1,36 @@
+query GetPacakgeReleases(
+    $first: Int!,
+    $packageId: ID!,
+    $afterCursor: String) {
+  packageReleases(
+    first: $first,
+    after: $afterCursor
+    ordering: [
+      {
+        sort: CREATED_AT,
+        direction: DESC
+      }
+    ]
+    filter: {
+      where: {
+        package: {
+          id: { equalTo: $packageId }
+        }
+      }
+    }
+  ) {
+    edges {
+      node {
+        id
+        name
+        description
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}

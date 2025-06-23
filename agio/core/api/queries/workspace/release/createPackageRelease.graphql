@@ -1,0 +1,30 @@
+mutation CreatePackageRelease (
+  	$packageId: String!,
+  	$name: String!,
+  	$label: String!,
+  	$description: String!
+  	$assets: Map!,
+  	$metadata: Map!
+) {
+  createPackageRelease(
+      input: {
+        name: $name,
+        packageId: $packageId,
+        description: $description,
+        label: $label,
+        assets: $assets,
+        metadata: $metadata,
+      })
+  {
+    packageReleaseId
+  }
+}
+
+#{
+# "packageId": "1ca37a81-dd77-4a61-9491-07c22b8ea5f5",
+#  "name": "0.1",
+#  "label": "test pkg",
+#  "description": "dsadsa",
+#  "assets": {},
+#  "metadata": {}
+#}

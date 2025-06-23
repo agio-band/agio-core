@@ -1,0 +1,11 @@
+mutation UpdatePackage($id: ID!, $hidden: Boolean, $disabled: Boolean, $verified: Boolean) {
+    updatePackage(
+      id: $id,
+      input: {
+        hidden: $hidden,
+        disabled: $disabled,
+        verified: $verified
+      }) {
+        ok
+    }
+}

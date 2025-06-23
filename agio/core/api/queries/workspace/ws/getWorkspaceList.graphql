@@ -1,0 +1,43 @@
+query GetWorkspacesFilteredByCompany(
+    $first: Int!,
+    $companyId: ID!,
+    $afterCursor: String) {
+    workspaces(
+        first: $first,
+        after: $afterCursor
+        ordering: [
+            {
+                sort: CREATED_AT,
+                direction: DESC
+            }
+        ]
+        filter: {
+            where: {
+                company: {
+                    id: { equalTo: $companyId }
+                }
+            }
+        }
+    ) {
+        edges {
+            node {
+                id
+                name
+                description
+                createdAt
+                updatedAt
+                #        company {
+                #          id
+                #          name
+                #          code
+                #        }
+            }
+        }
+        pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+        }
+    }
+}

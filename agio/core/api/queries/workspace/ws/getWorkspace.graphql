@@ -1,0 +1,14 @@
+query GetSingleWorkspaceById($id: ID!) {
+    workspace(id: $id) {
+        id
+        name
+        description
+        createdAt
+        updatedAt
+        company {
+            id
+            name
+            code
+        }
+    }
+}

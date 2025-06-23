@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def _get_template_content(name):
-    page_file_path = Path(__file__).parent / f'templates/{name}.html'
+    page_file_path = Path(__file__).parent.parent / f'templates/{name}.html'
     if not page_file_path.exists():
         raise FileNotFoundError(f"File {page_file_path} not found")
     return page_file_path.read_text()
@@ -36,7 +36,7 @@ class _ApiClientAuth:
     platform_url = config.api.PLATFORM_URL
     authorization_base_url = f'{config.api.PLATFORM_URL}/.ory/hydra/public/oauth2/auth'
     token_url = f'{config.api.PLATFORM_URL}/.ory/hydra/public/oauth2/token'
-    redirect_uri = 'http://localhost:9082/oauth_callback' # todo: use random port
+    redirect_uri = f'http://localhost:{config.api.AUTH_LOCAL_PORT}/oauth_callback'
     scope = ['openid', 'offline']
     default_client_id = config.api.DEFAULT_CLIENT_ID
 
@@ -68,7 +68,7 @@ class _ApiClientAuth:
         """
         Web browser will be opened
         """
-        logging.debug('Login...')
+        logging.debug(f'Login... {self.authorization_base_url} with client_id={client_id}')
         oauth = OAuth2Session(client_id, scope=self.scope, redirect_uri=self.redirect_uri)
         authorization_url, state = oauth.authorization_url(self.authorization_base_url)
         token = dict()
@@ -97,7 +97,7 @@ class _ApiClientAuth:
                     self.send_header('Location', authorization_url)
                     self.end_headers()
 
-        httpd = HTTPServer(('localhost', 9082), RequestHandler)     # type: ignore
+        httpd = HTTPServer(('localhost', config.api.AUTH_LOCAL_PORT), RequestHandler)     # type: ignore
         logging.info(f'Auth URL: {authorization_url}')
         webbrowser.open(authorization_url)
         httpd.handle_request()

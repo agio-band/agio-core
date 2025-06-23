@@ -1,0 +1,31 @@
+mutation CreateWorkspaceRevision(
+    $workspaceId: String!,
+    $isCurrent: Boolean!
+    $status: String!
+    $packageReleaseIds: [String!]!
+    $layout: Map!
+    $comment: String!
+) {
+    createWorkspaceRevision(
+        input:{
+            workspaceId: $workspaceId,
+            status: $status,
+            isCurrent: $isCurrent,
+            packageReleaseIds: $packageReleaseIds,
+            layout: $layout,
+            comment: $comment
+        })
+    {
+        workspaceRevisionId
+    }
+
+}
+
+#{
+# "workspaceId": "91eb2a3b-e2eb-4d8a-b0be-81e6e99d42ff",
+#  "isCurrent": true,
+#  "status": "ready",
+#  "packageReleaseIds": ["d71ec958-516f-499b-b822-ac2e103afc40"],
+#  "layout": {"key": "value"},
+#  "comment": "comment here"
+#}

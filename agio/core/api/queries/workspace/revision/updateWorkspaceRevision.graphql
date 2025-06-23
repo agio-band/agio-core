@@ -1,0 +1,26 @@
+mutation UpdateExistingWorkspaceRevision(
+    $id: ID!,
+    $isCurrent: Boolean,
+    $status: String,
+    $layout: Map,
+    $comment: String
+) {
+    updateWorkspaceRevision(
+      id: $id,
+      input: {
+        isCurrent: $isCurrent,
+        status: $status,
+        layout: $layout,
+        comment: $comment
+      }
+    ) {
+        ok
+    }
+}
+
+#{
+# "id": "5e277680-9950-4979-a0cb-81768a8420c4",
+#  "status": "ready",
+#  "layout": {"new": "layout"},
+#  "comment": "test"
+#}

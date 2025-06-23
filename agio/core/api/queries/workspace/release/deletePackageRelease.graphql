@@ -1,0 +1,9 @@
+mutation DeletePackageRelease(
+  $id: ID!
+) {
+    deletePackageRelease(
+      id: $id,
+      ) {
+        ok
+    }
+}

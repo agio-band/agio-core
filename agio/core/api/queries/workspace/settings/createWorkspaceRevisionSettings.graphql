@@ -1,0 +1,25 @@
+mutation CreateWorkspaceSettings(
+    $workspaceRevisionId: String!,
+    $isCurrent: Boolean!,
+    $data: Map!,
+    $comment: String!
+) {
+    createWorkspaceSettings(
+        input: {
+            workspaceRevisionId: $workspaceRevisionId,
+            isCurrent: $isCurrent,
+            data: $data,
+            comment: $comment
+        }
+    )
+    {
+        workspaceSettingsId
+    }
+}
+
+#{
+#  "workspaceRevisionId": "5e277680-9950-4979-a0cb-81768a8420c4",
+#  "isCurrent": true,
+#  "data": {"Key": "value"},
+#  "comment": "test"
+#}

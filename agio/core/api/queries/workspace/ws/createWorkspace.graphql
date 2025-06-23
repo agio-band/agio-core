@@ -1,0 +1,9 @@
+mutation CreateNewWorkspace ($name: String!, $companyId: String!, $description: String!) {
+  createWorkspace(input: {
+    name: $name,
+    companyId: $companyId,
+    description: $description
+  }) {
+    workspaceId
+  }
+}

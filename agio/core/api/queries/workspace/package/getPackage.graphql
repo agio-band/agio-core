@@ -1,0 +1,13 @@
+query GetSinglePackageById($id: ID!) {
+  package(id: $id) {
+    id
+    name
+    hidden
+    disabled
+    verified
+  }
+}
+
+#{
+#  "id": "..."
+#}

@@ -1,0 +1,14 @@
+query GetSinglePackageReleaseById($id: ID!) {
+  packageRelease(id: $id) {
+    id
+    name
+    package{
+      id
+      name
+    }
+    label
+    description
+    assets
+    metadata
+  }
+}
