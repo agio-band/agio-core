@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 import logging
-from agio.core.plugins.base.base_plugin_command import ACommandPlugin, ASubCommand
+from agio.core.plugins.base.command_base import ACommandPlugin, ASubCommand
 from agio.core.packages import package_tools
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 import click
 
-from agio.core.plugins.base.base_plugin_command import ACommandPlugin, ASubCommand
+from agio.core.plugins.base.command_base import ACommandPlugin, ASubCommand
 
 
 class LoginCommand(ASubCommand):

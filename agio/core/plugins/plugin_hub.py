@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from typing import Iterator
 
 from agio.core.exceptions import PluginLoadingError, PluginNotFoundError
 from agio.core.packages.package import APackage
@@ -50,8 +51,10 @@ class APluginHub(metaclass=Singleton):
             raise PluginNotFoundError(f"Plugin type '{plugin_type}' is not defined")
         return name in self.plugins[plugin_type]
 
-    def iter_plugins(self):
-        for plugins in self.plugins.values():
+    def iter_plugins(self, plugin_pype: str = None) -> Iterator['APlugin']:
+        for _plugin_pype, plugins in self.plugins.items():
+            if plugin_pype is not None and _plugin_pype != plugin_pype:
+                continue
             for plugin in plugins.values():
                 yield plugin
 

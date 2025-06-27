@@ -1,7 +1,7 @@
 import sys
 import click
 from pprint import pprint
-from agio.core.plugins.base.base_plugin_command import ACommandPlugin
+from agio.core.plugins.base.command_base import ACommandPlugin
 
 
 class InfoCommand(ACommandPlugin):
@@ -61,7 +61,10 @@ class InfoCommand(ACommandPlugin):
         from agio.core.main import plugin_hub
         print('PLUGINS:')
         print()
-        for plugin in plugin_hub.iter_plugins():
+        all_plugins = sorted(
+            list(plugin_hub.iter_plugins()),
+            key=lambda p: (p.plugin_type, p.name))
+        for plugin in all_plugins:
             print(f"{plugin.name}")
         print()
 

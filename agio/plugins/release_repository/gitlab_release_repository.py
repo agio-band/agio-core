@@ -1,4 +1,4 @@
-from agio.core.plugins.base.base_plugin_release_repository import ReleaseRepositoryPlugin
+from agio.core.plugins.base.release_repository_base import ReleaseRepositoryPlugin
 
 
 class GitLabRepositoryPlugin(ReleaseRepositoryPlugin):
