@@ -35,6 +35,10 @@ class APlugin(_APluginAbstract):
     def get_label(self):
         return self.label or unslugify(self.name)
 
+    @property
+    def path(self):
+        return inspect.getfile(self.__class__)
+
     def __repr__(self):
         return f"{self.package.name}.{self.name}"
 

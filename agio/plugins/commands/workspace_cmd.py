@@ -64,7 +64,7 @@ class UpdateWorkspaceCommand(ASubCommand):
 
 
 class WorkspaceCommand(ACommandPlugin):
-    name = 'workspace_command'
+    name = 'workspace_cmd'
     command_name = "ws"
     commands = [InstallWorkspaceCommand(),
                 UninstallWorkspaceCommand(),

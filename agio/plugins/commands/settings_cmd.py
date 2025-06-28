@@ -5,7 +5,7 @@ from agio.core.plugins.base.command_base import ACommandPlugin
 
 
 class SettingsCommand(ACommandPlugin):
-    name = 'settings_command'
+    name = 'settings_cmd'
     command_name = 'settings'
     arguments = [
         # click.option('-k', '--key', help='Show value of key'),

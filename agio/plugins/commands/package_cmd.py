@@ -78,7 +78,7 @@ class PackageRegisterCommand(ASubCommand):
 
 
 class PackageCommand(ACommandPlugin):
-    name = 'package_command'
+    name = 'package_cmd'
     command_name = "pkg"
     subcommands = [PackageNewCommand, PackageBuildCommand, PackageReleaseCommand, PackageRegisterCommand]
     help = 'Manage packages'

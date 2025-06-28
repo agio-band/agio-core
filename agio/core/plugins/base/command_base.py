@@ -22,7 +22,7 @@ class AbstractCommandPlugin(ABC):
 
     def _init_click(self, parent_group=None):
         if not self.command_name:
-            raise ValueError(f"{self.__class__.__name__}: Command name must be defined.")
+            raise ValueError(f"{self.__class__.__name__}: Command name must be defined. Class {self.__class__.__name__}")
 
         @click.pass_context
         def _callback(ctx, **kwargs):

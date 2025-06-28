@@ -1,11 +1,13 @@
 import sys
+from collections import defaultdict
+
 import click
 from pprint import pprint
 from agio.core.plugins.base.command_base import ACommandPlugin
 
 
 class InfoCommand(ACommandPlugin):
-    name = 'info_command'
+    name = 'info_cmd'
     command_name = 'info'
     arguments = [
         click.option('-g', '--packages', is_flag=True, help='Show packages info'),
@@ -54,18 +56,26 @@ class InfoCommand(ACommandPlugin):
         print('PACKAGES:')
         print()
         for package in package_hub.get_package_list():
-            print(f"{package.name} v{package.version}")
+            print(f"{package.name} v{package.version} {package.root}")
         print()
 
     def _show_plugins_info(self):
         from agio.core.main import plugin_hub
         print('PLUGINS:')
         print()
-        all_plugins = sorted(
-            list(plugin_hub.iter_plugins()),
-            key=lambda p: (p.plugin_type, p.name))
-        for plugin in all_plugins:
-            print(f"{plugin.name}")
+        all_plugins_by_package = defaultdict(list)
+        for plugin in plugin_hub.iter_plugins():
+            all_plugins_by_package[plugin.package.name].append(plugin)
+        for package_name, plugins in all_plugins_by_package.items():
+            package_plugins = defaultdict(list)
+            print(f"[{package_name}]")
+            for plugin in plugins:
+                package_plugins[plugin.plugin_type].append(plugin)
+            for plugin_type, _plugins in package_plugins.items():
+                print(f"  {plugin_type}:")
+                for plugin in _plugins:
+                    print(f"    {plugin.name}")
+            print()
         print()
 
     def _show_settings(self):

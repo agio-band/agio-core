@@ -23,7 +23,7 @@ class LogoutCommand(ASubCommand):
 
 
 class AuthCommand(ACommandPlugin):
-    name = "auth_command"
+    name = "auth_cmd"
     command_name = 'auth'
     subcommands = [LoginCommand, LogoutCommand]
 

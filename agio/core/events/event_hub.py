@@ -111,9 +111,11 @@ class EventHub:
             return
 
         for event_name in self._callbacks:
-            print(f"<{event_name}>")
+            print(f"[{event_name}]")
             if not self._callbacks[event_name]:
                 print("  (No callbacks)")
                 continue
             for callback_func, metadata in self._callbacks[event_name].items():
-                print(f"  {metadata['name']}() [once={metadata['once']}, raise_error={metadata['raise_error']}]")
+                print(f"  {metadata['name']}(){' [once]' if metadata['once'] else ''}") # {inspect.getfile(callback_func)}")
+                # print(f"  {metadata['name']}() [once={metadata['once']}, raise_error={metadata['raise_error']}]")
+            print()

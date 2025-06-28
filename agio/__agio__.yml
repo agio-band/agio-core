@@ -31,9 +31,9 @@ plugins:
     implementations:
       - module: plugins/commands/run_cmd.py
 
-  - label: Start App Command
-    implementations:
-      - module: plugins/commands/startapp_cmd.py
+#  - label: Start App Command
+#    implementations:
+#      - module: plugins/commands/startapp_cmd.py
 
   - label: Manage agio packages command
     implementations:
