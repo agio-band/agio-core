@@ -42,6 +42,7 @@ logger.debug(f'Loaded plugins: {plugin_hub.plugins_count}')
 # register callbacks for event core.app.exit to correct finalize you services
 
 def _before_exit_event(*args):
+    print()
     emit('core.app.exit', None)
 
 signal.signal(signal.SIGINT, _before_exit_event)

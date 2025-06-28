@@ -12,7 +12,6 @@ class AServicePlugin(BasePluginClass, APlugin):
         self._event = Event()
 
     def start(self, in_thread: bool = True, **kwargs):
-        print('Starting service', self.name)
         if in_thread:
             self._thread = Thread(target=self.execute, **kwargs)
             self._thread.start()
@@ -26,7 +25,6 @@ class AServicePlugin(BasePluginClass, APlugin):
         raise NotImplementedError
 
     def stop(self):
-        print('Exiting service', self.name)
         self._event.set()
         if self._thread:
             self._thread.join()

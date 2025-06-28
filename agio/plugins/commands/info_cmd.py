@@ -14,10 +14,11 @@ class InfoCommand(ACommandPlugin):
         click.option("-p", "--plugins", is_flag=True, help='Show plugins info'),
         click.option("-s", "--settings", is_flag=True, help='Show settings'),
         click.option("-c", "--callbacks", is_flag=True, help='Show callbacks'),
+        click.option("-d", "--diskusage", is_flag=True, help='Show callbacks'),
     ]
     help = 'Show info about current workspace'
 
-    def execute(self, packages, plugins, settings, callbacks):
+    def execute(self, packages, plugins, settings, callbacks, diskusage):
         line = lambda: print('='*70)
         line()
         self._show_workspace_info()
@@ -92,3 +93,9 @@ class InfoCommand(ACommandPlugin):
         print('CALLBACKS:')
         print()
         event_hub.print_event_list()
+
+    def show_projects_disk_usage(self):
+        ...
+
+    def show_libs_disk_usage(self):
+        ...
