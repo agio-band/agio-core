@@ -25,6 +25,19 @@ def unsubscribe(callback_func: Callable, event_name: str = None):
     return removed
 
 
+def on_startup(callback_func: Callable):
+    """
+    Shortcut for startup event
+    """
+    subscribe('core.app.startup', callback_func)
+
+
+def on_exit(callback_func: Callable):
+    """Shortcut for exit event"""
+    subscribe('core.app.exit', callback_func)
+
+
+
 def callback(event_name: str, **kwargs):
     def decorator(func: Callable):
         subscribe(event_name, func, **kwargs)

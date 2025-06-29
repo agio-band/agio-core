@@ -6,7 +6,6 @@ from agio.core.plugins.plugin_hub import APluginHub
 from agio.core.utils.app_context import AppContext
 from agio.core.api import client
 from agio.core.exceptions import NotAuthorizedError
-# import local config to init values
 from agio.core.utils import setup_logger
 from agio.core.events import emit, register_callbacks
 
@@ -16,6 +15,7 @@ logger = getLogger(__name__)
 # server settings if workspace is defined
 if not client.is_logged_in():
     logger.warning('User not authorized')
+    # raise NotAuthorizedError
 # app context
 app_context = AppContext()
 # packages hub
@@ -43,10 +43,11 @@ logger.debug(f'Loaded plugins: {plugin_hub.plugins_count}')
 
 def _before_exit_event(*args):
     print()
-    emit('core.app.exit', None)
+    logger.debug('Receive exit signal')
+    emit('core.app.exit')
 
 signal.signal(signal.SIGINT, _before_exit_event)
 signal.signal(signal.SIGTERM, _before_exit_event)
 
-emit('core.app.init_done', app_context)
+emit('core.app.startup', app_context)
 logger.debug('Core init done')
