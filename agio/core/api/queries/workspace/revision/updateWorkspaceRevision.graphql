@@ -1,18 +1,10 @@
 mutation UpdateExistingWorkspaceRevision(
     $id: ID!,
-    $isCurrent: Boolean,
-    $status: String,
-    $layout: Map,
-    $comment: String
+    $input: WorkspaceRevisionUpdateInput!,
 ) {
     updateWorkspaceRevision(
       id: $id,
-      input: {
-        isCurrent: $isCurrent,
-        status: $status,
-        layout: $layout,
-        comment: $comment
-      }
+      input: $input
     ) {
         ok
     }

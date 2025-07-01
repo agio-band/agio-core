@@ -26,11 +26,6 @@ query GetWorkspacesFilteredByCompany(
                 description
                 createdAt
                 updatedAt
-                #        company {
-                #          id
-                #          name
-                #          code
-                #        }
             }
         }
         pageInfo {

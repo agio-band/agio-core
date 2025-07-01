@@ -1,6 +1,6 @@
-query GetWorkspaceSettings($id: ID!,
+query GetWorkspaceSettings($revision_id: ID!,
 ) {
-    workspaceSettings(id: $id)
+    workspaceSettings(id: $revision_id)
     {
         id
         workspaceRevisionId

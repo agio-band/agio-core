@@ -1,7 +1,9 @@
+from typing import Iterator
 from uuid import UUID
 
 from . import client
 from .schemas.desk import UserProfileResponseSchema, CurrentCompanyResponseSchema, CompanyResponseSchema
+from .utils.query_tools import iter_entities
 from .utils.response_typing import response_schema
 
 
@@ -36,3 +38,11 @@ def get_company(company_id: UUID) -> CompanyResponseSchema:
 
 def update_company(company_id: UUID, update_data: dict) -> CompanyResponseSchema:
     raise NotImplementedError
+
+
+def iter_companies(limit: int = None) -> Iterator[dict]:
+    yield from iter_entities(
+        'desk/company/getCompanyList',
+        entities_data_key='companies',
+        limit=limit,
+    )

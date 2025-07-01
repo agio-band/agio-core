@@ -1,0 +1,45 @@
+query GetWorkspaceRevisionList(
+    $workspaceId: ID!,
+    $first: Int!,
+    $afterCursor: String,
+) {
+  workspaceRevisions(
+    first: $first
+    after: $afterCursor
+    ordering: [
+      {
+        sort: CREATED_AT,
+        direction: DESC
+      }
+    ]
+    filter: {
+      where: {
+        workspace: {
+          id: { equalTo: $workspaceId }
+        },
+        status: {equalTo: "ready"}
+      }
+    }
+  ) {
+    edges {
+      node {
+        id
+        workspaceId
+        isCurrent
+        status
+        packageReleases {
+          id
+          name
+        }
+        layout
+        comment
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}

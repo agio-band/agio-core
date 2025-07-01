@@ -1,0 +1,39 @@
+query GetWorkspaceSettingsList(
+    $revisionId: ID!,
+    $first: Int!,
+    $afterCursor: String,
+){
+    workspaceSettingses(
+        first: $first
+        after: $afterCursor
+        ordering: [
+          {
+            sort: CREATED_AT,
+            direction: DESC
+          }
+        ]
+        filter: {
+          where: {
+            workspaceRevision: {
+              id: { equalTo: $revisionId }
+            }
+          }
+        }
+    ){
+        edges {
+            node {
+                id
+                workspaceRevisionId
+                isCurrent
+                data
+                comment
+            }
+        }
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          startCursor
+          endCursor
+        }
+    }
+}

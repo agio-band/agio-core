@@ -1,5 +1,8 @@
+from typing import Iterator
 from uuid import UUID
 from . import client
+from .utils import NOTSET
+from .utils.query_tools import iter_entities
 
 
 def get_workspace(workspace_id: UUID|str, full: bool = False) -> dict:
@@ -11,20 +14,28 @@ def get_workspace(workspace_id: UUID|str, full: bool = False) -> dict:
     return resp['data']['workspace']
 
 
-def get_workspace_list(company_id: UUID, items_per_page: int = 10,  after: str = None) -> dict:
-    response = client.make_query(
+# def get_workspace_list(company_id: UUID, items_per_page: int = 10,  after: str = None) -> dict:
+#     response = client.make_query(
+#         'workspace/ws/getWorkspaceList',
+#         companyId=company_id,
+#         first=items_per_page,
+#         afterCursor=after,
+#     )
+#     return dict(
+#         data=[x['node'] for x in response['data']['workspaces']['edges']],
+#         pageInfo=response['data']['workspaces']['pageInfo'],
+#     )
+
+def iter_workspaces(company_id: UUID, limit: int = None) -> Iterator[dict]:
+    yield from iter_entities(
         'workspace/ws/getWorkspaceList',
-        companyId=company_id,
-        first=items_per_page,
-        afterCursor=after,
-    )
-    return dict(
-        data=[x['node'] for x in response['data']['workspaces']['edges']],
-        pageInfo=response['data']['workspaces']['pageInfo'],
+        entities_data_key='workspaces',
+        variables=dict(companyId=company_id),
+        limit=limit,
     )
 
 
-def create_workspace(company_id: UUID|str, name: str, description: str = None) -> str:
+def create_workspace(company_id: UUID|str, name: str, description: str = NOTSET) -> str:
     return client.make_query(
         'workspace/ws/createWorkspace',
         name=name,
@@ -33,12 +44,15 @@ def create_workspace(company_id: UUID|str, name: str, description: str = None) -
     )['data']['createWorkspace']['workspaceId']
 
 
-def update_workspace(workspace_id: UUID|str, name: str = None, description: str = None) -> bool:
+def update_workspace(workspace_id: UUID|str, name: str = NOTSET, description: str = NOTSET) -> bool:
     response = client.make_query(
         'workspace/ws/updateWorkspace',
         id=workspace_id,
-        name=name,
-        description=description,
+        input=dict(
+            name=name,
+            description=description,
+        )
+
     )
     return response['data']['updateWorkspace']['ok']
 
@@ -54,11 +68,11 @@ def delete_workspace(workspace_id: UUID|str) -> bool:
 
 def create_revision(
         workspace_id: UUID|str,
-        package_release_ids: list[str | UUID] = None,
-        set_current: bool = None,
-        status: str = None,
+        package_release_ids: list[str | UUID],
+        set_current: bool = True,
+        status: str = 'ready',  # TODO
         layout: dict = None,
-        comment: str = None,
+        comment: str = '',
     ) -> str:
     return client.make_query(
         'workspace/revision/createWorkspaceRevision',
@@ -66,61 +80,90 @@ def create_revision(
         packageReleaseIds=package_release_ids,
         isCurrent=set_current,
         status=status,
-        layout=layout,
+        layout=layout or {},
         comment=comment,
     )['data']['createWorkspaceRevision']['workspaceRevisionId']
 
 
 def update_revision(
         revision_id: UUID|str,
-        set_current: bool = None,
-        layout: dict = None,
-        status: str = None
+        set_current: bool = NOTSET,
+        layout: dict = NOTSET,
+        status: str = NOTSET
     ) -> str:
     return client.make_query(
         'workspace/revision/updateWorkspaceRevision',
         id=revision_id,
-        isCurrent=set_current,
-        layout=layout,
-        status=status,
+        input=dict(
+            isCurrent=set_current,
+            layout=layout,
+            status=status,
+        ),
     )['data']['updateWorkspaceRevision']['ok']
 
 
-def get_revision_list(
-        workspace_id: UUID|str,
-    ):
-    pass
+# def get_revision_list(
+#         workspace_id: UUID|str,
+#         items_per_page: int = 10,
+#         after: str = None
+#     ):
+#     return [x['node'] for x in client.make_query(
+#         'workspace/revision/getWorkspaceRevisionList',
+#         workspaceId=workspace_id,
+#         first=items_per_page,
+#         afterCursor=after,
+#     )['data']['workspaceRevisions']['edges']]
+
+
+def iter_revisions(workspace_id: UUID|str, limit: int = None) -> Iterator[dict]:
+    yield from iter_entities(
+        'workspace/revision/getWorkspaceRevisionList',
+        entities_data_key='workspaceRevisions',
+        variables=dict(workspaceId=workspace_id),
+        limit=limit,
+    )
 
 
 # settings
 
-def set_revision_settings(
+def create_revision_settings(
         revision_id: str|UUID,
         data: dict,
         set_current: bool = True,
-        comment: str = None,
+        comment: str = '',
     ):
     return client.make_query(
-        'workspace/settings/createWorkspaceRevisionSettings',
+        'workspace/settings/createRevisionSettings',
         workspaceRevisionId=revision_id,
-        data=data,
         isCurrent=set_current,
+        data=data,
         comment=comment,
-    )['data']#['workspaceSettingsId']
+    )['data']['createWorkspaceSettings']['workspaceSettingsId']
 
 
-def get_revision_settings(revision_id: UUID) -> dict:
+def get_revision_settings(revision_id: UUID|str) -> dict:
     return client.make_query(
-        'workspace/settings/getWorkspaceRevisionSettings',
-        id=revision_id
+        'workspace/settings/getRevisionSettings',
+        revision_id=revision_id
+    )['data']['workspaceSettings']
+
+
+# def get_revision_settings_list(
+#         revision_id: UUID|str,
+#         items_per_page: int = 10,
+#         after: str = None,
+#     ):
+#     return client.make_query(
+#         'workspace/settings/getRevisionSettingsList',
+#         revisionId=revision_id,
+#         first=items_per_page,
+#         afterCursor=after,
+#     )['data']['workspaceSettings']['revisionSettings']
+
+
+def iter_revision_settings(revision_id: UUID|str) -> Iterator[dict]:
+    yield from iter_entities(
+        'workspace/settings/getRevisionSettingsList',
+        entities_data_key='workspaceSettingses',
+        variables=dict(revisionId=revision_id)
     )
-
-
-def get_revision_settings_list(
-        revision_id: UUID,
-        items_per_page: int = 10,
-        after: str = None,
-    ):
-    ...
-
-

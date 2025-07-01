@@ -1,5 +1,8 @@
+from typing import Iterator
 from uuid import UUID
 from . import client
+from .utils import NOTSET
+from .utils.query_tools import iter_entities
 
 
 # packages
@@ -20,9 +23,9 @@ def create_package(name: str) -> str:
 
 def update_package(
         package_id: UUID|str,
-        hidden: bool = None,
-        disabled: bool = None,
-        verified: bool = None
+        hidden: bool = NOTSET,
+        disabled: bool = NOTSET,
+        verified: bool = NOTSET
     ):
     return client.make_query(
         'workspace/package/updatePackage',
@@ -33,19 +36,27 @@ def update_package(
     )['data']['updatePackage']['ok']
 
 
-def get_package_list(
-        items_per_page: int = 10,
-        after: str = None,
-        tags: list[str] = None,
-    ) -> dict:
-    data = client.make_query(
+# def get_package_list(
+#         items_per_page: int = 10,
+#         after: str = None,
+#         tags: list[str] = None,
+#     ) -> dict:
+#     data = client.make_query(
+#         'workspace/package/getPackageList',
+#         first=items_per_page,
+#         afterCursor=after,
+#     )
+#     return dict(
+#         data=[x['node'] for x in data['data']['packages']['edges']],
+#         pageInfo=data['data']['packages']['pageInfo'],
+#     )
+
+
+def iter_packages(limit: int = None) -> Iterator[dict]:
+    yield from iter_entities(
         'workspace/package/getPackageList',
-        first=items_per_page,
-        afterCursor=after,
-    )
-    return dict(
-        data=[x['node'] for x in data['data']['packages']['edges']],
-        pageInfo=data['data']['packages']['pageInfo'],
+        entities_data_key='packages',
+        limit=limit,
     )
 
 
@@ -57,7 +68,7 @@ def create_package_release(
         label: str,
         description: str,
         assets: dict,
-        meta_data: dict = None
+        meta_data: dict = NOTSET
     ) -> str:
     return client.make_query(
         'workspace/release/createPackageRelease',
@@ -70,25 +81,34 @@ def create_package_release(
     )["data"]["createPackageRelease"]["packageReleaseId"]
 
 
-def get_package_release(release_id: UUID) -> dict:
+def get_package_release(release_id: UUID|str) -> dict:
     return client.make_query(
         'workspace/release/getPackageRelease',
         id=release_id,
     )['data']['packageRelease']
 
 
-def get_package_release_list(
-        package_id: UUID|str,
-        search: str = None,
-        items_per_page: int = 10,
-        after: str = None
-    ) -> list:
-    return client.make_query(
+# def get_package_release_list(
+#         package_id: UUID|str,
+#         search: str = None,
+#         items_per_page: int = 10,
+#         after: str = None
+#     ) -> list:
+#     return client.make_query(
+#         'workspace/release/getPackageReleaseList',
+#         first=items_per_page,
+#         afterCursor=after,
+#         packageId=package_id,
+#     )['data']['packageReleases']['edges']
+
+
+def iter_package_releases(package_id: UUID|str, limit: int = None) -> Iterator[dict]:
+    yield from iter_entities(
         'workspace/release/getPackageReleaseList',
-        first=items_per_page,
-        afterCursor=after,
-        packageId=package_id,
-    )['data']['packageReleases']['packageReleaseList']
+        entities_data_key='packageReleases',
+        variables={'packageId': package_id},
+        limit=limit,
+    )
 
 
 def update_package_release(

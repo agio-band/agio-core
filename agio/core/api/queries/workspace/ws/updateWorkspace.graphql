@@ -1,10 +1,10 @@
-mutation UpdateExistingWorkspace($id: ID!, $name: String, $desctiption: String) {
+mutation UpdateExistingWorkspace(
+    $id: ID!,
+    $input: WorkspaceUpdateInput!
+) {
     updateWorkspace(
       id: $id,
-      input: {
-        name: $name,
-        description: $desctiption
-      }
+      input: $input
     ) {
         ok
     }

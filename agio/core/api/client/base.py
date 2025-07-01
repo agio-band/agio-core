@@ -40,7 +40,7 @@ class _ApiClientAuth:
     scope = ['openid', 'offline']
     default_client_id = config.api.DEFAULT_CLIENT_ID
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self._expire_time = None
         self.session = requests.Session()
         self._restore_session()
