@@ -1,13 +1,16 @@
 import inspect
+import logging
 import re
 from threading import Thread, Event
-from typing import Callable
 
-from agio.core.events import emit
+from agio.core.events import emit, subscribe
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.plugin_base import APlugin
+from agio.core.utils import process_hub
 from agio.core.utils.text_utils import unslugify
 
+
+logger = logging.getLogger(__name__)
 
 def action(
         add_to_menu: bool = False,
@@ -43,28 +46,22 @@ class ServicePlugin(BasePluginClass, APlugin):
     menu_name = None
     app_name = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._thread = None
-        self._event = Event()
 
-    def start(self, in_thread: bool = True, **kwargs):
-        if in_thread:
-            self._thread = Thread(target=self.execute, **kwargs)
-            self._thread.start()
-        else:
-            self.execute(**kwargs)
+    def before_start(self, **kwargs):
+        pass
 
-    def is_stopped(self):
-        return self._event.is_set()
+    def on_stopped(self):
+        pass
+
+    def start(self, **kwargs):
+        self.before_start(**kwargs)
+        self.execute(**kwargs)
 
     def execute(self, **kwargs):
         raise NotImplementedError
 
     def stop(self):
-        self._event.set()
-        if self._thread:
-            self._thread.join()
+        self.on_stopped()
 
     def get_action_items(self, menu_name: str, app_name: str):
         if self.menu_name is not None:
@@ -108,3 +105,88 @@ class ServicePlugin(BasePluginClass, APlugin):
         for name, member in inspect.getmembers(self, predicate=inspect.ismethod):
             if not name.startswith('_'):
                 yield name, member
+
+
+class ThreadServicePlugin(ServicePlugin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._thread = None
+        self._event = Event()
+
+    def start(self, **kwargs):
+        self.before_start(**kwargs)
+        self._thread = Thread(target=self.execute, **kwargs)
+        self._thread.start()
+
+    def is_stopped(self):
+        return self._event.is_set()
+
+    def stop(self):
+        self._event.set()
+        if self._thread:
+            self._thread.join()
+        self.on_stopped()
+
+
+class ProcessServicePlugin(ServicePlugin):
+    process_name = None
+    auto_restart = True
+    # create common process hub
+    ph = process_hub.ProcessHub()
+    subscribe('core.app.exit', ph.shutdown )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.process = None
+
+    def execute(self, **kwargs):
+        cmd = self.get_startup_command()
+        logger.debug(f'CMD: {cmd}')
+        self.process = self.ph.register_process(
+            name=self.process_name,
+            command=self.get_startup_command(),
+            restart=self.auto_restart,
+            cwd=self.get_cwd(),
+            env=self.get_env()
+        )
+        self.ph.start_process(self.process_name)
+        logger.debug('Process started: %s', self.process_name)
+
+    @action()
+    def stop_process(self):
+        if self.ph.is_process_alive(self.process_name):
+            self.ph.stop_process(self.process_name)
+            return True
+        return False
+
+    @action()
+    def start_process(self):
+        if self.ph.is_process_alive(self.process_name):
+            return False
+        self.ph.start_process(self.process_name)
+        return True
+
+    @action()
+    def restart_process(self):
+        if self.ph.is_process_alive(self.process_name):
+            self.ph.restart_process(self.process_name)
+            return True
+        return False
+
+    @action()
+    def get_process_info(self):
+        if self.process:
+            return self.process.info()
+
+    @action()
+    def get_process_status(self):
+        return self.ph.is_process_alive(self.process_name)
+
+    def get_startup_command(self) -> list[str]:
+        raise NotImplementedError
+
+    def get_cwd(self) -> str|None:
+        return
+
+    def get_env(self) -> dict|None:
+        return
