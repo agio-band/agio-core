@@ -51,9 +51,9 @@ class APluginHub(metaclass=Singleton):
             raise PluginNotFoundError(f"Plugin type '{plugin_type}' is not defined")
         return name in self.plugins[plugin_type]
 
-    def iter_plugins(self, plugin_pype: str = None) -> Iterator['APlugin']:
+    def iter_plugins(self, plugin_type: str = None) -> Iterator['APlugin']:
         for _plugin_pype, plugins in self.plugins.items():
-            if plugin_pype is not None and _plugin_pype != plugin_pype:
+            if plugin_type is not None and _plugin_pype != plugin_type:
                 continue
             for plugin in plugins.values():
                 yield plugin

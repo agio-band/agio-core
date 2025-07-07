@@ -12,7 +12,7 @@ urls:
   documentation: ""
   bug_tracker: "https://github.com/agio/agio-core/issues"
 
-resources_dir: "custom/resources" # default "/resources"
+#resources_dir: "custom/resources" # default "/resources"
 dependencies: []
 
 repository_api: gitea
@@ -31,9 +31,9 @@ plugins:
     implementations:
       - module: plugins/commands/run_cmd.py
 
-#  - label: Start App Command
-#    implementations:
-#      - module: plugins/commands/startapp_cmd.py
+  - label: Run Action Command
+    implementations:
+      - module: plugins/commands/action_cmd.py
 
   - label: Manage agio packages command
     implementations:
