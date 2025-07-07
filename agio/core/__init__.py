@@ -1,8 +1,8 @@
 import os
+from pathlib import Path
 
 from .core_config import CoreConfig
-
-config = CoreConfig()
+from .utils.local_storage import LocalStorage
 
 
 def _get_user_config_dir():
@@ -23,3 +23,7 @@ def get_agio_config_dir():
     agio_dir = os.path.join(_get_user_config_dir(), 'agio')
     os.makedirs(agio_dir, exist_ok=True)
     return agio_dir
+
+
+config = CoreConfig()
+store = LocalStorage(Path(get_agio_config_dir()) / 'store')

@@ -147,8 +147,14 @@ class ProcessHub:
         self._running = True
         threading.Thread(target=self._monitor_processes, daemon=True).start()
 
-    def register_process(self, name: str, command: list[str], restart: bool = False,
-                         cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None):
+    def register_process(
+            self,
+            name: str,
+            command: list[str],
+            restart: bool = False,
+            cwd: Optional[str] = None,
+            env: Optional[Dict[str, str]] = None
+        ):
         with self._lock:
             if name in self._processes:
                 raise ValueError(f"Process '{name}' is already registered.")
@@ -201,7 +207,7 @@ class ProcessHub:
                 except Exception as e:
                     logging.error(f"Error stopping '{name}': {e}")
 
-    def shutdown(self):
+    def shutdown(self, *args, **kwargs):
         if self._running:
             logging.info("Shutting down all processes...")
             self._running = False

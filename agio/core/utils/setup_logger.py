@@ -39,7 +39,7 @@ MESSAGE_FORMAT = (
     or "%(asctime)s | %(levelname)-8s | %(name)-40s | %(lineno)-4d  | %(message)s"
 )
 MESSAGE_FORMAT_CONSOLE = (
-    os.getenv("AGIO_LOGGING_MESSAGE_FORMAT_CONSOLE") or "%(levelname)-8s | %(name)-30s | %(lineno)-4d  | %(message)s"
+    os.getenv("AGIO_LOGGING_MESSAGE_FORMAT_CONSOLE") or "%(levelname)-8s | %(name)-40s | %(lineno)-4d  | %(message)s"
 )
 DATETIME_FORMAT = os.getenv("AGIO_LOGGING_DATETIME_FORMAT") or "%Y.%m.%d %H:%M:%S"
 

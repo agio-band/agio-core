@@ -110,3 +110,7 @@ class AuthorizationError(AException):
 
 class RequestError(AException):
     detail = "Request error"
+
+# services
+class ServiceStartupError(AException):
+    detail = "Service startup error"

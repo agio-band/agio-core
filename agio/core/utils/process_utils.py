@@ -152,6 +152,17 @@ def start_process(
     return None
 
 
+def process_exists(pid):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    else:
+        return True
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Start a process with different execution modes")
 
