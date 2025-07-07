@@ -92,6 +92,11 @@ class ServicePlugin(BasePluginClass, APlugin):
                  {'menu_name': menu_name, 'action_data': acton_data, 'app_name': app_name})
         return items
 
+    def get_action(self, action_name: str):
+        for name, func in self.__iter_actions__(active_only=False):
+            if name == action_name:
+                return func
+
     def __iter_actions__(self, active_only=False):
         for method, func in self.__iter_methods__():
             if hasattr(func, '_action_data'):
