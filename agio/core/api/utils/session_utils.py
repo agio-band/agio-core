@@ -1,7 +1,8 @@
 import os
 import json
 
-from agio.core import config, get_agio_config_dir
+from agio.core.utils import get_agio_config_dir
+from agio.core.utils import config
 
 _session_file = 'agio_session.json'
 

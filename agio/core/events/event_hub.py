@@ -1,17 +1,16 @@
-import inspect
-from typing import Callable
+import logging
 from collections import defaultdict
 from fnmatch import fnmatch
-import logging
+from typing import Callable
 
-from ..exceptions import StopEventPropagate, EventRuntimeError, CallbackInitError
-from .event import AEvent
+from agio.core.events.event import AEvent
+from agio.core.exceptions import StopEventPropagate, EventRuntimeError, CallbackInitError
+from agio.core.utils.singleton import Singleton
+
+logger = logging.getLogger(__name__)
 
 
-logger = logging.getLogger()
-
-
-class EventHub:
+class EventHub(metaclass=Singleton):
     """Registering callbacks and executing them when an event occurs"""
     def __init__(self):
         self._callbacks: defaultdict[str, dict[Callable, dict]] = defaultdict(dict)

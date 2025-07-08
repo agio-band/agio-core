@@ -2,7 +2,7 @@ from agio.core.exceptions import PackageLoadingError
 
 
 def get_release_repository_plugin(repo_url: str, repository_api: str = None):
-    from agio.core.main import plugin_hub
+    from agio.core import plugin_hub
 
     if not repo_url:
         raise PackageLoadingError('No repo url provided')

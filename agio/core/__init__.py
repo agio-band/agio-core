@@ -1,19 +1,33 @@
-from pathlib import Path
+import logging
+import signal
 
-from .core_config import CoreConfig
-from .utils.app_dirs import get_agio_config_dir
-from .utils.local_storage import LocalStorage
-from .utils.app_context import AppContext
-
+from .utils import setup_logger
+from .events import emit
+from .init.init_plugins import init_plugins
+from .init.init_packages import init_packages
 
 __all__ = [
-    'config',
-    'store',
-    'context'
+    'package_hub',
+    'plugin_hub',
+    'process_hub'
 ]
 
-# global constants
+from .utils.process_hub import ProcessHub
 
-config = CoreConfig()
-store = LocalStorage(Path(get_agio_config_dir()) / 'store')
-context = AppContext()
+logger = logging.getLogger(__name__)
+
+package_hub = init_packages()
+plugin_hub = init_plugins(package_hub)
+process_hub = ProcessHub()
+
+def _before_exit_event(*args):
+    print()
+    logger.debug('Receive exit signal')
+    emit('core.app.exit')
+
+
+signal.signal(signal.SIGINT, _before_exit_event)
+signal.signal(signal.SIGTERM, _before_exit_event)
+
+emit('core.app.on_startup')
+logger.debug('Core init done')

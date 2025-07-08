@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 from typing import Any, Callable
 
-from agio.core.main import package_hub
 from agio.core.settings import LocalSettingsHub, WorkspaceSettingsHub
 from agio.core.settings.generic_types import SettingsType
 
@@ -67,6 +66,7 @@ def collect_workspace_settings_layout() -> dict:
 
 
 def collect_layout(layout_type: str) -> dict:
+    from agio.core import package_hub
     # collect packages
     all_packages = package_hub.get_packages()
     # collect layout data

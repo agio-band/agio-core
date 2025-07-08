@@ -20,7 +20,7 @@ class APluginHub(metaclass=Singleton):
 
     @property
     def plugins_count(self):
-        return len(self.plugins)
+        return sum([len(types) for types in self.plugins.values()])
 
     def _collect_plugins(self, packages: list[APackage]) -> None:
         for pkg in packages:

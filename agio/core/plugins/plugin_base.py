@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Generator
 import logging
 
-from agio.core.exceptions import PluginLoadingError
+from agio.core.utils import context
 from agio.core.utils.import_utils import import_module_by_path
 from agio.core.utils.text_utils import unslugify
+from agio.core.exceptions import PluginLoadingError
 
 if TYPE_CHECKING:
     from agio.core.packages.package import APackage
@@ -28,16 +29,15 @@ class APlugin(_APluginAbstract):
 
     def __init__(self, package: APackage, plugin_info: dict):
         self._plugin_info = plugin_info
-        self.before_load()
         self._package = package
-        self.on_load()
 
     def get_label(self):
         return self.label or unslugify(self.name)
 
     @property
     def path(self):
-        return inspect.getfile(self.__class__)
+        class_file = inspect.getfile(self.__class__)
+        return os.path.abspath(class_file)
 
     def __repr__(self):
         return f"{self.package.name}.{self.name}"
@@ -47,14 +47,13 @@ class APlugin(_APluginAbstract):
 
     @classmethod
     def load_from_info(cls, plugin_info: dict, manifest_file_path: str) -> Generator[APlugin, None, None]:
-        from agio.core.main import app_context
         for imp in plugin_info.get('implementations', ()):
             if supported_apps := imp.get('apps'):
                 if isinstance(supported_apps, str):
                     supported_apps = (supported_apps,)
                 if not isinstance(supported_apps, (list, tuple, set)):
                     raise PluginLoadingError(f"Supported apps must be a iterable [{manifest_file_path}]")
-                if app_context.app_name not in supported_apps:
+                if context.app_name not in supported_apps:
                     logger.debug(f'Skip implementation for {supported_apps}')
                     continue
             if supported_app_groups := plugin_info.get('app_groups'):
@@ -62,7 +61,7 @@ class APlugin(_APluginAbstract):
                     supported_app_groups = (supported_app_groups,)
                 if not isinstance(supported_app_groups, (list, tuple, set)):
                     raise PluginLoadingError(f"Supported app groups must be a iterable [{manifest_file_path}]")
-                if app_context.app_group not in supported_app_groups:
+                if context.app_group not in supported_app_groups:
                     logger.debug(f'Skip implementation for {supported_app_groups}')
                     continue
             module = imp.get('module')
@@ -77,7 +76,7 @@ class APlugin(_APluginAbstract):
                 # todo: add from package root
                 plugin_module = import_module_by_path(full_path, module_name)
             except Exception as e:
-                raise PluginLoadingError(f"Error loading plugin: {full_path}") from e
+                raise PluginLoadingError(f"Error loading plugin: {full_path} [{e}]") from e
             for obj in plugin_module.__dict__.values():
                 if inspect.isclass(obj):
                     if issubclass(obj, APlugin) and not obj.__name__ == APlugin.__name__:
@@ -90,14 +89,3 @@ class APlugin(_APluginAbstract):
     @property
     def package(self):
         return self._package
-
-    @property
-    def path(self):
-        file = inspect.getfile(self.__class__)
-        return os.path.abspath(file)
-
-    def before_load(self):
-        ...
-
-    def on_load(self):
-        ...

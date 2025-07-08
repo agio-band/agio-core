@@ -3,10 +3,10 @@ from threading import Event
 from typing import Iterable
 
 from agio.core.events import subscribe, unsubscribe
-from agio.core.main import plugin_hub
+from agio.core.utils.singleton import Singleton
 
 
-class AServiceHub:
+class AServiceHub(metaclass=Singleton):
     """
     This context manager starts services on ENTER to context and stop it on EXIT
     """
@@ -34,6 +34,7 @@ class AServiceHub:
         return self.stop_event.is_set()
 
     def start_services(self, **kwargs):
+        from agio.core import plugin_hub
 
         already_registered = [s for s in self.service_list if s in self._registered_services]
         if already_registered:

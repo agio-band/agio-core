@@ -8,6 +8,8 @@ from typing import Optional, Dict
 
 import psutil
 
+from agio.core.utils.singleton import Singleton
+
 lock = threading.Lock()
 
 
@@ -63,13 +65,16 @@ class ProcessWrapper:
 
     def restart(self, cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None):
         logging.info(f"Restarting process '{self.name}'...")
-        self.stop(_soft=True)
+        self.stop(_hard=False)
         time.sleep(0.2)
         self.start(cwd=cwd, env=env)
 
-    def stop(self, _soft=False):
+    def stop(self, _hard: bool = False):
+        """
+        hard - disable autostart on startup in next time
+        """
         with lock:
-            if not _soft:
+            if _hard:
                 self._auto_restart = False
             if self.process is None:
                 logging.info(f"Process '{self.name}' is not running.")
@@ -140,7 +145,7 @@ class ProcessWrapper:
         return None
 
 
-class ProcessHub:
+class ProcessHub(metaclass=Singleton):
     def __init__(self):
         self._processes: Dict[str, ProcessWrapper] = {}
         self._lock = threading.Lock()
@@ -180,12 +185,12 @@ class ProcessHub:
                 raise ValueError(f"Process '{name}' not found.")
             process.start()
 
-    def stop_process(self, name: str):
+    def stop_process(self, name: str, hard: bool = True):
         with self._lock:
             process = self._processes.get(name)
             if not process:
                 raise ValueError(f"Process '{name}' not found.")
-            process.stop()
+            process.stop(hard)
 
     def restart_process(self, name: str, cwd: Optional[str] = None, env_override: Optional[Dict[str, str]] = None):
         with self._lock:

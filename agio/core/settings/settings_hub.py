@@ -1,8 +1,7 @@
 from typing import Any
 
+from agio.core import package_hub
 from agio.core.settings.package_settings import APackageSettings
-from agio.core.workspace.workspace import AWorkspace
-from agio.core.main import package_hub
 
 
 class ASettingsHub:
@@ -86,17 +85,17 @@ class ASettingsHub:
 class LocalSettingsHub(ASettingsHub):
     settings_type: str = 'local'
 
-    def save(self):
-        from agio.core.settings.collector import write_common_settings
-
-        data = self.dump()
-        write_common_settings(data)
+    # def save(self):
+    #     from agio.core.settings.collector import write_common_settings
+    #
+    #     data = self.dump()
+    #     write_common_settings(data)
 
 
 class WorkspaceSettingsHub(ASettingsHub):
     settings_type: str = 'workspace'
 
-    def save(self):
-        """
-        Current user must have permissions to save workspace settings
-        """
+    # def save(self):
+    #     """
+    #     Current user must have permissions to save workspace settings
+    #     """

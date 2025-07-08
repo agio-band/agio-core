@@ -53,7 +53,7 @@ class InfoCommand(ACommandPlugin):
         print(sys.executable)
 
     def _show_packages_info(self):
-        from agio.core.main import package_hub
+        from agio.core import package_hub
         print('PACKAGES:')
         print()
         for package in package_hub.get_package_list():
@@ -61,7 +61,7 @@ class InfoCommand(ACommandPlugin):
         print()
 
     def _show_plugins_info(self):
-        from agio.core.main import plugin_hub
+        from agio.core import plugin_hub
         print('PLUGINS:')
         print()
         all_plugins_by_package = defaultdict(list)

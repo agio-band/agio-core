@@ -3,7 +3,6 @@ import os
 import sys
 from agio.core.packages.package import APackage
 from agio.core.utils.singleton import Singleton
-from agio.core.workspace.workspace import AWorkspace
 
 
 class APackageHub(metaclass=Singleton):

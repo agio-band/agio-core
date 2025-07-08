@@ -5,7 +5,7 @@ from typing import Callable, Any
 from .event_hub import EventHub
 from ..utils.import_utils import import_module_by_path
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 event_hub = EventHub()
 
 

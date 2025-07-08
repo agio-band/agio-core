@@ -5,7 +5,7 @@ from functools import lru_cache
 
 @lru_cache
 def get_resources_dirs():
-    from agio.core.main import package_hub
+    from agio.core import package_hub
 
     resource_dir_list = [
         Path(__file__).parent,

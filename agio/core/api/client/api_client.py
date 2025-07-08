@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
-from agio.core import config
+from agio.core.utils import config
 from agio.core.api.utils import NOTSET
 from agio.core.api.client.base import _ApiClientAuth
 from agio.core.exceptions import RequestError

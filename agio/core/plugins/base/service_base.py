@@ -9,7 +9,7 @@ from typing import Iterable
 from agio.core.events import emit, subscribe
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.plugin_base import APlugin
-from agio.core.utils import process_hub
+from agio.core.utils import process_hub, context
 from agio.core.utils.action_items import ActionItem
 from agio.core.utils.text_utils import unslugify
 
@@ -17,7 +17,6 @@ from agio.core.utils.text_utils import unslugify
 logger = logging.getLogger(__name__)
 
 def action(
-        add_to_menu: bool = False,
         menu_name: str|Iterable[str] = None,
         app_name: str|Iterable[str] = None,
         label: str = None,
@@ -39,7 +38,6 @@ def action(
     def decorator(func):
         func._action_data = {
             # filters
-            'add_to_menu': add_to_menu,
             'menu_name': menu_name,
             'app_name': app_name,
             # action properties
@@ -69,6 +67,21 @@ class ServicePlugin(BasePluginClass, APlugin):
             if isinstance(self.app_name, str):
                 self.app_name = [self.app_name]
 
+    @property
+    def plugin_hub(self):
+        from agio.core import plugin_hub
+        return plugin_hub
+
+    @property
+    def package_hub(self):
+        from agio.core import package_hub
+        return package_hub
+
+    @property
+    def process_hub(self):
+        from agio.core import process_hub
+        return process_hub
+
     def before_start(self, **kwargs):
         pass
 
@@ -85,7 +98,8 @@ class ServicePlugin(BasePluginClass, APlugin):
     def stop(self):
         self.on_stopped()
 
-    def get_action_items(self, menu_name: str, app_name: str):
+    def get_action_items(self, menu_name: str, app_name: str = None):
+        app_name = app_name or context.app_name
         for item in self.collect_actions():
             if item.menu_name and menu_name in item.menu_name:
                 if not item.app_name:
@@ -121,7 +135,7 @@ class ServicePlugin(BasePluginClass, APlugin):
     def __iter_actions__(self, active_only=False):
         for method, func in self.__iter_methods__():
             if hasattr(func, '_action_data'):
-                if active_only and getattr(func, 'add_to_menu', False):
+                if active_only and bool(getattr(func, 'menu_name', False)):
                     continue
                 yield method, func
 
@@ -156,57 +170,53 @@ class ProcessServicePlugin(ServicePlugin):
     process_name = None
     auto_restart = True
 
-    # TODO move to process hub service
-    # create common process hub
-    ph = process_hub.ProcessHub()
-    subscribe('core.app.exit', ph.shutdown )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.process = None
 
     def execute(self, **kwargs):
         cmd = self.get_startup_command()
-        logger.debug(f'CMD: {cmd}')
-        self.process = self.ph.register_process(
+        logger.debug(f'Service {self.name} process  cmd: {cmd}')
+        self.process = self.process_hub.register_process(
             name=self.process_name,
             command=self.get_startup_command(),
             restart=self.auto_restart,
             cwd=self.get_cwd(),
             env=self.get_env()
         )
-        self.ph.start_process(self.process_name)
+        self.process_hub.start_process(self.process_name)
         logger.debug('Process started: %s', self.process_name)
 
-    @action(add_to_menu=False) # TODO disable by default?
-    def stop_process(self):
-        if self.ph.is_process_alive(self.process_name):
-            self.ph.stop_process(self.process_name)
+    @action()
+    def stop_process(self, soft: bool = False):
+        print(soft)
+        if self.process_hub.is_process_alive(self.process_name):
+            self.process_hub.stop_process(self.process_name, soft=soft)
             return True
         return False
 
-    @action(add_to_menu=False)
+    @action()
     def start_process(self):
-        if self.ph.is_process_alive(self.process_name):
+        if self.process_hub.is_process_alive(self.process_name):
             return False
-        self.ph.start_process(self.process_name)
+        self.process_hub.start_process(self.process_name)
         return True
 
     @action()
     def restart_process(self):
-        if self.ph.is_process_alive(self.process_name):
-            self.ph.restart_process(self.process_name)
+        if self.process_hub.is_process_alive(self.process_name):
+            self.process_hub.restart_process(self.process_name)
             return True
         return False
 
-    @action(add_to_menu=False)
+    @action()
     def get_process_info(self):
         if self.process:
             return self.process.info()
 
-    @action(add_to_menu=False)
+    @action()
     def get_process_status(self):
-        return self.ph.is_process_alive(self.process_name)
+        return self.process_hub.is_process_alive(self.process_name)
 
     def get_startup_command(self) -> list[str]:
         raise NotImplementedError
