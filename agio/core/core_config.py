@@ -29,8 +29,15 @@ class ApiSettings(_BaseSettings):
     AUTH_LOCAL_PORT: int = 9082
 
 
+class WorkspaceSettings(_BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="AGIO_", extra="ignore")
+
+    RESOURCES_DIR: str = ""
+    WORKSPACES_ROOT: str = "~/.agio/workspaces"
+
 
 class CoreConfig(BaseConfig):
     api: ApiSettings = ApiSettings()
+    workspace: WorkspaceSettings = WorkspaceSettings()
 
 
