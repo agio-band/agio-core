@@ -1,13 +1,12 @@
-from pathlib import Path
-from typing import Generator
 import os
 import sys
+from pathlib import Path
+from typing import Generator
 
-import requests
-
-from . import get_release_repository_plugin
-from .package import APackage, APackageRepository
-from ..workspace.pkg_manager import get_package_manager, get_package_manager_class
+from agio.core import api
+from agio.core.packages.package import APackage, APackageRepository
+from agio.core.workspace.pkg_manager import get_package_manager, get_package_manager_class
+from agio.core.packages import get_release_repository_plugin
 
 
 def find_packages_roots() -> Generator:
@@ -25,8 +24,8 @@ def make_release(package_repository_path: str, token: str = None, **kwargs):
     if not repo:
         raise ValueError(f"Repository {pkg.source_url} is not supported")
     # check registered release
-    resp = requests.get(f'http://localhost:8002/release/{pkg.name}/{pkg.version}')
-    if resp.status_code == 200:
+    resp = api.package.get_package_release_by_name_and_version(pkg.name, pkg.version)
+    if resp:
         raise ValueError(f"Release {pkg.name} {pkg.version} already exists in agio repository")
     release_data = repo.make_release(
         pkg,
@@ -37,39 +36,26 @@ def make_release(package_repository_path: str, token: str = None, **kwargs):
 
 
 def register_new_package_release(pkg: APackageRepository, data: dict = None, **kwargs):
-    url = 'http://localhost:8002/release'
-    submit_data = dict(
-        package_name=pkg.name,
+    package = api.package.find_package(pkg.name)
+    if not package:
+        raise ValueError(f"Package {pkg.name} is not found")
+    release_id = api.package.create_package_release(
+        package_id=package['id'],
         version=pkg.version,
-        data=dict(
-            urls=pkg.data.get('urls', {}),
-            icon=pkg.data.get('icon', ''),
-            assets=data['assets'],
-            description=pkg.data.get('description', ''),
-            dependencies=pkg.data.get('dependencies', []),
-            settings=pkg.data.get('settings', {}),
-            callbacks=pkg.data.get('callbacks', [])
-        )
+        label=pkg.label,
+        description=pkg.description,
+        assets=data['assets'],
     )
-    resp = requests.post(url, json=submit_data)
-    if not resp.ok:
-        print(resp.json())
-    resp.raise_for_status()
-    return resp.json()
+    return release_id
 
 
 def register_package(package_repository_path: str):
     pkg = APackageRepository(package_repository_path)
-    url = 'http://localhost:8002/package'    # TODO: get global registry from settings
-    data = dict(
-        name=pkg.name,
-        label=pkg.label,
+    package_id = api.package.create_package(
+        name=pkg.name
     )
-    resp = requests.post(url, json=data)
-    if not resp.ok:
-        print(resp.json())
-    resp.raise_for_status()
-    return resp.json()
+    return package_id
+
 
 def build_package(package_root: str, **kwargs):
     path = Path(package_root)

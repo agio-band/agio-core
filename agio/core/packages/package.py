@@ -1,19 +1,20 @@
+import logging
 import os
 import re
 from functools import lru_cache, cached_property
 from pathlib import Path
 from typing import Generator, Type, Any
-import logging
 from urllib.parse import urlparse
+
 import yaml
 
+from agio.core import api
 from agio.core.exceptions import PackageError, PackageRuntimeError, PackageMetadataError
 from agio.core.plugins.plugin_base import APlugin
 from agio.core.utils import git_utils
-from agio.core.utils.network import download_file
 from agio.core.utils.import_utils import import_object_by_dotted_path
-from agio.core.utils.repository_utils import fetch_whl_url, filter_compatible_package
-from agio.core.workspace.request_data import get_package, get_release
+from agio.core.utils.network import download_file
+from agio.core.utils.repository_utils import filter_compatible_package
 
 logger = logging.getLogger(__name__)
 
@@ -209,7 +210,7 @@ class AReleaseInfo:
     Package info from server
     """
     def __init__(self, package_name: str, version: str  = None):
-        self._package_info = get_release(package_name, version)
+        self._package_info = api.package.get_package_release_by_name_and_version(package_name, version)
 
     def __str__(self):
         return f"{self.name} v{self.version}"
@@ -301,6 +302,10 @@ class APackageRepository:
     @property
     def label(self):
         return self.data['label']
+
+    @property
+    def description(self):
+        return self.data.get('description')
 
     @cached_property
     def data(self):

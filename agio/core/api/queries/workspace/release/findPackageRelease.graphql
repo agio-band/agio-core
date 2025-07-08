@@ -1,0 +1,29 @@
+query FindPackageRelease (
+    $package_name: String!,
+    $version: String!
+) {
+  packageReleases(first: 1, filter: {
+    where: {
+      name: {
+        equalTo: $version
+      }
+      package: {
+        name: {
+          equalTo: $package_name
+        }
+      }
+
+    }
+  }) {
+    edges {
+      node {
+        id
+        name
+        label
+        description
+        assets
+        metadata
+      }
+    }
+  }
+}

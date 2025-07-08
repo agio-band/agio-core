@@ -21,6 +21,11 @@ def create_package(name: str) -> str:
     )['data']['createPackage']['packageId']
 
 
+def find_package(name: str) -> dict:
+    return client.make_query(
+        'workspace/package/findPackage',
+    )
+
 def update_package(
         package_id: UUID|str,
         hidden: bool = NOTSET,
@@ -87,6 +92,14 @@ def get_package_release(release_id: UUID|str) -> dict:
         id=release_id,
     )['data']['packageRelease']
 
+def get_package_release_by_name_and_version(package_name: str, version: str) -> dict:
+    resp = client.make_query(
+        'workspace/release/findPackageRelease',
+        package_name=package_name,
+        version=version,
+    )
+    if resp['data']['packageReleases']['edges']:
+        return resp['data']['packageReleases']['edges'][0]['node']
 
 # def get_package_release_list(
 #         package_id: UUID|str,

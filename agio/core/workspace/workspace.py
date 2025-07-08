@@ -2,22 +2,25 @@ import json
 import os
 import shutil
 import sys
-from functools import cached_property
+from functools import cached_property, lru_cache
 from pathlib import Path
 from uuid import UUID
 
 from agio.core.exceptions import WorkspaceNotExists, WorkspaceNotInstalled
 from agio.core.packages.package import APackage, AReleaseInfo, logger
-from agio.core.workspace import pkg_manager, request_data, venv_utils
+from agio.core.utils import config
+from agio.core.workspace import pkg_manager, venv_utils
+from agio.core import api
 
 
 class AWorkspace:
     _meta_file_name = '__agio_ws__.json'
-    workspaces_root = Path('~/.agio/workspaces').expanduser()  # TODO: path from config
+    workspaces_root = Path(config.workspace.WORKSPACES_ROOT).expanduser()
 
     def __init__(self, workspace_id: str | UUID):
         self.id = workspace_id
         self._root = self.workspaces_root.joinpath(str(self.id))
+        self._packages = None
         try:
             self._data = self._load_local_data()
         except WorkspaceNotInstalled:
@@ -28,6 +31,13 @@ class AWorkspace:
 
     def __repr__(self):
         return f'<Workspace "{str(self)}">'
+
+    @lru_cache
+    def packages(self) -> list[APackage]:
+        if self._packages is None:
+            if self.root.exists():
+                self._packages = tuple(self.iter_installed_packages())
+        return self._packages
 
     @property
     def local_meta_file(self):
@@ -41,8 +51,7 @@ class AWorkspace:
             return json.load(f)
 
     def _load_remote_data(self):
-        data = request_data.get_workspace_data(self.id)
-        return data
+        return api.workspace.get_workspace(self.id)
 
     @classmethod
     def current(cls):
@@ -68,11 +77,14 @@ class AWorkspace:
     def iter_installed_packages(self):
         yield from self.venv_manager.iter_packages()
 
-    def iter_packages(self):
-        if not self.is_installed():
-            raise WorkspaceNotInstalled
-        for pkg in self._data.get('packages', []):
-            yield APackage(**pkg)
+    # def iter_packages(self):
+    #     """
+    #     Iter installed packages
+    #     """
+    #     if not self.is_installed():
+    #         raise WorkspaceNotInstalled
+    #     for pkg in self._packages:
+    #         yield APackage(**pkg)
 
     def get_package(self, package_name) -> APackage:
         pkg_data = self._data.get(package_name)
@@ -89,15 +101,15 @@ class AWorkspace:
     def get_pyexecutable(self) -> str:
         return self.venv_manager.python_executable
 
-    def collect_stat(self):
-        """
-        File sizes
-        Creation date
-        Package count
-            python libs
-            agio packages
-        """
-        pass
+    # def collect_stat(self):
+    #     """
+    #     File sizes
+    #     Creation date
+    #     Package count
+    #         python libs
+    #         agio packages
+    #     """
+    #     pass
 
     def exists(self):
         return self.root.exists()
@@ -145,7 +157,7 @@ class AWorkspace:
             json.dump(self._data, f, indent=4)
 
     def get_packages_info(self):
-        return [AReleaseInfo(pkg['name'], pkg['version']) for pkg in self._data['packages']]
+        return [AReleaseInfo(pkg['name'], pkg['version']) for pkg in self._packages]
 
     def remove(self) -> bool:
         if self.exists():
