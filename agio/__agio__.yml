@@ -18,6 +18,10 @@ dependencies: []
 repository_api: gitea
 
 plugins:
+  # services
+  - label: Core Service
+    implementations:
+      - module: plugins/services/core_service.py
   # commands
   - label: Info Command
     implementations:
