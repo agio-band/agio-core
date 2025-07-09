@@ -1,0 +1,60 @@
+name: package_name
+version: 0.0.1
+label: Package Label
+description: |
+  Long text description
+icon: 'relative/path/to/icon.png'
+
+tags:
+  - tag1
+  - tag2
+
+urls:
+  home_page: "https://official-cite.com/package-name"
+  documentation: "https://official-cite.com/package-name/docs"
+  bug_tracker: "https://github.com/agio/package-name/issues"
+
+resources_dir: "custom/resources"
+# default "/resources"
+
+dependencies: [
+  "pypackage1>=0.1",
+  "pypackage2>=0.2",
+]
+agio_dependencies: [
+  "agio_core>=0.0.1",
+  "my_other_package>=0.0.1",
+]
+
+repository_api: gitea # default github
+
+plugins:
+  # services
+  - label: My Service
+    implementations:
+      - module: plugins/services/my_service.py
+  # commands
+  - label: My Command
+    implementations:
+      - module: plugins/commands/my_cmd.py
+  # dcc plugins
+  - label: Maya Plugin
+    implementations:
+      - module: plugins/maya/maya_plugin.py
+        apps:
+          - maya
+  - label: Nuke Plugin
+    implementations:
+      - module: plugins/nuke/nuke_plugin.py
+        app_groups:
+          - nuke  # for Nuke, NukeStudio, Hiero
+
+settings:
+  workspace:
+    layout: package_settings/workspace_layout.yml   # file path
+    model: package_settings.workspace_settings.MyWorkspaceSettings  # dotted import path
+    actions: TODO
+  local:
+    layout: package_settings/local_layout.yml
+    model: package_settings.local_settings.MyLocalSettings
+
