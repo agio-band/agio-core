@@ -163,6 +163,12 @@ def process_exists(pid):
         return True
 
 
+def restart_with_env(envs: dict):
+    cmd = [sys.executable]+sys.argv
+    envs = {**os.environ.copy(), **envs}
+    start_process(cmd, envs=envs, replace=True, workdir=os.getcwd())
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Start a process with different execution modes")
 
