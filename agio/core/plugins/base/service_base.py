@@ -48,6 +48,7 @@ def action(
             'group': group,
             'args': args or (),
             'kwargs': kwargs or {},
+            'callable': func,
         }
         return func
     return decorator
@@ -98,16 +99,6 @@ class ServicePlugin(BasePluginClass, APlugin):
     def stop(self):
         self.on_stopped()
 
-    def get_action_items(self, menu_name: str, app_name: str = None):
-        app_name = app_name or context.app_name
-        for item in self.collect_actions():
-            if item.menu_name and menu_name in item.menu_name:
-                if not item.app_name:
-                    continue
-                if not any([fnmatch(item_app_name, app_name) for item_app_name in item.app_name]):
-                    continue
-                yield item
-
     @lru_cache
     def collect_actions(self):
         items = []
@@ -123,8 +114,8 @@ class ServicePlugin(BasePluginClass, APlugin):
             ))
             item_data = {k: v for k, v in acton_data.items() if k in ActionItem.get_fields()}
             emit('core.services.action_item_created', item_data)
-            item = ActionItem(**item_data)
-            items.append(item)
+            # item = ActionItem(**item_data)
+            items.append(item_data)
         return items
 
     def get_action(self, action_name: str):

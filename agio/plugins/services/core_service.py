@@ -10,7 +10,7 @@ class CoreService(ServicePlugin):
         pass
 
     @action(menu_name='tray.main_menu', app_name='desk', order=98)
-    def login(self):
+    def logout(self):
         client.logout()
 
     @action(menu_name='tray.main_menu', app_name='desk', order=99)
