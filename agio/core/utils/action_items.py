@@ -1,11 +1,14 @@
 import logging
 from dataclasses import dataclass
 from fnmatch import fnmatch
-from functools import lru_cache, partial
-from typing import Callable, Any
+from functools import lru_cache
+from typing import Any, Callable
+
 import requests
 
 logger = logging.getLogger(__name__)
+EXECUTE_ACTION_URL = 'http://localhost:8080/action'
+
 
 @dataclass
 class ActionItem:
@@ -19,11 +22,11 @@ class ActionItem:
     app_name: list[str]|None
     args: tuple|list|None
     kwargs: dict|None
-    callable: Callable|None
+    is_visible_callback: Callable|None = None
 
     def serialize(self) -> dict:
         return {
-            'type': 'item',
+            'type': 'action',
             'action': self.action,
             'name': self.name,
             'label': self.label,
@@ -31,7 +34,7 @@ class ActionItem:
             'order': self.order,
             'group': self.group or '',
             'app_name': self.app_name,
-            'args': self.args or tuple(),
+            'args': self.args or [],
             'kwargs': self.kwargs or dict(),
         }
 
@@ -41,7 +44,12 @@ class ActionItem:
 
     @property
     def is_visible(self):
-        return self.menu_name and self.app_name
+        if self.menu_name and self.app_name:
+            if self.is_visible_callback:
+                return self.is_visible_callback()
+            else:
+                return True
+        return False
 
     def is_match(self, menu_name: str, app_name: str) -> bool:
         if isinstance(self.menu_name, str):
@@ -65,6 +73,9 @@ class ActionItem:
             return self.order < other.order
         return (self.group or '') < (other.group or '')
 
+    def __call__(self, *args, **kwargs):
+        return call_action(self)
+
 
 class DividerItem:
     # TODO
@@ -85,7 +96,7 @@ class ActionGroupItem:
         self._items.extend(items)
 
     def sorted_items(self) -> list[ActionItem]:
-        return sorted(self._items)#, key=lambda item: (item.group or '', item.order))
+        return sorted(self._items)
 
     def serialize(self) -> dict:
         return {
@@ -109,7 +120,6 @@ class ActionGroupItem:
         return iter(self.sorted_items())
 
 
-
 @lru_cache
 def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
     from agio.core import plugin_hub
@@ -120,8 +130,6 @@ def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
     for plugin in plugin_hub.iter_plugins('service'):
         for action_data in plugin.collect_actions():
             action = ActionItem(**action_data)
-            if not action.is_visible:
-                continue
             if not action.is_match(menu_name, app_name):
                 continue
             action.name = f"{plugin.package.name}.{action.name}"
@@ -130,21 +138,14 @@ def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
     return grp
 
 
-def make_callback(action: ActionItem|dict) -> Callable[..., None]:
-    if action.callable:
-        logger.debug('Use callable for action: %s', action.name)
-        return partial(action.callable, *action.args, **action.kwargs)
-    else:
-        logger.debug('Use localhost call for action: %s', action.name)
-        return partial(call_action, action)
-
-
-def call_action(action: ActionItem|dict) -> Any:
-    data = dict(
-        action_name=action.action,
-        kwargs=action.kwargs,
-        args=action.args,
+def call_action(action: ActionItem|dict, *args, **kwargs) -> Any:
+    resp = requests.post(
+        EXECUTE_ACTION_URL,
+        json=dict(
+            action=action.action,
+            args=action.args,
+            kwargs=action.kwargs,
+        )
     )
-    resp = requests.post('http://localhost:8080/action', json=data)
     resp.raise_for_status()
     return resp.json()

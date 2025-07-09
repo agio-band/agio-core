@@ -22,6 +22,11 @@ plugins:
   - label: Core Service
     implementations:
       - module: plugins/services/core_service.py
+
+  - label: Actions Service
+    implementations:
+      - module: plugins/services/actions_service.py
+
   # commands
   - label: Info Command
     implementations:

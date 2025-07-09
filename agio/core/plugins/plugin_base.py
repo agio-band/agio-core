@@ -17,13 +17,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-class _APluginAbstract(ABC):
+class _APluginBase:
     plugin_type = None
     name = None
     is_abstract = True
 
 
-class APlugin(_APluginAbstract):
+class APlugin(_APluginBase):
     name = None
     label = None
 

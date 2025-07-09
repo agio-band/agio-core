@@ -46,6 +46,11 @@ class APluginHub(metaclass=Singleton):
             if plugin.name == name:
                 return plugin
 
+    def find_plugin_by_name(self, plugin_type: str, name: str) -> 'APlugin':
+        for plugin in self.plugins[plugin_type].values():
+            if plugin.name == name:
+                return plugin
+
     def plugin_exists(self, plugin_type: str, name: str) -> bool:
         if plugin_type not in self.plugins:
             raise PluginNotFoundError(f"Plugin type '{plugin_type}' is not defined")
