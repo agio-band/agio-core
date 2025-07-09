@@ -1,9 +1,8 @@
+import logging
 import os
 import subprocess
 import threading
-import signal
 import time
-import logging
 from typing import Optional, Dict
 
 import psutil
@@ -208,6 +207,7 @@ class ProcessHub(metaclass=Singleton):
         with self._lock:
             for name, process in self._processes.items():
                 try:
+                    # TODO detach permanent processes
                     process.stop()
                 except Exception as e:
                     logging.error(f"Error stopping '{name}': {e}")

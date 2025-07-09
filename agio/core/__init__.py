@@ -2,7 +2,7 @@ import logging
 import signal
 
 from .utils import setup_logger
-from .events import emit
+from .events import emit, subscribe
 from .init.init_plugins import init_plugins
 from .init.init_packages import init_packages
 
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 package_hub = init_packages()
 plugin_hub = init_plugins(package_hub)
 process_hub = ProcessHub()
+subscribe('core.app.exit', process_hub.shutdown)
 
 def _before_exit_event(*args):
     print()

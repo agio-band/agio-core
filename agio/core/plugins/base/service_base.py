@@ -1,18 +1,15 @@
 import inspect
 import logging
 import re
-from fnmatch import fnmatch
 from functools import lru_cache
 from threading import Thread, Event
 from typing import Iterable
 
-from agio.core.events import emit, subscribe
+from agio.core.events import emit
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.plugin_base import APlugin
-from agio.core.utils import process_hub, context
 from agio.core.utils.action_items import ActionItem
 from agio.core.utils.text_utils import unslugify
-
 
 logger = logging.getLogger(__name__)
 
@@ -179,10 +176,9 @@ class ProcessServicePlugin(ServicePlugin):
         logger.debug('Process started: %s', self.process_name)
 
     @action()
-    def stop_process(self, soft: bool = False):
-        print(soft)
+    def stop_process(self, hard: bool = True):
         if self.process_hub.is_process_alive(self.process_name):
-            self.process_hub.stop_process(self.process_name, soft=soft)
+            self.process_hub.stop_process(self.process_name, hard=hard)
             return True
         return False
 
