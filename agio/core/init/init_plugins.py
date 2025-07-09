@@ -2,13 +2,14 @@ import logging
 
 from agio.core.events import emit
 from agio.core.plugins.plugin_hub import APluginHub
+from agio.core.utils import context
 
 logger = logging.getLogger(__name__)
 
 
 def init_plugins(package_hub):
     # init plugins hub
-    logger.debug('Initializing plugin hub...')
+    logger.debug(f'Initializing plugin hub for app {context.app_name}...')
     plugin_hub = APluginHub(package_hub)
     # collect plugins
     plugin_hub.collect_plugins()

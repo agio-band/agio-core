@@ -10,8 +10,8 @@ class _BaseSettings(BaseConfig):
         env_file=(env_file_path.as_posix()),
         case_sensitive=True,
         extra="ignore",
-
     )
+
 
 class ApiSettings(_BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AGIO_API_", extra="ignore")

@@ -78,14 +78,14 @@ def action(
 
 
 class _UpdateActions(type):
-    def __new__(cls, clsname, bases, attrs):
+    def __new__(cls, class_name, bases, attrs):
         if 'name' in attrs:
             service_name = attrs['name']
             for name, func in attrs.items():
                 if hasattr(func, '_action_data'):
                     action_full_name = f"{service_name}.{func._action_data['name']}"
                     func._action_data['action'] = action_full_name
-        return super().__new__(cls, clsname, bases, attrs)
+        return super().__new__(cls, class_name, bases, attrs)
 
 
 class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
@@ -128,7 +128,7 @@ class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
         self.execute(**kwargs)
 
     def execute(self, **kwargs):
-        raise NotImplementedError
+        pass
 
     def stop(self):
         self.on_stopped()
@@ -138,14 +138,9 @@ class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
         items = []
         for name, func in self.__iter_actions__(active_only=True):
             acton_data = getattr(func, '_action_data')
-            # action_name = acton_data.get('name') or name
             action_menu_name = acton_data.get('menu_name') or self.menu_name
             if not action_menu_name:
                 continue
-            # acton_data.update(dict(
-            #     label=acton_data.get('label') or unslugify(name),
-            #     # action=f"{self.name}.{action_name}",
-            # ))
             item_data = {k: v for k, v in acton_data.items() if k in ActionItem.get_fields()}
             emit('core.services.action_item_created', item_data)
             items.append(item_data)
