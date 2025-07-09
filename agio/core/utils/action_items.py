@@ -126,7 +126,7 @@ def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
     from agio.core.utils import context
 
     app_name = app_name or context.app_name
-    grp = ActionGroupItem(None, None)
+    grp = ActionGroupItem(menu_name, None)
     for plugin in plugin_hub.iter_plugins('service'):
         for action_data in plugin.collect_actions():
             action = ActionItem(**action_data)
