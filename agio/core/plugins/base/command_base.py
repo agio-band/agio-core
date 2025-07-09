@@ -1,10 +1,15 @@
 import inspect
+import logging
 from abc import ABC
 import click
 
 from agio.core.packages.package import APackage
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.plugin_base import APlugin
+from agio.core.utils import context
+from agio.core.utils.process_utils import restart_with_env
+
+logger = logging.getLogger(__name__)
 
 
 class AbstractCommandPlugin(ABC):
@@ -20,6 +25,9 @@ class AbstractCommandPlugin(ABC):
         self._init_click(parent_group)
         self.context = None
 
+    def before_start(self, **kwargs):
+        pass
+
     def _init_click(self, parent_group=None):
         if not self.command_name:
             raise ValueError(f"{self.__class__.__name__}: Command name must be defined. Class {self.__class__.__name__}")
@@ -27,6 +35,7 @@ class AbstractCommandPlugin(ABC):
         @click.pass_context
         def _callback(ctx, **kwargs):
             self.context = ctx
+            self.before_start(**kwargs)
             return self.execute(**kwargs)
         for decorator in reversed(self.arguments):
             _callback = decorator(_callback)
@@ -90,3 +99,17 @@ class ASubCommand(ABC):
 
     def execute(self, *args, **kwargs):
         raise NotImplementedError(f'Not implemented in {self.__class__.__name__}')
+
+
+class AStartAppCommand(ACommandPlugin):
+    """
+    Command for override default standalone application with new app name via restart and replace old process
+    """
+    app_name = None
+
+    def before_start(self, **kwargs):
+        if not self.app_name:
+            raise ValueError(f"{self.__class__.__name__}: app_name must be defined.")
+        if context.app_name != self.app_name:
+            logger.debug(f'Restart as application "{self.app_name}"')
+            restart_with_env({'AGIO_APP_NAME': self.app_name})
