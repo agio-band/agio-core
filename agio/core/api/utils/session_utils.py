@@ -2,13 +2,12 @@ import os
 import json
 
 from agio.core.utils import get_agio_config_dir
-from agio.core.utils import config
 
 _session_file = 'agio_session.json'
 
 
 def _get_session_file():
-    store_dir = config.api.SESSION_STORE_DIR or get_agio_config_dir()
+    store_dir = get_agio_config_dir()
     return os.path.join(store_dir, _session_file)
 
 

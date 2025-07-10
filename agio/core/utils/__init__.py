@@ -10,7 +10,8 @@ __all__ = [
     'config',
     'context',
     'store',
-    'get_actions'
+    'get_actions',
+    'get_agio_config_dir',
 ]
 
 config = CoreConfig()

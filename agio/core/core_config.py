@@ -19,8 +19,6 @@ class ApiSettings(_BaseSettings):
     USE_RESPONSE_SCHEMA: bool = True
     # request timeout
     REQUEST_TIMEOUT: int = 5
-    # session file location
-    SESSION_STORE_DIR: str = ""
     # base url
     PLATFORM_URL: str = "https://platform.agio.services"
     # default api client
