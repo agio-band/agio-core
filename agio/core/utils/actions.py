@@ -73,8 +73,28 @@ class ActionItem:
             return self.order < other.order
         return (self.group or '') < (other.group or '')
 
+    @property
+    def plugin_name(self):
+        return self.action.split('.')[0]
+
+    @property
+    def action_name(self):
+        return self.action.split('.')[-1]
+
+    def get_executable(self):
+        from agio.core import plugin_hub
+
+        plugin = plugin_hub.find_plugin_by_name('service', self.plugin_name)
+        if not plugin:
+            raise RuntimeError(f'Plugin "{self.plugin_name}" not found')
+        func = plugin.get_action(self.action_name)
+        if not func:
+            raise RuntimeError(f'Action "{self.action_name}" not found')
+        return func
+
     def __call__(self, *args, **kwargs):
-        return call_action(self)
+        func = self.get_executable()
+        return func(*self.args, **self.kwargs)
 
 
 class DividerItem:
@@ -137,15 +157,3 @@ def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
             # TODO add divider
     return grp
 
-
-def call_action(action: ActionItem|dict, *args, **kwargs) -> Any:
-    resp = requests.post(
-        EXECUTE_ACTION_URL,
-        json=dict(
-            action=action.action,
-            args=action.args,
-            kwargs=action.kwargs,
-        )
-    )
-    resp.raise_for_status()
-    return resp.json()

@@ -19,3 +19,8 @@ def get_agio_config_dir():
     agio_dir = os.path.join(_get_user_config_dir(), 'agio')
     os.makedirs(agio_dir, exist_ok=True)
     return agio_dir
+
+
+def temp_dir():
+    ...
+

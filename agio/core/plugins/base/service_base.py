@@ -9,7 +9,7 @@ from typing import Iterable, Any, Callable
 from agio.core.events import emit
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.plugin_base import APlugin
-from agio.core.utils.action_items import ActionItem
+from agio.core.utils.actions import ActionItem
 from agio.core.utils.text_utils import unslugify
 
 logger = logging.getLogger(__name__)
@@ -28,13 +28,13 @@ def get_class_from_method(func):
     return cls
 
 
-def action(
+def make_action(
         menu_name: str|Iterable[str] = None,
         app_name: str|Iterable[str] = None,
         label: str = None,
         icon: str = None,
         order: int = 50,
-        group: str = None,  # TODO not used
+        group: str = None,
         args: Iterable[Any] = None,
         kwargs: dict[str: Any] = None,
         is_visible_callback: Callable = None,
@@ -62,8 +62,9 @@ def action(
             'group': group,
             'kwargs': kwargs or {},
             'args': args or (),
-            'action': None,  # updated later in metaclass
+            'action': None,  # will update later in metaclass
             'is_visible_callback': is_visible_callback,
+            # 'user_groups': []  # access permissions on frontend
         }
 
         @wraps(func)
@@ -136,7 +137,7 @@ class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
     @lru_cache
     def collect_actions(self):
         items = []
-        for name, func in self.__iter_actions__(active_only=True):
+        for name, func in self.__iter_actions__(visible_only=True):
             acton_data = getattr(func, '_action_data')
             action_menu_name = acton_data.get('menu_name') or self.menu_name
             if not action_menu_name:
@@ -147,14 +148,14 @@ class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
         return items
 
     def get_action(self, action_name: str):
-        for name, func in self.__iter_actions__(active_only=False):
+        for name, func in self.__iter_actions__(visible_only=False):
             if name == action_name:
                 return func
 
-    def __iter_actions__(self, active_only=False):
+    def __iter_actions__(self, visible_only=False):
         for method, func in self.__iter_methods__():
             if hasattr(func, '_action_data'):
-                if active_only and bool(getattr(func, 'menu_name', False)):
+                if visible_only and bool(getattr(func, 'menu_name', False)):
                     continue
                 yield method, func
 
@@ -206,33 +207,33 @@ class ProcessServicePlugin(ServicePlugin):
         self.process_hub.start_process(self.process_name)
         logger.debug('Process started: %s', self.process_name)
 
-    @action()
+    @make_action()
     def stop_process(self, hard: bool = True):
         if self.process_hub.is_process_alive(self.process_name):
             self.process_hub.stop_process(self.process_name, hard=hard)
             return True
         return False
 
-    @action()
+    @make_action()
     def start_process(self, **kwargs):
         if self.process_hub.is_process_alive(self.process_name):
             return False
         self.process_hub.start_process(self.process_name)
         return True
 
-    @action()
+    @make_action()
     def restart_process(self, **kwargs):
         if self.process_hub.is_process_alive(self.process_name):
             self.process_hub.restart_process(self.process_name)
             return True
         return False
 
-    @action()
+    @make_action()
     def get_process_info(self, **kwargs):
         if self.process:
             return self.process.info()
 
-    @action()
+    @make_action()
     def get_process_status(self, **kwargs):
         return self.process_hub.is_process_alive(self.process_name)
 
