@@ -1,4 +1,6 @@
 import os
+import tempfile
+from pathlib import Path
 
 
 def _get_user_config_dir():
@@ -15,12 +17,33 @@ def _get_user_config_dir():
         raise OSError("Unsupported operating system")
 
 
-def get_agio_config_dir():
-    agio_dir = os.path.join(_get_user_config_dir(), 'agio')
-    os.makedirs(agio_dir, exist_ok=True)
-    return agio_dir
+def _get_user_cache_dir():
+    if os.name == 'nt':
+        path = os.getenv("LOCALAPPDATA", Path.home() / "AppData" / "Local")
+    elif os.name == "darwin":
+        path = Path.home() / "Library" / "Caches"
+    else:
+        path = Path(os.getenv("XDG_CACHE_HOME", Path.home() / ".cache"))
+    return path.expanduser()
 
 
-def temp_dir():
-    ...
+def _get_user_temp_dir():
+    return Path(tempfile.gettempdir())
 
+
+def temp_dir() -> str:
+    return _get_user_temp_dir().joinpath('agio').as_posix()
+
+
+def cache_dir() -> str:
+    return _get_user_cache_dir().joinpath('agio').as_posix()
+
+
+def config_dir() -> str:
+    conf_dir = Path(_get_user_config_dir(), 'agio')
+    return conf_dir.as_posix()
+
+
+def pipeline_config_dir() -> str:
+    path = os.path.join(config_dir(), 'pipe')
+    return path

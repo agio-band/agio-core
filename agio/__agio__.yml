@@ -71,9 +71,8 @@ plugins:
       - module: plugins/release_repository/gitea_release_repository.py
 
 settings:
-  workspace:
+  local:
     layout: package_settings/workspace_layout.yml
-#   model: none
-# local:
-#   model: none
+    model: package_settings.local_settings.CoreSettings
+
 

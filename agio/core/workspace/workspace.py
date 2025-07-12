@@ -15,7 +15,7 @@ from agio.core import api
 
 class AWorkspace:
     _meta_file_name = '__agio_ws__.json'
-    workspaces_root = Path(config.workspace.WORKSPACES_ROOT).expanduser()
+    workspaces_root = Path(config.workspace.WORKSPACES_CACHE_ROOT).expanduser()
 
     def __init__(self, workspace_id: str | UUID):
         self.id = workspace_id

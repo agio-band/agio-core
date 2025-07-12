@@ -1,13 +1,14 @@
+import copy
+import inspect
 import json
 import re
 import types
-import copy
-import inspect
 from typing import Any, Iterator, get_origin, get_args, Union, Type
+
 from pydantic import BaseModel
 
-from agio.core.exceptions import SettingsInitError
 from agio.core.exceptions import RequiredValueNotSetError
+from agio.core.exceptions import SettingsInitError
 from agio.core.settings.fields.base_field import BaseField
 from agio.core.settings.fields.compaund_fields import CollectionField
 from agio.core.settings.fields.model_fields import ModelField
@@ -264,12 +265,6 @@ class APackageSettings(metaclass=_SettingsMeta):
         if self._class_kwargs.get('_init_only'):
             # quite loading class only
             return
-        # check required fields first
-        required_fields = getattr(self, '_required_fields', [])
-        missing = [name for name in required_fields if name not in kwargs and not self._fields_data[name].has_value()]
-
-        if missing:
-            raise RequiredValueNotSetError(f"Missing required fields in package settings \"{self.name}\": {', '.join(missing)}")
 
         # set values
         for name, value_data in kwargs.items():
@@ -278,7 +273,9 @@ class APackageSettings(metaclass=_SettingsMeta):
                     if 'value' in value_data:
                         self._fields_data[name].set(value_data['value'])
                     if 'dependency' in value_data:
-                        self._fields_data[name].dependency(value_data['dependency'])
+                        dep = value_data['dependency']
+                        if dep:
+                            self._fields_data[name].set_dependency(dep)
                 else:
                     self._fields_data[name].set(value_data)
 
@@ -328,7 +325,16 @@ class APackageSettings(metaclass=_SettingsMeta):
     def iter_fields(self):
         yield from self._fields_data.items()
 
+    def _check_missing_values(self):
+        # check required fields first
+        required_fields = getattr(self, '_required_fields', [])
+        missing = [name for name in required_fields if not self._fields_data[name].has_value()]
+        if missing:
+            err_params = [f'{self.name}.{parm}' for parm in missing]
+            raise RequiredValueNotSetError(f"Missing required fields in package settings: {', '.join(err_params)}")
+
     def __dump_values__(self, serialized:bool = False) -> dict:
+        self._check_missing_values()
         result = {}
         for name, field in self._fields_data.items():
             try:
@@ -340,14 +346,18 @@ class APackageSettings(metaclass=_SettingsMeta):
                     raise ValueError(f"Field '{name}' is required but has no value") from e
         return result
 
-    def __dump_settings__(self) -> dict:
+    def __dump_settings__(self, skip_default: bool = True) -> dict:
+        self._check_missing_values()
         result = {}
         for name, field in self._fields_data.items():
+            if skip_default and field.is_default():
+                continue
             result[name] = field.get_settings()
         return result
 
     def __to_json__(self, serialize_hook=None, **kwargs) -> str:
-        JsonSerializer.custom_hook= serialize_hook
+        self._check_missing_values()
+        JsonSerializer.custom_hook = serialize_hook
         return json.dumps(self.__dump_values__(serialized=True), cls=JsonSerializer, **kwargs)
 
     @classmethod

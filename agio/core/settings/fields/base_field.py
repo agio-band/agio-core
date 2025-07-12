@@ -9,7 +9,7 @@ from weakref import ref
 from pydantic import TypeAdapter, BaseModel
 from pydantic_core import ValidationError
 
-from agio.core.exceptions import ValueTypeError
+from agio.core.exceptions import ValueTypeError, ParameterError
 from agio.core.settings.fields.js_types import to_js_type
 from agio.core.settings.generic_types import REQUIRED, NOT_SET
 from agio.core.settings.validators import ValidatorBase
@@ -31,7 +31,6 @@ class BaseFieldMeta(ABCMeta):
 
 class BaseField(ABC, metaclass=BaseFieldMeta):
     field_type: Any = None
-    # value_type: Any = None
     default_validators: list[ValidatorBase, ...] = []
     __name_pattern = re.compile(r'^[a-zA-Z](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$')
 
@@ -44,21 +43,26 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
         description: str = None,
         docs_url: str = None,
         widget: str|dict = None,
+        locked: bool = False,
         order: dict = None,
         hint: str = None,
         **kwargs
     ):
         self._data: dict[str, Any] = {
+            # values
             'value': NOT_SET,
-            'required': default_value is REQUIRED,
-            'default': None,
-            'validators': list(self.default_validators) + (validators or []),
+            'locked': locked,
             'dependency': {
                 'type': None,  # dependency type:  ref (reference)|exp (expression)|pdg
                 'value': None,
                 'options': None,
                 'enabled': False, # for disable in overrides
             },
+
+            # props
+            'required': default_value is REQUIRED,
+            'default': None,
+            'validators': list(self.default_validators) + (validators or []),
             'kwargs': kwargs,
 
             # ui options
@@ -137,7 +141,24 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
     def namespace(self) -> str:
         return self._name.split('.')[0]
 
+    def lock(self):
+        if self._data.get('locked'):
+            return False
+        self._data['locked'] = True
+        return True
+
+    def unlock(self):
+        if not self._data['locked']:
+            return False
+        self._data['locked'] = False
+        return True
+
+    def is_locked(self) -> bool:
+        return self._data['locked']
+
     def set(self, value: Any) -> None:
+        if self.is_locked():
+            raise ParameterError('Parameter is locked')
         self._data['value'] = self._validate(value)
 
     def get(self) -> Any:
@@ -147,19 +168,43 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
             return self._data['default']
         raise ValueError("Field is required but value is not set")
 
+    def _get_save_values_list(self):
+        return {
+            "value",
+            "dependency",
+            "locked",
+        }
+
     def get_settings(self):
-        result = dict(value=self.get())
-        if self._data['dependency']['type'] is not None:
-            result['dependency'] = self._data['dependency']
-        return result
+        data = {k: v for k, v in self._data.items() if k in self._get_save_values_list()}
+        if not data['dependency']['type']:
+            data['dependency']= None
+        return data
+
+    # def get_settings(self):
+    #     result = dict(value=self.get())
+    #     if self._data['dependency']['type'] is not None:
+    #         result['dependency'] = self._data['dependency']
+    #     return result
+
+    def set_settings(self, saved_settings: dict) -> None:
+        self._data.update(saved_settings)
+
+    def get_dependency(self):
+        return self._data['dependency']
 
     def set_dependency(self, dependency_value: dict) -> None:
+        if self.is_locked():
+            raise ParameterError('Parameter is locked')
         self._data['dependency'] = dependency_value
 
     def set_reference_to(self, parm: Type['BaseField']) -> None:
+        if self.is_locked():
+            raise ParameterError('Parameter is locked')
         if not parm.name:
             raise ValueError("Reference field must have a name")
-        self._data['dependency']['value'] = f'ref:{parm.name}'
+        self._data['dependency']['type'] = 'ref'
+        self._data['dependency']['value'] = parm.name
 
     def set_comment(self, value: str) -> None:
         self._data['comment'] = TypeAdapter(str).validate_python(value)
@@ -172,6 +217,18 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
 
     def has_value(self) -> bool:
         return self._data['value'] is not NOT_SET or (not self._data['required'] and self._data['default'] is not None)
+
+    def is_default(self):
+        if self._data['required']:
+            return self._data['value'] is NOT_SET
+        if self._data['dependency'].get('type'):
+            return False
+        return self._data['default'] == self._data['value']
+
+    def set_default(self):
+        if self._data['required']:
+            raise ParameterError('Parameter is required and have no default value')
+        self._data['value'] = self._data['default']
 
     def get_serialized(self) -> Any:
         value = self.get()
@@ -195,7 +252,7 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
             'required': self.is_required(),
             'default': self._serialize_value(self._data['default']),
             'validators': self._get_validators_schema(),
-            'dependency': self._data['dependency'],
+            # 'dependency': self._data['dependency'],
             **self.get_additional_info()
         }
         if self._data['description']:

@@ -1,7 +1,9 @@
 from typing import Any
 
 from agio.core import package_hub
+from agio.core.events import emit
 from agio.core.settings.package_settings import APackageSettings
+from agio.core.settings.collector import write_local_settings
 
 
 class ASettingsHub:
@@ -18,9 +20,7 @@ class ASettingsHub:
 
         self._package_settings = {}
         all_packages = package_hub.get_packages()
-        for package_name in package_names:
-            if package_name not in all_packages:
-                raise ValueError(f'Package {package_name} not found')
+        for package_name in all_packages.keys():
             if self.settings_type == LocalSettingsHub.settings_type:
                 package_settings_cls = all_packages[package_name].get_local_settings_class()
             elif self.settings_type == WorkspaceSettingsHub.settings_type:
@@ -62,10 +62,14 @@ class ASettingsHub:
             raise KeyError(f"Package {package_name} not found in workspace settings")
         return package_settings.set(param_name, value)
 
+    def set_default(self, param_name: str) -> None:
+        parm = self.get_parameter(param_name)
+        return parm.set_default()
+
     def get_parameter(self, param_name: str) -> Any:
         if param_name.count('.') != 1:
             raise NameError(f"Invalid parameter name: {param_name}")
-        package_name, param_name = param_name.split(":")
+        package_name, param_name = param_name.split(".")
         package_settings: APackageSettings = self._package_settings.get(package_name)
         if not package_settings:
             raise KeyError(f"Package {package_name} not found in workspace settings")
@@ -74,7 +78,7 @@ class ASettingsHub:
     def dump(self):
         all_settings = {}
         for name, pkg in self._package_settings.items():
-            pkg_settings = {f"{name}.{k}": v for k,v in pkg.__dump_settings__().items()}
+            pkg_settings = {f"{name}.{k}": v for k,v in pkg.__dump_settings__(skip_default=True).items()}
             all_settings.update(pkg_settings)
         return all_settings
 
@@ -85,11 +89,10 @@ class ASettingsHub:
 class LocalSettingsHub(ASettingsHub):
     settings_type: str = 'local'
 
-    # def save(self):
-    #     from agio.core.settings.collector import write_common_settings
-    #
-    #     data = self.dump()
-    #     write_common_settings(data)
+    def save(self):
+        data = self.dump()
+        write_local_settings(data)
+        emit('core.settings.local_settings_saved')
 
 
 class WorkspaceSettingsHub(ASettingsHub):

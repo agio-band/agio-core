@@ -1,38 +1,29 @@
 import json
+import logging
 from pathlib import Path
-from typing import Any, Callable
 
-from agio.core.settings import LocalSettingsHub, WorkspaceSettingsHub
+from agio.core import package_hub
 from agio.core.settings.generic_types import SettingsType
+from agio.core.utils import pipeline_config_dir
 
-settings_root = Path('~/.agio/settings').expanduser()
-
-
-def collect_local_settings() -> LocalSettingsHub:
-    # read local settings from files
-    settings = read_local_settings_values()
-    # create local settings instance with applied values
-    return LocalSettingsHub(settings)
+logger = logging.getLogger(__name__)
 
 
-def collect_workspace_settings() -> WorkspaceSettingsHub|None:
-    from agio.core.workspace.workspace import AWorkspace
-    # create workspace instance
-    ws = AWorkspace.current()
-    if not ws:
-        return
-    # get workspace settings from server
-    settings = {}
-    # create workspace settings instance with applied values
-    return WorkspaceSettingsHub(settings)
+def _get_settings_dir() -> Path:
+    return Path(pipeline_config_dir()) / 'settings'
+
+
+def _get_settings_file(file_name: str) -> Path:
+    return _get_settings_dir().joinpath(file_name).with_suffix('.json')
+
 
 
 def read_local_settings_values():
     path_list = [
-        settings_root/'common_settings.json'
+        _get_settings_file('common_settings')
     ]
-    # TODO: add project overrides
     # TODO: add studio overrides
+    # TODO: add project overrides
     # read data
     settings_data = {}
     for path in path_list:
@@ -43,16 +34,13 @@ def read_local_settings_values():
     return settings_data
 
 
-def write_local_settings(common_settings: dict = None, projects_settings: dict = None, company_settings: dict = None):
-    if company_settings:
-        save_path = settings_root / 'common_settings.json'
-        with save_path.open('w', encoding='utf-8') as f:
-            json.dump(common_settings, f, ensure_ascii=False, indent=4)
-    # todo:
-    if projects_settings:
-        pass
-    if company_settings:
-        pass
+def write_local_settings(settings_dict: dict = None, scope: str = None):
+    save_path = _get_settings_file('common_settings')
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    with save_path.open('w', encoding='utf-8') as f:
+        json.dump(settings_dict, f, ensure_ascii=False, indent=4)
+    logger.info(f'Saved settings to {save_path}')
+    # todo: apply for scopes: project, company
 
 # layout
 
@@ -66,7 +54,6 @@ def collect_workspace_settings_layout() -> dict:
 
 
 def collect_layout(layout_type: str) -> dict:
-    from agio.core import package_hub
     # collect packages
     all_packages = package_hub.get_packages()
     # collect layout data
@@ -102,7 +89,7 @@ def merge_prefixed_sections(configs_data: dict) -> dict:
     pending_parents = []
 
     def process_section(_section: dict, pkg_name: str) -> dict:
-        new_section = {}
+        _new_section = {}
 
         for key, value in _section.items():
             if key == "content":
@@ -119,20 +106,20 @@ def merge_prefixed_sections(configs_data: dict) -> dict:
                         new_content.append(item)
                     else:
                         new_content.append(item)
-                new_section["content"] = new_content
+                _new_section["content"] = new_content
             elif key != "children":
-                new_section[key] = value
+                _new_section[key] = value
 
         if "children" in _section:
             new_children = {}
-            for child_name, child_section in _section["children"].items():
-                prefixed_child_name = f"{pkg_name}.{child_name}"
-                child_processed = process_section(child_section, pkg_name)
+            for _child_name, _child_section in _section["children"].items():
+                prefixed_child_name = f"{pkg_name}.{_child_name}"
+                child_processed = process_section(_child_section, pkg_name)
                 new_children[prefixed_child_name] = child_processed
                 section_index[prefixed_child_name] = child_processed
-            new_section["children"] = new_children
+            _new_section["children"] = new_children
 
-        return new_section
+        return _new_section
 
     # collect all sections
     for filename, filedata in configs_data.items():

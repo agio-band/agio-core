@@ -1,7 +1,7 @@
 import logging
 import os
 import re
-from functools import lru_cache, cached_property
+from functools import lru_cache, cached_property, cache
 from pathlib import Path
 from typing import Generator, Type, Any
 from urllib.parse import urlparse
@@ -122,10 +122,10 @@ class APackage:
                 return None
         return current_level
 
+    @cache
     def get_settings_class(self, settings_type: str):
         required = False
         settings_path = self._get_meta_data_field(f'settings.{settings_type}.model')
-        # settings_path = self._get_settings_field(f'{settings_type}.model')
         if settings_path is None:
             # default path
             settings_path = f'package_settings.{settings_type}_settings.Settings'

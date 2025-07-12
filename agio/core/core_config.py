@@ -1,8 +1,9 @@
 from pathlib import Path
 from pydantic_settings import BaseSettings as BaseConfig, SettingsConfigDict
 
+from agio.core.utils.app_dirs import cache_dir, config_dir
 
-env_file_path = Path(".env")
+env_file_path = Path(config_dir(), 'core_config')
 
 
 class _BaseSettings(BaseConfig):
@@ -31,7 +32,7 @@ class WorkspaceSettings(_BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AGIO_", extra="ignore")
 
     RESOURCES_DIR: str = ""
-    WORKSPACES_ROOT: str = "~/.agio/workspaces"
+    WORKSPACES_CACHE_ROOT: str = Path(cache_dir()).joinpath("workspaces").as_posix()
 
 
 class CoreConfig(BaseConfig):
