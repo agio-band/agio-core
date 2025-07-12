@@ -3,7 +3,7 @@ import json
 
 from agio.core.utils import config_dir
 
-_session_file = 'agio_session.json'
+_session_file = 'session.json'
 
 
 def _get_session_file():

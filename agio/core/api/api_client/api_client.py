@@ -5,7 +5,7 @@ from uuid import UUID
 
 from agio.core.utils import config
 from agio.core.api.utils import NOTSET
-from agio.core.api.client.base import _ApiClientAuth
+from agio.core.api.api_client.base import _ApiClientAuth
 from agio.core.exceptions import RequestError
 
 
