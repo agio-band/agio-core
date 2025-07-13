@@ -92,7 +92,7 @@ class LocalSettingsHub(ASettingsHub):
     def save(self):
         data = self.dump()
         write_local_settings(data)
-        emit('core.settings.local_settings_saved')
+        emit('core.settings.local_settings_saved', {'settings': self})
 
 
 class WorkspaceSettingsHub(ASettingsHub):

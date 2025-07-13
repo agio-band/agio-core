@@ -148,22 +148,27 @@ def get_revision_settings(revision_id: UUID|str) -> dict:
     )['data']['workspaceSettings']
 
 
-# def get_revision_settings_list(
-#         revision_id: UUID|str,
-#         items_per_page: int = 10,
-#         after: str = None,
-#     ):
-#     return client.make_query(
-#         'workspace/settings/getRevisionSettingsList',
-#         revisionId=revision_id,
-#         first=items_per_page,
-#         afterCursor=after,
-#     )['data']['workspaceSettings']['revisionSettings']
-
-
 def iter_revision_settings(revision_id: UUID|str) -> Iterator[dict]:
     yield from iter_entities(
         'workspace/settings/getRevisionSettingsList',
         entities_data_key='workspaceSettingses',
         variables=dict(revisionId=revision_id)
     )
+
+
+def get_settings_by_workspace_id(workspace_id: UUID|str) -> dict:
+    resp = client.make_query(
+        'workspace/settings/getSettingsByWorkspaceId',
+        workspaceId=workspace_id
+    )['data']['workspaceSettingses']['edges']
+    if resp:
+        return resp[0]['node']
+
+
+def get_settings_by_revision_id(revision_id: UUID|str) -> dict:
+    resp = client.make_query(
+        'workspace/settings/getSettingsByRevisionId',
+        revisionId=str(revision_id)
+    )['data']['workspaceSettingses']['edges']
+    if resp:
+        return resp[0]['node']

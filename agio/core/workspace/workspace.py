@@ -8,9 +8,11 @@ from uuid import UUID
 
 from agio.core.exceptions import WorkspaceNotExists, WorkspaceNotInstalled
 from agio.core.packages.package import APackage, AReleaseInfo, logger
+from agio.core.settings import WorkspaceSettingsHub
 from agio.core.utils import config
 from agio.core.workspace import pkg_manager, venv_utils
 from agio.core import api
+from agio.core.events import emit
 
 
 class AWorkspace:
@@ -93,10 +95,12 @@ class AWorkspace:
         return APackage(**pkg_data)
 
     def get_launch_envs(self):
-        return {
+        env = {
             'AGIO_WORKSPACE_ID': str(self.id),
             'VIRTUAL_ENV': self.root.as_posix()
         }
+        emit('core.workspace.launch_envs', {'envs': env, 'workspace': self})
+        return env
 
     def get_pyexecutable(self) -> str:
         return self.venv_manager.python_executable
@@ -131,6 +135,7 @@ class AWorkspace:
             return True
 
     def install(self, clean: bool = False, no_cache: bool = False):
+        emit('core.workspace.before_install', {'workspace': self})
         self._data = self._load_remote_data()
         reinstall = clean or self.need_to_reinstall()
 
@@ -155,14 +160,17 @@ class AWorkspace:
         self.venv_manager.install_packages(*install_args, no_cache=no_cache)
         with open(self.local_meta_file, 'w') as f:
             json.dump(self._data, f, indent=4)
+        emit('core.workspace.installed', {'workspace': self, 'data': self._data, 'meta_filename': self.local_meta_file})
 
     def get_packages_info(self):
         return [AReleaseInfo(pkg['name'], pkg['version']) for pkg in self._packages]
 
     def remove(self) -> bool:
+        emit('core.workspace.before_remove', {'workspace': self})
         if self.exists():
             self.venv_manager.delete_venv()
             shutil.rmtree(self.root)
+            emit('core.workspace.removed', {'workspace': self})
             return True
         return False
 
@@ -174,4 +182,11 @@ class AWorkspace:
         if not self.exists():
             raise WorkspaceNotExists('Workspace not installed')
         self.install()
+
+    def get_settings(self) -> WorkspaceSettingsHub:
+        settings_data = {}  # TODO
+        # create workspace settings instance with applied values
+        settings = WorkspaceSettingsHub(settings_data)
+        emit('core.settings.workspace_settings_loaded', {'settings': settings, 'workspace': ws})
+        return settings
 

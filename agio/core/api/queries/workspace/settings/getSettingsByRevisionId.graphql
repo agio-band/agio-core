@@ -1,0 +1,27 @@
+query GetSettingsByRevisionId($revisionId: ID!) {
+  workspaceSettingses(
+    filter: {
+      where: {
+        isCurrent: { equalTo: true },
+        workspaceRevision: {
+          id: { equalTo: $revisionId }
+        }
+      }
+    },
+    first: 1
+  ) {
+    edges {
+      node {
+        id
+        data
+        workspaceRevision {
+          id
+          workspace {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+}
