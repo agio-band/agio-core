@@ -14,7 +14,7 @@ def get_resources_dirs():
     ]
     # from env
 
-    from_env = config.workspace.RESOURCES_DIR
+    from_env = config.WS.RESOURCES_DIR
     if from_env:
         resource_dir_list.extend([Path(path) for path in from_env.split(os.pathsep)])
     # from packages

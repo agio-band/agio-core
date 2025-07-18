@@ -27,6 +27,10 @@ class PackageMetadataError(AException):
     detail: str = "Package Metadata Error"
 
 
+class PackageRepositoryError(AException):
+    detail: str = "Package Repository Error"
+
+
 # workspace
 class WorkspaceError(AException):
     detail: str = "Workspace Error"
@@ -38,6 +42,10 @@ class WorkspaceNotExists(WorkspaceError):
 
 class WorkspaceNotInstalled(WorkspaceError):
     detail: str = "Workspace Not Installed"
+
+
+class MakeReleaseError(AException):
+    detail: str = "Make Release Error"
 
 
 # Event hub

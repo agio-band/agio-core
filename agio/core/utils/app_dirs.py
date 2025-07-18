@@ -31,19 +31,25 @@ def _get_user_temp_dir():
     return Path(tempfile.gettempdir())
 
 
-def temp_dir() -> str:
-    return _get_user_temp_dir().joinpath('agio').as_posix()
+def temp_dir() -> Path:
+    return _get_user_temp_dir().joinpath('agio')
 
 
-def cache_dir() -> str:
-    return _get_user_cache_dir().joinpath('agio').as_posix()
+def cache_dir() -> Path:
+    return _get_user_cache_dir().joinpath('agio')
 
 
-def config_dir() -> str:
-    conf_dir = Path(_get_user_config_dir(), 'agio')
-    return conf_dir.as_posix()
+def local_app_dir() -> Path:
+    return Path(_get_user_config_dir(), 'agio')
 
 
-def pipeline_config_dir() -> str:
-    path = os.path.join(config_dir(), 'pipe')
-    return path
+def config_dir() -> Path:
+    return local_app_dir() / 'config'
+
+
+def default_workspace_install_dir() -> Path:
+    return local_app_dir() / 'workspaces'
+
+
+def pipeline_config_dir() -> Path:
+    return local_app_dir() / 'pipe'

@@ -1,9 +1,8 @@
-from pathlib import Path
 from pydantic_settings import BaseSettings as BaseConfig, SettingsConfigDict
 
-from agio.core.utils.app_dirs import cache_dir, config_dir
+from agio.core.utils import app_dirs
 
-env_file_path = Path(config_dir(), 'core_config')
+env_file_path = app_dirs.config_dir() / 'core_config.env'
 
 
 class _BaseSettings(BaseConfig):
@@ -11,15 +10,15 @@ class _BaseSettings(BaseConfig):
         env_file=(env_file_path.as_posix()),
         case_sensitive=True,
         extra="ignore",
+        env_prefix="AGIO_"
     )
 
 
 class ApiSettings(_BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="AGIO_API_", extra="ignore")
     # all api methods must return pydantic schemas instead dicts
     USE_RESPONSE_SCHEMA: bool = True
     # request timeout
-    REQUEST_TIMEOUT: int = 5
+    API_REQUEST_TIMEOUT: int = 5
     # base url
     PLATFORM_URL: str = "https://platform.agio.services"
     # default api client
@@ -29,14 +28,18 @@ class ApiSettings(_BaseSettings):
 
 
 class WorkspaceSettings(_BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="AGIO_", extra="ignore")
-
     RESOURCES_DIR: str = ""
-    WORKSPACES_CACHE_ROOT: str = Path(cache_dir()).joinpath("workspaces").as_posix()
+    CACHE_ROOT: str = app_dirs.cache_dir().as_posix()
+    INSTALL_DIR: str = app_dirs.default_workspace_install_dir().as_posix()
+
+
+class PackagesConfig(_BaseSettings):
+    STORE_URL: str = "https://store.agio.services"  # TODO
 
 
 class CoreConfig(BaseConfig):
-    api: ApiSettings = ApiSettings()
-    workspace: WorkspaceSettings = WorkspaceSettings()
+    API: ApiSettings = ApiSettings()
+    WS: WorkspaceSettings = WorkspaceSettings()
+    PKG: PackagesConfig = PackagesConfig()
 
 

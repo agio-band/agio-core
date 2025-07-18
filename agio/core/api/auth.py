@@ -1,4 +1,6 @@
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
+from requests.exceptions import HTTPError
+from agio.core.exceptions import RequestError
 from . import client
 
 # auth
@@ -17,6 +19,6 @@ def is_logged_in():
     """
     try:
         resp = client.make_query('desk/account/currentUserId')
-    except InvalidGrantError:
+    except (InvalidGrantError, HTTPError, RequestError):
         return False
     return 'error' not in resp

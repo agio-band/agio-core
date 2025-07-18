@@ -1,0 +1,50 @@
+query GetWorkspaceAndCurrentRevision($workspaceId: ID!) {
+  workspace(id: $workspaceId) {
+    id
+    name
+    description
+    createdAt
+    updatedAt
+    company {
+      id
+      name
+      code
+    }
+  }
+  workspaceRevisions(
+    first: 1
+    ordering: [{ sort: CREATED_AT, direction: DESC }]
+    filter: {
+      where: {
+        workspace: { id: { equalTo: $workspaceId } }
+        isCurrent: { equalTo: true }
+      }
+    }
+  ) {
+    edges {
+      node {
+        id
+        workspaceId
+        isCurrent
+        status
+        packageReleases {
+          id
+          name
+          label
+          description
+          assets
+          metadata
+          package{
+            id
+            name
+            hidden
+            verified
+            disabled
+          }
+        }
+        layout
+        comment
+      }
+    }
+  }
+}

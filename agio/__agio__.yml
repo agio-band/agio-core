@@ -8,6 +8,7 @@ tags:
   - core
 
 urls:
+  source_url: "https://github.com/paulwinex/agio-core"
   home_page: ""
   documentation: ""
   bug_tracker: "https://github.com/agio/agio-core/issues"
@@ -51,6 +52,10 @@ plugins:
   - label: Settings command
     implementations:
       - module: plugins/commands/settings_cmd.py
+
+  - label: Pass command
+    implementations:
+      - module: plugins/commands/pass_cmd.py
 
   # auth
   - label: Auth command

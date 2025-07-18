@@ -14,7 +14,7 @@ def get_current_branch(repository_root: str):
 
 
 def has_uncommited_changes(repository_root: str):
-    cmd = 'git status --porcelain'
+    cmd = 'git status --porcelain --untracked-files=no'
     output = process_utils.start_process(shlex.split(cmd), workdir=repository_root, get_output=True)
     return bool(output.strip())
 
@@ -25,18 +25,17 @@ def has_unpushed_commits(repository_root: str):
     return output.decode().strip() != '0'
 
 
-def get_tags(repository_root: str, remote_name: str = 'origin'):
+def get_tags(repository_root: str, remote_url: str):
     cmd = 'git tag --list'
     output = process_utils.start_process(shlex.split(cmd), workdir=repository_root, get_output=True)
     local_tags = set(output.split('\n') if output else [])
-
-    cmd = f'git ls-remote --tags {remote_name}'
+    cmd = f'git ls-remote --tags {remote_url}'
     try:
         output = process_utils.start_process(shlex.split(cmd), workdir=repository_root, get_output=True)
     except Exception as e:
         logger.warning(str(e))
+        raise
     remote_tags = set(re.findall(r'refs/tags/([\w.]+)', output))
-
     return local_tags, remote_tags
 
 
@@ -45,23 +44,19 @@ def create_tag(repository_root: str, tag_name: str, message: str = None, push: b
     Configured ssh required
     """
     repository_root = str(repository_root)
-    local_tags, remote_tags = get_tags(repository_root)
+    local_tags, remote_tags = get_tags(repository_root, get_remote_url(repository_root))
     if tag_name in local_tags:
         cmd = f'git tag -d {tag_name}'
-        print('REMOVE LOCAL:', cmd)
         subprocess.call(shlex.split(cmd), cwd=repository_root)
     if push and tag_name in remote_tags:
         cmd = f'git push --delete origin {tag_name}'
-        print('REMOVE REMOTE:', cmd)
         subprocess.call(shlex.split(cmd), cwd=repository_root)
     cmd = f'git tag {tag_name}'
     if message:
         cmd += f' -m "{message}"'
-    print('CREATE TAG', cmd)
     subprocess.call(shlex.split(cmd), cwd=repository_root)
     if push:
         cmd = f'git push origin {tag_name}'
-        print('PUSH TAG TO REMOTE', cmd)
         subprocess.call(shlex.split(cmd), cwd=repository_root)
 
 

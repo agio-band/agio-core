@@ -7,7 +7,7 @@ Schema = Type[BaseModel]
 
 def response_schema(schema: Schema) -> Callable:
     def decorator(func: Callable) -> Callable:
-        if config.api.USE_RESPONSE_SCHEMA:
+        if config.API.USE_RESPONSE_SCHEMA:
             def wrapper(*args, **kwargs) -> BaseModel:
                 result = func(*args, **kwargs)
                 if not isinstance(result, dict):

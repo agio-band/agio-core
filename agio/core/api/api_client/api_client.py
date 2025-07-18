@@ -1,4 +1,6 @@
 import json
+import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from uuid import UUID
@@ -9,13 +11,16 @@ from agio.core.api.api_client.base import _ApiClientAuth
 from agio.core.exceptions import RequestError
 
 
+logger = logging.getLogger(__name__)
+
+
 class ApiClient(_ApiClientAuth):
-    _base_api_url = f'{config.api.PLATFORM_URL}/graphql'
+    _base_api_url = f'{config.API.PLATFORM_URL}/graphql'
     queries_root = Path(__file__).parent.parent.joinpath('queries')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._debug_query = False
+        self._debug_query = bool(os.getenv('AGIO_DEBUG_QUERY'))
 
     def set_debug_query(self, val: bool):
         self._debug_query = bool(val)
@@ -44,6 +49,8 @@ class ApiClient(_ApiClientAuth):
         if self._debug_query:
             self._print_data(data, "Request")
         response = self.session.post(self._base_api_url, json=data)
+        if not response.ok:
+            logger.exception(f"Request failed with status code: {response.status_code}")
         response.raise_for_status()
         result = response.json()
         if self._debug_query:

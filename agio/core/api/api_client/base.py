@@ -33,12 +33,12 @@ def _error_page_text():
 
 
 class _ApiClientAuth:
-    platform_url = config.api.PLATFORM_URL
-    authorization_base_url = f'{config.api.PLATFORM_URL}/.ory/hydra/public/oauth2/auth'
-    token_url = f'{config.api.PLATFORM_URL}/.ory/hydra/public/oauth2/token'
-    redirect_uri = f'http://localhost:{config.api.AUTH_LOCAL_PORT}/oauth_callback'
+    platform_url = config.API.PLATFORM_URL
+    authorization_base_url = f'{config.API.PLATFORM_URL}/.ory/hydra/public/oauth2/auth'
+    token_url = f'{config.API.PLATFORM_URL}/.ory/hydra/public/oauth2/token'
+    redirect_uri = f'http://localhost:{config.API.AUTH_LOCAL_PORT}/oauth_callback'
     scope = ['openid', 'offline']
-    default_client_id = config.api.DEFAULT_CLIENT_ID
+    default_client_id = config.API.DEFAULT_CLIENT_ID
 
     def __init__(self, *args, **kwargs):
         self._expire_time = None
@@ -97,7 +97,7 @@ class _ApiClientAuth:
                     self.send_header('Location', authorization_url)
                     self.end_headers()
 
-        httpd = HTTPServer(('localhost', config.api.AUTH_LOCAL_PORT), RequestHandler)     # type: ignore
+        httpd = HTTPServer(('localhost', config.API.AUTH_LOCAL_PORT), RequestHandler)     # type: ignore
         logging.info(f'Auth URL: {authorization_url}')
         webbrowser.open(authorization_url)
         httpd.handle_request()

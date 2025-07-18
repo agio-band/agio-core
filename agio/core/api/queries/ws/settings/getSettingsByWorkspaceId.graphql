@@ -33,7 +33,7 @@ query GetSettingsByWorkspaceId($workspaceId: ID!) {
         id
         data
         workspaceRevision {
-           id
+         id
         }
       }
     }

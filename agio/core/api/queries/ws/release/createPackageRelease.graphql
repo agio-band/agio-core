@@ -1,0 +1,21 @@
+mutation CreatePackageRelease (
+    $packageId: String!,
+    $name: String!,
+    $label: String!,
+    $description: String!
+    $assets: Map!,
+    $metadata: Map!
+) {
+    createPackageRelease(
+        input: {
+            name: $name,
+            packageId: $packageId,
+            description: $description,
+            label: $label,
+            assets: $assets,
+            metadata: $metadata,
+        })
+    {
+        packageReleaseId
+    }
+}

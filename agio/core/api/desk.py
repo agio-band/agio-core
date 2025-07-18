@@ -24,7 +24,7 @@ def update_profile(update_data: dict):
 
 # Company
 
-@response_schema(CurrentCompanyResponseSchema)
+# @response_schema(CurrentCompanyResponseSchema)
 def get_current_company() -> dict|CurrentCompanyResponseSchema:
     """
     Get current active company.

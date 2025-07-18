@@ -1,0 +1,40 @@
+query FindWorkspaceRevisionList(
+    $first: Int!,
+    $afterCursor: String,
+    $where: WorkspaceRevisionWhere
+) {
+  workspaceRevisions(
+    first: $first
+    after: $afterCursor
+    ordering: [
+      {
+        sort: CREATED_AT,
+        direction: DESC
+      }
+    ]
+    filter: {
+      where: $where
+    }
+  ) {
+    edges {
+      node {
+        id
+        workspaceId
+        isCurrent
+        status
+        packageReleases {
+          id
+          name
+        }
+        layout
+        comment
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}

@@ -1,0 +1,20 @@
+query FindPackageByName($name: String!) {
+    packages (
+        filter: {
+            where: {
+                name: { equalTo: $name }
+            }
+        },
+        first: 1
+    ){
+        edges {
+            node{
+                id
+                name
+                hidden
+                disabled
+                verified
+            }
+        }
+    }
+}

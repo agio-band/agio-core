@@ -19,6 +19,7 @@ def terminate_child(proc):
 def start_process(
         command: list[str] | tuple[str] | str,
         envs: dict = None,
+        clear_envs: list = None,
         detached: bool = False,
         replace: bool = False,
         new_console: bool = False,
@@ -35,9 +36,11 @@ def start_process(
     Propagates exit code from child to parent if the child crashes.
     """
     new_env = os.environ.copy()
+    if clear_envs:
+        for env in clear_envs:
+            new_env.pop(env, None)
     if envs:
         new_env.update(envs)
-
     if workdir:
         if not os.path.isdir(workdir):
             print(f"Error: Working directory '{workdir}' does not exist.")
@@ -98,7 +101,6 @@ def start_process(
             else:
                 command = f'{terminal} -e "{subprocess.list2cmdline(command)}"'
                 use_shell = True
-
     process = subprocess.Popen(
         command,
         env=new_env,

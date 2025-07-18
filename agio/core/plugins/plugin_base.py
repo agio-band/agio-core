@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-import inspect, os
-from abc import ABC
+import inspect
+import logging
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Generator
-import logging
 
+from agio.core.exceptions import PluginLoadingError
 from agio.core.utils import context
 from agio.core.utils.import_utils import import_module_by_path
 from agio.core.utils.text_utils import unslugify
-from agio.core.exceptions import PluginLoadingError
 
 if TYPE_CHECKING:
-    from agio.core.packages.package import APackage
+    from agio.core.packages import APackageLocal
 
 
 logger = logging.getLogger(__name__)
@@ -27,9 +27,9 @@ class APlugin(_APluginBase):
     name = None
     label = None
 
-    def __init__(self, package: APackage, plugin_info: dict):
+    def __init__(self, package: APackageLocal, plugin_info: dict):
         self._plugin_info = plugin_info
-        self._package = package
+        self._package = package # local package tools
 
     def get_label(self):
         return self.label or unslugify(self.name)

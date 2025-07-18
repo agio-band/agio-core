@@ -1,7 +1,9 @@
 import glob
 import os
 import sys
-from agio.core.packages.package import APackage
+from typing import Generator
+
+from agio.core.packages import APackage, APackageLocal
 from agio.core.utils.singleton import Singleton
 
 
@@ -10,10 +12,10 @@ class APackageHub(metaclass=Singleton):
         self._packages = {}
         self.collect_packages()
 
-    def add_package(self, package: APackage):
-        if package.name in self._packages:
-            raise ValueError(f"Package {package.name} already registered: {self._packages[package.name].root}")
-        self._packages[package.name] = package
+    def add_package(self, package: APackageLocal):
+        if package.package_name in self._packages:
+            raise ValueError(f"Package {package.package_name} already registered: {self._packages[package.package_name].root}")
+        self._packages[package.package_name] = package
 
     @property
     def packages_count(self):
@@ -43,7 +45,7 @@ class APackageHub(metaclass=Singleton):
             self.add_package(package)
 
     @classmethod
-    def iter_packages(cls) -> list[APackage]:
+    def iter_packages(cls) -> Generator[APackageLocal, None, None]:
         # TODO support zip packages
 
         def iter_importable_packages():
@@ -61,8 +63,8 @@ class APackageHub(metaclass=Singleton):
 
         loaded = set()
         for pkg_path in iter_importable_packages():
-            if APackage.is_package_root(pkg_path) and pkg_path not in loaded:
-                yield APackage(pkg_path)
+            if APackageLocal.is_package_root(pkg_path) and pkg_path not in loaded:
+                yield APackageLocal(pkg_path)
                 loaded.add(pkg_path)
 
     def collect_callbacks(self):

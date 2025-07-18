@@ -1,0 +1,5 @@
+mutation DeleteExistingPackage($id: ID!) {
+  deletePackage(id: $id) {
+    ok
+  }
+}

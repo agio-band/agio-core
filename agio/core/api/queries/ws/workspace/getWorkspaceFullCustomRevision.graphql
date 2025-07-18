@@ -1,0 +1,40 @@
+query GetWorkspaceAndSpecificRevision(
+  $workspaceId: ID!
+  $revisionId: ID!
+) {
+  workspace(id: $workspaceId) {
+    id
+    name
+    description
+    createdAt
+    updatedAt
+    company {
+      id
+      name
+      code
+    }
+  }
+  workspaceRevision(id: $revisionId) {
+    id
+    workspaceId
+    isCurrent
+    status
+    packageReleases {
+      id
+      name
+      label
+      description
+      assets
+      metadata
+      package{
+        id
+        name
+        hidden
+        verified
+        disabled
+      }
+    }
+    layout
+    comment
+  }
+}

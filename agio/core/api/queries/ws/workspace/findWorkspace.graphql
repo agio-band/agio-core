@@ -1,0 +1,34 @@
+query FindWorkspace(
+    $first: Int!,
+    $afterCursor: String,
+    $where: WorkspaceWhere
+) {
+    workspaces(
+        first: $first
+        after: $afterCursor
+        ordering: [
+            {
+                sort: CREATED_AT,
+                direction: DESC
+            }
+        ]
+        filter: {
+            where: $where
+        }
+    ) {
+        edges {
+            node {
+                id
+                name
+                description
+                createdAt
+                updatedAt
+                company {
+                    id
+                    name
+                    code
+                }
+            }
+        }
+    }
+}

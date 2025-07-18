@@ -17,4 +17,4 @@ __all__ = [
 
 config = CoreConfig()
 context = AppContext()
-store = LocalStorage(Path(config_dir()) / 'store')
+store = LocalStorage(Path(pipeline_config_dir()) / 'store')

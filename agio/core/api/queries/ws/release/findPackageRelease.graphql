@@ -23,6 +23,7 @@ query FindPackageRelease (
         description
         assets
         metadata
+        packageId
       }
     }
   }

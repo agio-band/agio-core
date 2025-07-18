@@ -96,7 +96,7 @@ class LocalSettingsHub(ASettingsHub):
 
 
 class WorkspaceSettingsHub(ASettingsHub):
-    settings_type: str = 'workspace'
+    settings_type: str = 'ws'
 
     # def save(self):
     #     """

@@ -73,5 +73,3 @@ def check_current_python_version(required_version: str, current_version: str):
             return True
     return is_match
 
-
-find_best_available_version('3.13', '<=3.12', ['3.11.1', '3.12.0'])

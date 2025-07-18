@@ -1,37 +1,11 @@
+import re
 from pathlib import Path
 from typing import List
+from urllib.parse import urlparse
 
 import requests
-import re
 from packaging.tags import sys_tags, Tag
 from packaging.utils import parse_wheel_filename
-from requests.exceptions import RequestException
-
-
-# def get_compatible_whl_url(repo_owner: str, repo_name: str, package_version: str):
-#     compatible_tags = list(sys_tags())
-#     releases_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/{package_version}"
-#
-#     try:
-#         response = requests.get(releases_url)
-#         response.raise_for_status()
-#         assets = response.json().get("assets", [])
-#     except RequestException as e:
-#         raise RuntimeError(f"Failed to fetch GitHub release: {e}")
-#
-#     for asset in assets:
-#         if not asset["name"].endswith(".whl"):
-#             continue
-#         try:
-#             name, version, build, tags_whl = parse_wheel_filename(asset["name"])
-#             if any(tag in tags_whl for tag in compatible_tags):
-#                 return asset["browser_download_url"]
-#         except InvalidWheelFilename:
-#             continue
-#         except Exception as e:
-#             print(f"Warning: unexpected error parsing wheel '{asset['name']}': {e}")
-#             continue
-#     raise ValueError("No compatible .whl found for your platform.")
 
 
 def extract_repo_info(repo_url: str):
@@ -117,3 +91,69 @@ def filter_compatible_package(files: List[str]) -> str:
     if best_match:
         return best_match
     raise ValueError("No compatible .whl found for your platform.")
+
+
+
+class GitUrl:
+    def __init__(self, url: str, token: str = None, secure_http: bool = False):
+        self.original_url = url
+        self.token = token
+        self.secure_http = secure_http
+        self.parts = self._parse_url(url)
+
+    def __repr__(self):
+        return f"<GitUrl(original='{self.original_url}')>"
+
+    def _parse_url(self, url: str):
+        # SCP-like SSH format: git@github.com:user/repo.git (без схемы!)
+        if not re.match(r'^\w+://', url):  # Нет схемы — это SCP
+            scp_like = re.match(r'^(?P<user>[^@]+)@(?P<host>[^:]+):(?P<path>.+)$', url)
+            if scp_like:
+                return {
+                    'scheme': 'ssh',
+                    'user': scp_like.group('user'),
+                    'host': scp_like.group('host'),
+                    'path': scp_like.group('path'),
+                    'port': None
+                }
+
+        # Иначе — полноценный URL с схемой
+        parsed = urlparse(url)
+        return {
+            'scheme': parsed.scheme,
+            'user': parsed.username or '',
+            'host': parsed.hostname,
+            'path': parsed.path.lstrip('/'),
+            'port': parsed.port
+        }
+
+    @property
+    def http(self):
+        if self.secure_http or self.parts['scheme'] == 'https':
+            scheme = 'https'
+        else:
+            scheme = 'http'
+        user = self.parts['user'] or 'git'
+        host = self.parts['host']
+        path = self.parts['path']
+        if self.token:
+            return f"{scheme}://{user}:{self.token}@{host}/{path}"
+        return f"{scheme}://{host}/{path}"
+
+    @property
+    def ssh(self):
+        """Convert to SSH URL: git@host:user/repo.git"""
+        user = self.parts['user'] or 'git'
+        host = self.parts['host']
+        path = self.parts['path']
+        return f"{user}@{host}:{path}"
+
+    def to_ssh_url_scheme(self):
+        """Convert to ssh://git@host[:port]/user/repo.git (not SCP-like)"""
+        user = self.parts['user'] or 'git'
+        host = self.parts['host']
+        path = self.parts['path']
+        port = f":{self.parts['port']}" if self.parts['port'] else ""
+        return f"ssh://{user}@{host}{port}/{path}"
+
+

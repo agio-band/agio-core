@@ -4,64 +4,68 @@ from pathlib import Path
 from typing import Generator
 
 from agio.core import api
-from agio.core.packages.package import APackage, APackageRepository
+from agio.core.packages import APackage, APackageLocal
+from agio.core.packages.package_toolset import get_remote_repository_plugin
 from agio.core.workspace.pkg_manager import get_package_manager, get_package_manager_class
-from agio.core.packages import get_release_repository_plugin
 
 
 def find_packages_roots() -> Generator:
     for path in sys.path:
         for mdl  in os.listdir(path):
             pkg_root = os.path.join(path, mdl)
-            if APackage.is_package_root(pkg_root):
+            if APackageLocal.is_package_root(pkg_root):
                 yield pkg_root
 
 
-def make_release(package_repository_path: str, token: str = None, **kwargs):
-    pkg = APackageRepository(package_repository_path)
-    # TODO: сделать универсальный обработчик который внутри выберет нужный плагин
-    repo = get_release_repository_plugin(pkg.source_url, pkg.repository_api)
-    if not repo:
-        raise ValueError(f"Repository {pkg.source_url} is not supported")
-    # check registered release
-    resp = api.package.get_package_release_by_name_and_version(pkg.name, pkg.version)
-    if resp:
-        raise ValueError(f"Release {pkg.name} {pkg.version} already exists in agio repository")
-    release_data = repo.make_release(
-        pkg,
-        access_data={'token': token},
-        **kwargs
-    )
-    return register_new_package_release(pkg, release_data)
-
-
-def register_new_package_release(pkg: APackageRepository, data: dict = None, **kwargs):
-    package = api.package.find_package(pkg.name)
-    if not package:
-        raise ValueError(f"Package {pkg.name} is not found")
-    release_id = api.package.create_package_release(
-        package_id=package['id'],
-        version=pkg.version,
-        label=pkg.label,
-        description=pkg.description,
-        assets=data['assets'],
-    )
-    return release_id
-
-
 def register_package(package_repository_path: str):
-    pkg = APackageRepository(package_repository_path)
+    pkg = APackageLocal(package_repository_path)
     package_id = api.package.create_package(
-        name=pkg.name
+        name=pkg.package_name
     )
     return package_id
 
 
-def build_package(package_root: str, **kwargs):
-    path = Path(package_root)
-    pkg_manager = get_package_manager(path)
+def build_package(package_root: str|Path, **kwargs):
+    pkg_manager = get_package_manager(Path(package_root))
     resp = pkg_manager.build_package(**kwargs)
     return resp
+
+
+def make_release(package_repository_path: str, token: str = None, **kwargs):
+    toolset = APackageLocal(package_repository_path)
+    # check package is registered
+    toolset.get_package()
+    # check registered release
+    release = toolset.get_release()
+    if release:
+        raise ValueError(f"Release {toolset.package_name} {toolset.package_version} "
+                         f"already exists in agio repository")
+    # build release
+    repo = get_remote_repository_plugin(toolset.source_url, toolset.repository_api)
+    release_data = repo.make_release(
+        toolset,
+        access_data={'token': token},
+        **kwargs
+    )
+    return register_new_package_release(toolset, release_data)
+
+
+def register_new_package_release(pkg: APackageLocal, data: dict = None, **kwargs):
+    package = api.package.find_package(pkg.package_name)
+    if not package:
+        raise ValueError(f"Package {pkg.package_name} is not found")
+    release_id = api.package.create_package_release(
+        package_id=package['id'],
+        version=pkg.package_version,
+        label=pkg.label,
+        description=pkg.description,
+        assets={"whl": data['assets']},
+        metadata={}
+    )
+    return release_id
+
+
+
 
 
 def download_package_release(package_name: str, version: str, target_dir: str = None):

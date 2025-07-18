@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 import logging
 from agio.core.plugins.base.command_base import ACommandPlugin, ASubCommand
-from agio.core.packages import package_tools
+from agio.core.packages import package_utils
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +41,13 @@ class PackageBuildCommand(ASubCommand):
         # --no-cache
         # --cache-dir <CACHE_DIR>
         logger.info(f"Build package {path}")
-        package_tools.build_package(path, **kwargs)
+        package_utils.build_package(path, **kwargs)
 
 
 class PackageReleaseCommand(ASubCommand):
     command_name = "release"
     arguments = [
-        click.option('-t', '--token'),
+        click.option('-t', '--token', envvar='AGIO_GIT_REPOSITORY_TOKEN',),
         click.option('-b', '--no-check-branch', is_flag=True, default=False, help='Skip branch check'),
         click.option('-c', '--no-check-commits', is_flag=True, default=False, help='Skip commits check'),
         click.option('-p', '--no-check-pushed', is_flag=True, default=False, help='Skip push check'),
@@ -59,8 +59,8 @@ class PackageReleaseCommand(ASubCommand):
 
     def execute(self, token: str, path: str, **kwargs):
         logger.debug(f"Make package release: {path}")
-        result = package_tools.make_release(path, token=token, **kwargs)
-        logger.info(f"Release created: ID {result['id']}")
+        result = package_utils.make_release(path, token=token, **kwargs)
+        logger.info(f"Release created: ID {result}")
 
 
 class PackageRegisterCommand(ASubCommand):
@@ -73,7 +73,7 @@ class PackageRegisterCommand(ASubCommand):
 
     def execute(self, path: str):
         logger.debug(f"Register release in agio store: {path}")
-        resp = package_tools.register_package(path)
+        resp = package_utils.register_package(path)
         print(resp)
 
 
@@ -89,6 +89,6 @@ class PackageCommand(ACommandPlugin):
     def execute(self, info, *args, **kwargs):
         if info:
             print('Show packages info... [TODO]')
-        else:
-            click.echo("ERROR: Arguments not pass", err=True)
-            self.context.exit(1)
+        # else:
+        #     click.echo("ERROR: Arguments not pass", err=True)
+        #     self.context.exit(1)
