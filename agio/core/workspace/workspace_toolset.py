@@ -77,8 +77,6 @@ class AWorkspaceToolset:
     def venv_manager(self):
         return pkg_manager.get_package_manager(self.install_root)
 
-
-
     def install(self, clean: bool = False, no_cache: bool = False):
         emit('core.workspace.before_install', {'workspace': self})
         self._data = self._load_remote_data()

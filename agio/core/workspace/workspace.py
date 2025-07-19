@@ -36,11 +36,11 @@ class AWorkspace(Entity):
         )
         return cls(ws_id)
 
-    def delete(self) -> None:
-        api.workspace.delete_workspace(self.id)
+    def delete(self) -> bool:
+        return api.workspace.delete_workspace(self.id)
 
     @classmethod
-    def find(cls, company_id: str, name: str = NOTSET) -> Self:
+    def find(cls, company_id: str = None, name: str = NOTSET) -> Self:
         company_id = company_id or api.desk.get_current_company()['id']
         data = api.workspace.find_workspace(company_id=company_id, name=name)
         if data:

@@ -92,10 +92,13 @@ class PackageManagerBase:
                 self.create_venv()
         cmd = list(map(str, [self.get_executable(), *cmd]))
         workdir = workdir or str(self.path)
-        # logger.info(f'Running command: {" ".join(cmd)}')
-        # logger.info(f'In directory: {workdir}')
+        logger.debug(f'Running command: {" ".join(cmd)}')
+        logger.debug(f'In directory: {workdir}')
         kwargs.setdefault('get_output', True)
-        return start_process(cmd, workdir=workdir, **kwargs)
+        return start_process(cmd, workdir=workdir, clear_envs=['VIRTUAL_ENV'], **kwargs)
+        # env = os.environ.copy()
+        # env.pop('VIRTUAL_ENV', None)
+        # return subprocess.call(cmd, cwd=workdir, env=env, shell=False)#, **kwargs)
 
     # @classmethod
     # def get_venvs_installation_path(cls):

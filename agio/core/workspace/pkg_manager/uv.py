@@ -1,6 +1,7 @@
 import json
 import os
 import platform
+import re
 import shutil
 import stat
 import tarfile
@@ -38,7 +39,6 @@ class UVPackageManager(PackageManagerBase):
         if kwargs.get('no_cache'):
             cmd.append('--no-cache')
         cmd.extend(packages)
-        # logger.info('Install cmd: %s', ' '.join(cmd))
         self.run(cmd)
 
     def uninstall_package(self, package_name):
@@ -59,25 +59,37 @@ class UVPackageManager(PackageManagerBase):
             if prk['name'] == package_name:
                 return prk['version']
 
-    def create_venv(self, py_version: str):
+    def _get_latest_version(self, versions: list[str], pre_releases=False) -> str | None:
+        sorted_versions = sorted(versions, key=lambda vers: re.search(r"\d+\.\d+\.\d+", vers).groups())
+        if not pre_releases:
+            sorted_versions = [x for x in sorted_versions if not re.search(r"[a-z]", x)]
+        return sorted_versions[0] if sorted_versions else None
+
+    def create_venv(self, py_version: str|None = None):
         available_versions = [x['version'] for x in self.get_available_python_versions()]
-        py_version = venv_utils.find_best_available_version(
-            None,
-            py_version,
-            available_versions
-        )
+        if py_version:
+            py_version = venv_utils.find_best_available_version(
+                None,
+                py_version,
+                available_versions
+            )
+        else:
+            py_version = self._get_latest_version(available_versions)
         if py_version:
             py_version = '=='+py_version    # force match version
             if py_version.strip('=') not in self.get_installed_python_versions():
                 logger.info('Installing python version: %s', py_version)
                 cmd = ['python', 'install', py_version]
                 self.run(cmd, workdir=Path.home().as_posix())
+        else:
+            raise RuntimeError('No python version available')
         logger.info('Create venv with version: %s', py_version)
         cmd = ['init', '--bare']
         cmd.extend(['--python', py_version])
         self.path.mkdir(parents=True, exist_ok=True)
         self.run(cmd, workdir=self.path.as_posix())
         self.run(['venv'], workdir=self.path.as_posix())
+        logger.info('Create venv with version %s: %s', py_version, self.path)
 
     def venv_exists(self):
         return Path(self.venv_path, 'pyvenv.cfg').exists()
