@@ -53,10 +53,6 @@ plugins:
     implementations:
       - module: plugins/commands/settings_cmd.py
 
-  - label: Pass command
-    implementations:
-      - module: plugins/commands/pass_cmd.py
-
   # auth
   - label: Auth command
     implementations:
