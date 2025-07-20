@@ -1,3 +1,4 @@
+import os
 import sys
 from collections import defaultdict
 
@@ -85,12 +86,14 @@ class InfoCommand(ACommandPlugin):
         print()
 
     def _show_settings(self):
-        from agio import local_settings, workspace_settings
+        from agio.core.settings import get_local_settings
+
+        local_settings = get_local_settings()
         print('LOCAL SETTINGS:')
         pprint(local_settings)
         print()
         print('WORKSPACE SETTINGS:')
-        pprint(workspace_settings)
+        print('TODO...')
 
     def show_callbacks(self):
         from agio.core.events import event_hub
@@ -104,3 +107,17 @@ class InfoCommand(ACommandPlugin):
 
     def show_libs_disk_usage(self):
         ...
+
+
+class EnvCommand(ACommandPlugin):
+    name = 'env_cmd'
+    command_name = 'env'
+    help = 'Show agio env'
+
+    def execute(self, *args, **kwargs):
+        keys = [k for k in os.environ.keys() if k.startswith('AGIO_')]
+        max_length = max(len(k) for k in keys)
+        for k in keys:
+            value = os.environ[k]
+            click.secho(f"{k:>{max_length+2}} = {value}", fg='green')
+
