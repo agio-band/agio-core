@@ -11,11 +11,10 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 import requests
-from agio.core.workspace import venv_utils
+from .. import venv_utils
 
 from .pkg_manager_base import PackageManagerBase
-from ...packages.package import APackage
-from ...utils.process_utils import start_process
+from agio.core.utils.process_utils import start_process
 
 logger = logging.getLogger(__name__)
 

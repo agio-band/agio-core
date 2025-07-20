@@ -1,5 +1,6 @@
 import base64
 import logging
+import threading
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
@@ -9,27 +10,13 @@ import webbrowser
 import requests
 from requests_oauthlib import OAuth2Session
 
+from agio.core.api.api_client.auth_server import run_oauth_server
+from agio.core.events import subscribe_manager
 from agio.core.utils import config
 from agio.core.api.utils import session_utils
 from agio.core.exceptions import AuthorizationError
 
 logger = logging.getLogger(__name__)
-
-
-def _get_template_content(name):
-    page_file_path = Path(__file__).parent.parent / f'templates/{name}.html'
-    if not page_file_path.exists():
-        raise FileNotFoundError(f"File {page_file_path} not found")
-    return page_file_path.read_text()
-
-def _success_page_text():
-    return _get_template_content('success_page')
-
-
-def _error_page_text():
-    return _get_template_content('error_page')
-
-
 
 
 class _ApiClientAuth:
@@ -64,43 +51,27 @@ class _ApiClientAuth:
     def is_logged_in(self):
         return self.session.headers.get('Authorization') is not None
 
-    def _do_login(self, client_id: str) -> dict:
-        """
-        Web browser will be opened
-        """
-        logging.debug(f'Login... {self.authorization_base_url} with client_id={client_id}')
-        oauth = OAuth2Session(client_id, scope=self.scope, redirect_uri=self.redirect_uri)
-        authorization_url, state = oauth.authorization_url(self.authorization_base_url)
-        token = dict()
+    def _do_login(self, client_id: str) -> dict|None:
+        stop_event = threading.Event()
 
-        class RequestHandler(BaseHTTPRequestHandler):
+        token, thread = run_oauth_server(
+            client_id=client_id or config.API.DEFAULT_CLIENT_ID,
+            scope=['openid', 'offline'],
+            authorization_base_url=f'{config.API.PLATFORM_URL}/.ory/hydra/public/oauth2/auth',
+            token_url=f'{config.API.PLATFORM_URL}/.ory/hydra/public/oauth2/token',
+            port=config.API.AUTH_LOCAL_PORT,
+            stop_event=stop_event
+        )
+        is_canceled = False
+        def cancel(*args, **kwargs):
+            nonlocal is_canceled
+            stop_event.set()
+            is_canceled = True
 
-            def do_GET(self):
-                nonlocal token
-                if self.path.startswith('/oauth_callback'):
-                    parsed_url = urlparse(self.path)
-                    code = parse_qs(parsed_url.query).get('code')
-                    if code:
-                        code = code[0]
-                        token = oauth.fetch_token(_ApiClientAuth.token_url, client_secret='', code=code)
-                        self.send_response(200)
-                        self.send_header('Content-type', 'text/html')
-                        self.end_headers()
-                        self.wfile.write(_success_page_text().encode())
-                    else:
-                        self.send_response(400)
-                        self.send_header('Content-type', 'text/html')
-                        self.end_headers()
-                        self.wfile.write(_error_page_text().encode())
-                else:
-                    self.send_response(302)
-                    self.send_header('Location', authorization_url)
-                    self.end_headers()
-
-        httpd = HTTPServer(('localhost', config.API.AUTH_LOCAL_PORT), RequestHandler)     # type: ignore
-        logging.info(f'Auth URL: {authorization_url}')
-        webbrowser.open(authorization_url)
-        httpd.handle_request()
+        with subscribe_manager('core.app.exit', cancel):
+            thread.join()
+        if is_canceled:
+            return None
         return token or None
 
     def _refresh_token(self):

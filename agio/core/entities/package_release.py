@@ -1,7 +1,7 @@
 from typing import Self, Iterator
 
 from agio.core.api.utils import NOTSET
-from agio.core.entities import Entity
+from .entity import Entity
 from agio.core import api
 
 

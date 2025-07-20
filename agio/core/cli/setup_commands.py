@@ -4,7 +4,8 @@ import click
 
 from agio.core.cli import tools
 from agio.core import plugin_hub
-from agio.core.workspace import AWorkspace
+from agio.core.entities import AWorkspace
+from agio.core.pkg.workspace import AWorkspaceManager
 
 
 # base command
@@ -44,7 +45,7 @@ from agio.core.workspace import AWorkspace
 )
 @click.pass_context
 def agio_group(ctx, project_name, project_id, workspace_id, workspace_name, revision_id, debug):
-    if not AWorkspace.current():
+    if not AWorkspaceManager.current():
         ws: AWorkspace|None = tools.get_workspace_from_args(
             project_name=project_name,
             project_id=project_id,

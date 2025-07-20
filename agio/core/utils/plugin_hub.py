@@ -2,9 +2,9 @@ import logging
 from collections import defaultdict
 from typing import Iterator
 
+from agio.core.entities import APackage
 from agio.core.exceptions import PluginLoadingError, PluginNotFoundError
-from agio.core.packages.package import APackage
-from agio.core.plugins.plugin_base import APlugin
+from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils.singleton import Singleton
 
 logger = logging.getLogger(__name__)

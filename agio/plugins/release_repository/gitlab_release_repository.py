@@ -1,4 +1,4 @@
-from agio.core.plugins.base.remote_repository_base import RemoteRepositoryPlugin
+from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
 
 
 class GitLabRepositoryPlugin(RemoteRepositoryPlugin):

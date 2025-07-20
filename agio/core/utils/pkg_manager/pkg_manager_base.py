@@ -1,13 +1,12 @@
 import inspect
 import os
-import shutil
 import logging
 import subprocess
 from pathlib import Path
 
-from agio.core.packages.package import APackage
+from agio.core.pkg.package import APackage
 from agio.core.utils.process_utils import start_process
-from agio.core.workspace import venv_utils
+from agio.core.utils import venv_utils
 import tomllib as  toml
 
 logger = logging.getLogger(__name__)

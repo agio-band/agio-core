@@ -1,4 +1,4 @@
-from agio.core.plugins.base.command_base import ACommandPlugin
+from agio.core.plugins.base_command import ACommandPlugin
 import click
 
 from agio.core.utils.args_helper import parse_args_to_dict

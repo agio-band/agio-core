@@ -1,4 +1,4 @@
-from agio.core.events import emit
+from ..events import emit
 from .collector import read_local_settings_values
 from .fields.base_field import BaseField
 from .fields.compaund_fields import ListField, SetField, TupleField, DictField
@@ -13,7 +13,7 @@ from .fields.extended_fields import (
 )
 from .fields.generic_fields import StringField, IntField, BaseField, FloatField
 from .package_settings import APackageSettings
-from .settings_hub import LocalSettingsHub, WorkspaceSettingsHub
+from agio.core.utils.settings_hub import LocalSettingsHub
 
 
 def get_local_settings() -> LocalSettingsHub:

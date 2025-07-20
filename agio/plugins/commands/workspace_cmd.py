@@ -1,6 +1,6 @@
 import click
-from agio.core.plugins.base.command_base import ACommandPlugin, ASubCommand
-from agio.core.workspace.workspace import AWorkspace
+from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
+from agio.core.pkg.workspace import AWorkspace
 
 
 class InstallWorkspaceCommand(ASubCommand):

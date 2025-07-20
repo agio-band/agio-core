@@ -6,7 +6,7 @@ import logging
 import requests
 
 from agio.core.exceptions import MakeReleaseError
-from agio.core.plugins.base.remote_repository_base import RemoteRepositoryPlugin
+from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
 from urllib.parse import urlparse
 
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
     name = 'github_repository'
     repository_api = 'github'
-    check_url_pattern = r'https://github\.com.*'
+    check_url_pattern = r'https://github\.com.+'
     default_token = os.getenv('GITHUB_TOKEN')
 
     def get_token(self, access_data: dict) -> str:

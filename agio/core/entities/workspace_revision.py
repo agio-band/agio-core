@@ -2,8 +2,8 @@ from typing import Iterator, Self
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
-from agio.core.entities import Entity
-from agio.core.packages import APackage
+from .entity import Entity
+from .package import APackage
 
 
 class AWorkspaceRevision(Entity):
@@ -82,6 +82,6 @@ class AWorkspaceRevision(Entity):
         return self._data.get("settings")
 
     def get_toolset(self):
-        from agio.core.workspace import AWorkspaceToolset
+        from agio.core.pkg import AWorkspaceToolset
 
         return AWorkspaceToolset(self)

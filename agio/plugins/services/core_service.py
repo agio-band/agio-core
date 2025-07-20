@@ -3,7 +3,7 @@ import signal
 
 from agio.core.events import emit
 from agio.core.api import client
-from agio.core.plugins.base.service_base import ServicePlugin, make_action
+from agio.core.plugins.base_service import ServicePlugin, make_action
 
 
 class CoreService(ServicePlugin):

@@ -8,7 +8,7 @@ import click
 
 from agio.core import api
 from agio.core.utils.process_utils import start_process
-from agio.core.workspace.workspace import AWorkspace
+from agio.core.pkg.workspace import AWorkspace, AWorkspaceManager
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def get_workspace_from_args(**kwargs):
             revision = api.workspace.get_revision_by_project_name(project_context['project_name'])
     else:
         return
-    return AWorkspace(revision['workspaceId'], revision['id'])
+    return AWorkspaceManager(revision['id'])
 
 
 class Env(click.ParamType):

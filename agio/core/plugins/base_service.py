@@ -8,7 +8,7 @@ from typing import Iterable, Any, Callable
 
 from agio.core.events import emit
 from agio.core.plugins.mixins import BasePluginClass
-from agio.core.plugins.plugin_base import APlugin
+from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils.actions import ActionItem
 from agio.core.utils.text_utils import unslugify
 

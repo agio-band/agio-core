@@ -4,7 +4,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 
 from agio.core.plugins.mixins import BasePluginClass
-from agio.core.plugins.plugin_base import APlugin
+from agio.core.plugins.base_plugin import APlugin
 
 logger = logging.getLogger(__name__)
 

@@ -2,8 +2,10 @@ from pathlib import Path
 
 import click
 import logging
-from agio.core.plugins.base.command_base import ACommandPlugin, ASubCommand
-from agio.core.packages import package_utils
+
+from agio.core.entities import APackage
+from agio.core.pkg.package_repostory import APackageRepository
+from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,11 @@ class PackageNewCommand(ASubCommand):
     ]
 
     def execute(self, path: str):
-        print(f"Create new package in {path}")
+        print(f"Create new package from {path}")
+        pkg = APackageRepository(path).pkg_manager
+        print('Package name:', pkg.package_name)
+        new_pkg = APackage.create(pkg.package_name)
+        print(f"New package created: {new_pkg.id}")
 
 
 class PackageBuildCommand(ASubCommand):
@@ -41,7 +47,8 @@ class PackageBuildCommand(ASubCommand):
         # --no-cache
         # --cache-dir <CACHE_DIR>
         logger.info(f"Build package {path}")
-        package_utils.build_package(path, **kwargs)
+        APackageRepository(path).build(**kwargs)
+
 
 
 class PackageReleaseCommand(ASubCommand):
@@ -59,28 +66,18 @@ class PackageReleaseCommand(ASubCommand):
 
     def execute(self, token: str, path: str, **kwargs):
         logger.debug(f"Make package release: {path}")
-        result = package_utils.make_release(path, token=token, **kwargs)
-        logger.info(f"Release created: ID {result}")
-
-
-class PackageRegisterCommand(ASubCommand):
-    command_name = "register"
-    arguments = [
-        click.argument("path",
-                     type=click.Path(exists=True, dir_okay=True, resolve_path=True),
-                     default=Path.cwd().absolute().as_posix()),
-    ]
-
-    def execute(self, path: str):
-        logger.debug(f"Register release in agio store: {path}")
-        resp = package_utils.register_package(path)
-        print(resp)
+        release_data = APackageRepository(path).make_release(**kwargs)
+        logger.info(f"Release created: ID {release_data['id']}")
 
 
 class PackageCommand(ACommandPlugin):
     name = 'package_cmd'
     command_name = "pkg"
-    subcommands = [PackageNewCommand, PackageBuildCommand, PackageReleaseCommand, PackageRegisterCommand]
+    subcommands = [
+        PackageNewCommand,
+        PackageBuildCommand,
+        PackageReleaseCommand,
+    ]
     help = 'Manage packages'
     arguments = [
         click.option('-i', '--info', is_flag=True, default=False, help='Show package information'),

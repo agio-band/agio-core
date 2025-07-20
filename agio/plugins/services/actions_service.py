@@ -1,4 +1,4 @@
-from agio.core.plugins.base.service_base import ServicePlugin, make_action
+from agio.core.plugins.base_service import ServicePlugin, make_action
 from agio.core.utils import get_actions
 
 

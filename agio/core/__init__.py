@@ -1,7 +1,8 @@
 import logging
 import signal
 
-from .events import emit as _emit, subscribe as _subscribe
+from .events import subscribe as _subscribe
+from .events import emit as _emit
 from .init.init_packages import init_packages
 from .init.init_plugins import init_plugins
 from .utils import setup_logger

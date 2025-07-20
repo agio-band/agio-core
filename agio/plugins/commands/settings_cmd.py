@@ -1,7 +1,4 @@
-import sys
-import click
-from pprint import pprint
-from agio.core.plugins.base.command_base import ACommandPlugin
+from agio.core.plugins.base_command import ACommandPlugin
 
 
 class SettingsCommand(ACommandPlugin):

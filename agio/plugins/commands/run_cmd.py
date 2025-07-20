@@ -2,7 +2,7 @@ import sys
 
 from  agio.core.cli.tools import Env
 import click
-from agio.core.plugins.base.command_base import ACommandPlugin
+from agio.core.plugins.base_command import ACommandPlugin
 from agio.core.utils.process_utils import start_process
 
 

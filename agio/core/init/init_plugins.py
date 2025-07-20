@@ -1,7 +1,7 @@
 import logging
 
 from agio.core.events import emit
-from agio.core.plugins.plugin_hub import APluginHub
+from agio.core.utils.plugin_hub import APluginHub
 from agio.core.utils import context
 
 logger = logging.getLogger(__name__)

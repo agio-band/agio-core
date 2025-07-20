@@ -3,8 +3,8 @@ from typing import Generator, Self
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
-from agio.core.entities import Entity
-from agio.core.packages.release import APackageRelease
+from .entity import Entity
+from .package_release import APackageRelease
 
 logger = logging.getLogger(__name__)
 

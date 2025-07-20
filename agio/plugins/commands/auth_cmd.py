@@ -1,17 +1,17 @@
-import click
-
-from agio.core.plugins.base.command_base import ACommandPlugin, ASubCommand
+from agio.core.api import client
+from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 
 
 class LoginCommand(ASubCommand):
     command_name = "login"
     arguments = [
-        click.argument("email", type=click.STRING),
-        click.argument("password", type=click.STRING),
+        # click.argument("email", type=click.STRING),
+        # click.argument("password", type=click.STRING),
     ]
 
-    def execute(self, email: str, password: str):
-        print(f"Login: {email}@{password}")
+    # def execute(self, email: str, password: str):
+    def execute(self):
+        client.login()
 
 
 class LogoutCommand(ASubCommand):
@@ -19,7 +19,7 @@ class LogoutCommand(ASubCommand):
     arguments = []
 
     def execute(self):
-        print(f"Logout: ...")
+        client.logout()
 
 
 class AuthCommand(ACommandPlugin):

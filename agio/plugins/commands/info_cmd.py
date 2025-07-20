@@ -3,7 +3,10 @@ from collections import defaultdict
 
 import click
 from pprint import pprint
-from agio.core.plugins.base.command_base import ACommandPlugin
+from agio.core.plugins.base_command import ACommandPlugin
+from agio.core.plugins.base_plugin import APlugin
+from agio.core.pkg.package import APackageManager
+from agio.core.pkg.workspace import AWorkspaceManager
 
 
 class InfoCommand(ACommandPlugin):
@@ -41,9 +44,9 @@ class InfoCommand(ACommandPlugin):
         line()
 
     def _show_workspace_info(self):
-        from agio.core.workspace.workspace import AWorkspace
-        ws = AWorkspace.current()
-        if ws:
+        ws_manager = AWorkspaceManager.current()
+        if ws_manager:
+            ws = ws_manager.get_workspace()
             print(f'Workspace: {ws} [{ws.id}]' )
         else:
             print('Workspace: [Not set]')
@@ -57,7 +60,8 @@ class InfoCommand(ACommandPlugin):
         print('PACKAGES:')
         print()
         for package in package_hub.get_package_list():
-            print(f"{package.name} v{package.version} {package.root}")
+            package: APackageManager
+            print(f"{package.package_name} v{package.package_version} {package.root}")
         print()
 
     def _show_plugins_info(self):
@@ -66,7 +70,8 @@ class InfoCommand(ACommandPlugin):
         print()
         all_plugins_by_package = defaultdict(list)
         for plugin in plugin_hub.iter_plugins():
-            all_plugins_by_package[plugin.package.name].append(plugin)
+            plugin: APlugin
+            all_plugins_by_package[plugin.package.package_name].append(plugin)
         for package_name, plugins in all_plugins_by_package.items():
             package_plugins = defaultdict(list)
             print(f"[{package_name}]")

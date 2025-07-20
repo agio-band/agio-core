@@ -3,9 +3,9 @@ import logging
 from abc import ABC
 import click
 
-from agio.core.packages.package import APackage
+from agio.core.entities import APackage
 from agio.core.plugins.mixins import BasePluginClass
-from agio.core.plugins.plugin_base import APlugin
+from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils import context
 from agio.core.utils.process_utils import restart_with_env
 
