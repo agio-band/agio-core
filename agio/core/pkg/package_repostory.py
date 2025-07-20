@@ -77,7 +77,7 @@ class APackageRepository:
         # create release on remote repository
         self.remote_repository.create_and_upload_release(
             self.pkg_manager.source_url,
-            self.pkg_manager.package_name,
+            self.pkg_manager.package_version,
             build_path,
         )
         release = self.remote_repository.get_release_with_tag(

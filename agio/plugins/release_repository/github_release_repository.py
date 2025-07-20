@@ -9,6 +9,7 @@ from agio.core.exceptions import MakeReleaseError
 from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
 from urllib.parse import urlparse
 
+from agio.core.utils import config
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
 
         logger.debug(f"Checking if release exists: {url}")
         retry = 0
-        while retry < 3:
+        while retry < config.API.MAX_REQUEST_ATTEMPTS:
             response = requests.get(url, headers=headers)
             if response.ok:
                 return response.json()

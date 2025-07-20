@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 import logging
 
-from agio.core.entities import APackage
+from agio.core.entities import APackage, APackageRelease
 from agio.core.pkg.package_repostory import APackageRepository
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 
@@ -66,8 +66,11 @@ class PackageReleaseCommand(ASubCommand):
 
     def execute(self, token: str, path: str, **kwargs):
         logger.debug(f"Make package release: {path}")
-        release_data = APackageRepository(path).make_release(**kwargs)
-        logger.info(f"Release created: ID {release_data['id']}")
+        repo =  APackageRepository(path)
+        pkg_manager = repo.pkg_manager
+        release_data = repo.make_release(**kwargs)
+        release = APackageRelease.find(pkg_manager.package_name, release_data['version'])
+        logger.info(f"Package release created: {release.id}")
 
 
 class PackageCommand(ACommandPlugin):

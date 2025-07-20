@@ -25,6 +25,8 @@ class ApiSettings(_BaseSettings):
     DEFAULT_CLIENT_ID: str = "b5431a17-4c52-43cf-b71b-ac700b43985f"
     # auth local server port
     AUTH_LOCAL_PORT: int = 9082
+    # git repository connectio attempts
+    MAX_REQUEST_ATTEMPTS: int = 5
 
 
 class WorkspaceSettings(_BaseSettings):
