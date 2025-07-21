@@ -1,13 +1,11 @@
 query GetPacakgeReleases(
-    $first: Int!,
     $packageId: ID!,
-    $afterCursor: String) {
+) {
   packageReleases(
-    first: $first,
-    after: $afterCursor
+    first: 1,
     ordering: [
       {
-        sort: CREATED_AT,
+        sort: NAME,
         direction: DESC
       }
     ]
@@ -18,7 +16,8 @@ query GetPacakgeReleases(
         }
       }
     }
-  ) {
+  )
+  {
     edges {
       node {
         id
@@ -30,8 +29,8 @@ query GetPacakgeReleases(
         package{
           id
           name
-        }
       }
+    }
     }
     pageInfo {
       hasNextPage

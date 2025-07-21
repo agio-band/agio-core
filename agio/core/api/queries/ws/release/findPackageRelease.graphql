@@ -24,6 +24,10 @@ query FindPackageRelease (
         assets
         metadata
         packageId
+        package{
+          id
+          name
+        }
       }
     }
   }

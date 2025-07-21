@@ -25,6 +25,14 @@ query FindWorkspaceRevisionList(
         packageReleases {
           id
           name
+          label
+          description
+          assets
+          metadata
+          package{
+            id
+            name
+          }
         }
         layout
         comment

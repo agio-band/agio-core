@@ -9,8 +9,13 @@ query GetSingleWorkspaceRevisionById($id: ID!) {
         packageReleases {
             id
             name
-            package {
-                name
+            label
+            description
+            assets
+            metadata
+            package{
+              id
+              name
             }
         }
     }
