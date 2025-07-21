@@ -1,9 +1,12 @@
 from typing import Self, Iterator
+from uuid import UUID
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
+from . import APackageRelease, APackage
 from .entity import Entity
 from .workspace_revision import AWorkspaceRevision
+from ..exceptions import RequestError
 
 
 class AWorkspace(Entity):
@@ -51,7 +54,71 @@ class AWorkspace(Entity):
         if revision:
             return AWorkspaceRevision(revision)
 
-    def get_toolset(self):
-        from agio.core.pkg import AWorkspaceM
+    def get_manager(self):
+        from agio.core.pkg import AWorkspaceManager
 
-        return AWorkspaceMnager(self.get_current_revision())
+        return AWorkspaceManager(self.get_current_revision())
+
+    def _find_release(self, input_data: dict|str|APackageRelease|APackage) -> APackageRelease:
+        if isinstance(input_data, APackageRelease):
+            return input_data
+        elif isinstance(input_data, APackage):
+            latest_release = input_data.latest_release()
+            if not latest_release:
+                raise Exception(f'Release for package {input_data} not found')
+            return latest_release
+        elif isinstance(input_data, str):
+
+            try:
+                release = api.package.get_package_release(input_data)
+                return APackageRelease(release)
+            except RequestError:
+                try:
+                    pkg = APackage.find(name=input_data)
+                    return pkg.latest_release()
+                except RequestError:
+                    raise Exception(f'Package or release {input_data} not found')
+        elif isinstance(input_data, dict):
+            release = api.package.get_package_release_by_name_and_version(
+                package_name=input_data['name'],
+                version=input_data['version'],
+            )
+            if not release:
+                raise Exception(f'Package release {input_data} not found')
+            return APackageRelease(release)
+        else:
+            raise Exception(f'Unknown input type {type(input_data)}')
+
+    def set_package_list(
+            self,
+            packages: list[dict|str],
+            set_current: bool = False,
+            comment: str = None,
+            layout: dict = None,
+    ):
+        if not packages:
+            raise Exception(f'No packages to set')
+        # collect releases
+        releases: list[APackageRelease] = [self._find_release(p) for p in packages]
+        if not releases:
+            raise Exception(f'No package releases found')
+        pkg_names = [p.get_package_name() for p in releases]
+        for pkg_name in pkg_names:
+            if pkg_names.count(pkg_name)>1:
+                raise Exception(f'Multiple packages with same name: {pkg_name}')
+        names = [rel.get_package_name() for rel in releases]
+        # check core package exists
+        if 'agio_core' not in names:
+            raise Exception(f'agio-core package is required but not added')
+        release_ids = [rel.id for rel in releases]
+        # create revision
+        result = api.workspace.create_revision(
+            workspace_id=self.id,
+            package_release_ids=release_ids,
+            set_current=set_current,
+            status='ready', # TODO change to "sync"
+            comment=comment,
+            layout=layout or NOTSET,
+        )
+        return AWorkspaceRevision(result)
+

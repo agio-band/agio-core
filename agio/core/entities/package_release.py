@@ -1,11 +1,25 @@
+import logging
+import os
+from pathlib import Path
 from typing import Self, Iterator
+from urllib.parse import urlparse
 
-from agio.core.api.utils import NOTSET
-from .entity import Entity
 from agio.core import api
+from agio.core.api.utils import NOTSET
+from agio.core.exceptions import PackageError
+from agio.core.utils import config, app_dirs
+from agio.core.utils.network import download_file
+from agio.core.utils.repository_utils import filter_compatible_package
+from .entity import Entity
+
+logger = logging.getLogger(__name__)
 
 
 class APackageRelease(Entity):
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} {self.get_package_name()} v{self.get_version()} ({self.id!r})>'
+
     @classmethod
     def get_data(cls, entity_id: str) -> dict:
         return api.package.get_package_release(entity_id)
@@ -59,14 +73,50 @@ class APackageRelease(Entity):
             return cls(data)
 
     def get_package_id(self) -> str:
-        return self._data['packageId']
+        return self._data['package']['id']
 
-    def get_package(self):
+    def get_package_name(self) -> str:
+        return self._data['package']['name']
+
+    def get_package(self) -> "APackage":
         from .package import APackage
-        return APackage(self._data.get('packageId'))
+        return APackage(self.get_package_id())
 
     def get_assets(self):
-        return self._data.get('assets')
+        return self._data.get('assets', {}).get('whl')
 
     def get_version(self):
         return self._data.get('name')
+
+    def get_installation_command(self):
+        package = self.get_package()
+
+        if assets := self.get_assets():
+            url_list = [asset['url'] for asset in assets]
+            cmd = filter_compatible_package(url_list)
+            cmd = cmd.strip()
+            if not cmd:
+                raise PackageError(f"Error fetching whl file, Compatible asset not found")
+            if cmd.startswith('https'):
+                # check if is private package saved on private store
+                url_info = urlparse(cmd)
+                if url_info.netloc == urlparse(config.PKG.STORE_URL).netloc:
+                    logger.info(f'Downloading release from store {cmd}')
+                    cmd = download_file(
+                        cmd,
+                        Path(app_dirs.temp_dir(), 'releases').as_posix(),
+                        Path(cmd).name, use_credentials=True
+                    )
+            elif cmd.startswith('git+'):
+                pass
+            else:
+                cmd = os.path.expandvars(Path(cmd).expanduser())
+                if not os.path.exists(cmd):
+                    raise PackageError(f"Error fetching package {self}, file not found: {cmd}")
+            return cmd
+        elif package.source_url:
+            # use source repository path. Repository must be installable! (pyproject.toml)
+            cmd = os.path.expandvars(Path(package.source_url).expanduser())
+        else:
+            raise PackageError(f"Error fetching package {self}, installation command not created")
+        return cmd

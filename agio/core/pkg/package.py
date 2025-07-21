@@ -82,6 +82,9 @@ class APackageManager:
     def info_file(self):
         return self.root / self.info_file_name
 
+    def get_pacakge_metadata(self):
+        return self._info_data
+
     # creators
 
     @classmethod
@@ -242,36 +245,5 @@ class APackageManager:
         callbacks = self._get_meta_data_field('callbacks') or []
         for path in callbacks:
             yield self.root.joinpath(path).with_suffix('.py').as_posix()
-
-    def get_installation_command(self):
-        if assets := self.release.get_assets():
-            url_list = [asset['url'] for asset in assets]
-            cmd = filter_compatible_package(url_list)
-            cmd = cmd.strip()
-            if not cmd:
-                raise PackageError(f"Error fetching whl file, Compatible asset not found")
-            if cmd.startswith('https'):
-                # check if is private package saved on private store
-                url_info = urlparse(cmd)
-                if url_info.netloc == urlparse(config.PKG.STORE_URL).netloc:
-                    logger.info(f'Downloading release from store {cmd}')
-                    cmd = download_file(
-                        cmd,
-                        Path(app_dirs.temp_dir(), 'releases').as_posix(),
-                        Path(cmd).name, use_credentials=True
-                    )
-            elif cmd.startswith('git+'):
-                pass
-            else:
-                cmd = os.path.expandvars(Path(cmd).expanduser())
-                if not os.path.exists(cmd):
-                    raise PackageError(f"Error fetching package {self}, file not found: {cmd}")
-            return cmd
-        elif self.source_url:
-            # use source repository path. Repository must be installable! (pyproject.toml)
-            cmd = os.path.expandvars(Path(self.source_url).expanduser())
-        else:
-            raise PackageError(f"Error fetching package {self}, installation command not created")
-        return cmd
 
 

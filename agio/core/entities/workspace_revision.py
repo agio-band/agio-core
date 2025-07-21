@@ -2,6 +2,7 @@ from typing import Iterator, Self
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
+from . import APackageRelease
 from .entity import Entity
 from .package import APackage
 
@@ -72,6 +73,14 @@ class AWorkspaceRevision(Entity):
         if data:
             return cls(data)
 
+    @property
+    def metadata(self):
+        return self._data.get("metadata", {})
+
+    @property
+    def workspace_id(self):
+        return self._data['workspaceId']
+
     def get_comment(self):
         return self._data.get("comment")
 
@@ -81,7 +90,24 @@ class AWorkspaceRevision(Entity):
     def get_settings(self):
         return self._data.get("settings")
 
-    def get_toolset(self):
-        from agio.core.pkg import AWorkspaceToolset
+    def get_package_list(self):
+        for pkg_data in self._data.get("packageReleases"):
+            yield APackageRelease(pkg_data)
 
-        return AWorkspaceToolset(self)
+    def get_manager(self):
+        from agio.core.pkg import AWorkspaceManager
+
+        return AWorkspaceManager(self)
+
+    def set_layout(self, layout: dict):
+        return api.workspace.update_revision(
+            revision_id=self.id,
+            layout=layout
+        )
+
+    def set_settings(self, settings_data: dict) -> str:
+        return api.workspace.create_revision_settings(
+            self.id,
+            settings_data,
+            set_current=True
+        )

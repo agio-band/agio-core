@@ -30,8 +30,12 @@ class AWorkspaceManager:
                 revision = AWorkspaceRevision(revision)
         self._revision = revision
 
+    @property
+    def workspace_id(self):
+        return self.revision.workspace_id
+
     def get_workspace(self) -> AWorkspace:
-        return AWorkspace(self._data['workspaceId'])
+        return AWorkspace(self.workspace_id)
 
     @classmethod
     def from_workspace(cls, workspace: AWorkspace|str) -> Self:
@@ -54,12 +58,9 @@ class AWorkspaceManager:
     def _load_local_data(self):
         meta_file = self.local_meta_file
         if not meta_file.exists():
-            raise WorkspaceNotInstalled('Workspace not installed locally')
+            raise WorkspaceNotInstalled('Workspace revision not installed locally')
         with meta_file.open() as f:
             return json.load(f)
-
-    def get_meta_value(self, key: str, default=None):
-        return self._data['workspace'].get('metadata', {}).get(key, default)
 
     # define
     @classmethod
@@ -75,14 +76,19 @@ class AWorkspaceManager:
     def revision(self):
         return self._revision
 
-    @property
+    @cached_property
     def root(self):
-        config.WS.CACHE_ROOT
-        return self._root
+        return Path(config.WS.CACHE_ROOT, self.workspace_id).expanduser().resolve()
 
-    @property
+    @cached_property
     def install_root(self):
-        return self.root.joinpath(self.revision_id)
+        return self.root.joinpath(self.revision.id)
+
+    def get_package_list(self):
+        return self.revision.get_package_list()
+
+    def get_py_version(self):
+        return self.revision.metadata.get('py_version', {}).get(sys.platform.lower())
 
     # install and manage
 
@@ -91,22 +97,17 @@ class AWorkspaceManager:
         return pkg_manager.get_package_manager(self.install_root)
 
     def install(self, clean: bool = False, no_cache: bool = False):
-        emit('core.workspace.before_install', {'workspace': self})
-        self._data = self._load_remote_data()
-
-        package_info_list = self.get_packages_info()
-        if not package_info_list:
+        emit('core.workspace.before_install', {'revision': self})
+        package_list = self.get_package_list()
+        if not package_list:
             raise Exception('No packages to install')
-        install_args = [pkg.get_installation_command() for pkg in package_info_list]
-
+        install_args = [pkg.get_installation_command() for pkg in package_list]
         reinstall = clean or self.need_to_reinstall()
-
         if reinstall:
-            os_name = sys.platform.lower()
             logger.info('Reinstalling workspace...')
             if self.is_installed():
                 self.remove()
-            py_version_required = self._data.get('python_version', {}).get(os_name)
+            py_version_required = self.get_py_version()
             self.venv_manager.create_venv(py_version_required)
 
 
@@ -118,22 +119,21 @@ class AWorkspaceManager:
             print(pkg)
         print('-'*100)
 
-        logger.info(f'Packages to install: {package_info_list}')
+        logger.info(f'Packages to install: {package_list}')
         self.venv_manager.install_packages(*install_args, no_cache=no_cache)
         with open(self.local_meta_file, 'w') as f:
-            json.dump(self._data, f, indent=4)
-        emit('core.workspace.installed', {'workspace': self, 'data': self._data, 'meta_filename': self.local_meta_file})
-
+            json.dump(self.revision._data, f, indent=4)
+        emit('core.workspace.installed', {'workspace': self, 'packages': package_list, 'meta_filename': self.local_meta_file})
 
     def iter_installed_packages(self):
         yield from self.venv_manager.iter_packages()
 
     def is_installed(self):
         return self.local_meta_file.exists()
+
     def need_to_reinstall(self):
         if self.is_installed():
-            os_name = sys.platform.lower()
-            required_py_version = self.get_meta_value('python_version', {}).get(os_name)
+            required_py_version = self.get_py_version()
             if required_py_version:
                 current_version = self.venv_manager.get_python_version(full=True)
                 if not venv_utils.check_current_python_version(

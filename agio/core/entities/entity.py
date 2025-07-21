@@ -11,10 +11,12 @@ class Entity(ABC):
             # from ID
             self._id = entity
             self._data = self.get_data(entity)
-        else:
+        elif isinstance(entity, dict):
             # from data
             self._id = entity['id']
             self._data = entity
+        else:
+            raise TypeError('entity must be a string or dict')
 
     def reload(self):
         self._data = self.get_data(self.id)

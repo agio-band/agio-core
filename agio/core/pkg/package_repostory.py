@@ -97,7 +97,7 @@ class APackageRepository:
                 size=ast['size'],
                 url=ast['browser_download_url'],
             ))
-        self.register_release(assets)
+        self.register_release(assets, metadata=self.pkg_manager.get_pacakge_metadata())
         release_data = dict(
             release_url=release['html_url'],
             assets=assets,

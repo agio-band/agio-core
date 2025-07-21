@@ -58,6 +58,12 @@ class APackage(Entity):
         for release_data in api.package.iter_package_releases(self.id):
             yield APackageRelease(release_data)
 
+    def latest_release(self) -> APackageRelease:
+        revision_id = api.package.get_latest_release(self.id)
+        if revision_id is not None:
+            return APackageRelease(revision_id)
+
+
 # class Package:
 #     info_file_name = '__agio__.yml'
 #
