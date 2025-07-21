@@ -5,11 +5,12 @@ from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
-from agio.core.utils import config
-from agio.core.api.utils import NOTSET
-from agio.core.api.api_client.base import _ApiClientAuth
-from agio.core.exceptions import RequestError
+from requests.exceptions import HTTPError
 
+from agio.core.api.api_client.base import _ApiClientAuth
+from agio.core.api.utils import NOTSET
+from agio.core.exceptions import RequestError
+from agio.core.utils import config
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,10 @@ class ApiClient(_ApiClientAuth):
         response = self.session.post(self._base_api_url, json=data)
         if not response.ok:
             logger.exception(f"Request failed with status code: {response.status_code}")
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except HTTPError as e:
+            raise RequestError('Request failed') from e
         result = response.json()
         if self._debug_query:
             self._print_data(result, 'Response')
