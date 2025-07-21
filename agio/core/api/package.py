@@ -163,3 +163,12 @@ def delete_package_release(release_id: UUID) -> bool:
         'ws/release/deletePackageRelease',
         id=release_id,
     )['data']['deletePackageRelease']['ok']
+
+
+def get_latest_release(package_id: str) -> dict:
+    resp = client.make_query(
+        'ws/release/getLatestRelease',
+        packageId=package_id,
+    )["data"]["packageReleases"]["edges"]
+    if resp:
+        return resp[0]['node']

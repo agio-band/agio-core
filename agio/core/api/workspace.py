@@ -199,7 +199,7 @@ def get_revision_by_workspace_name(workspace_name: str) -> dict:
     return find_revision(workspace_name=workspace_name, is_current=True)
 
 
-def delete_revision(revision_id: UUID|str):
+def delete_revision(revision_id: UUID|str) -> bool:
     return client.make_query(
         'ws/revision/deleteWorkspaceRevision',
         id=str(revision_id),
@@ -212,7 +212,7 @@ def create_revision_settings(
         data: dict,
         set_current: bool = True,
         comment: str = '',
-    ):
+    ) -> str:
     return client.make_query(
         'ws/settings/createSettings',
         workspaceRevisionId=revision_id,
