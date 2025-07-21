@@ -11,6 +11,8 @@ class Entity(ABC):
             # from ID
             self._id = entity
             self._data = self.get_data(entity)
+            if not self._data:
+                raise Exception(f"No data found for {entity}")
         elif isinstance(entity, dict):
             # from data
             self._id = entity['id']

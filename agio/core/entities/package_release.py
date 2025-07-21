@@ -2,12 +2,11 @@ import logging
 import os
 from pathlib import Path
 from typing import Self, Iterator
-from urllib.parse import urlparse
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
 from agio.core.exceptions import PackageError
-from agio.core.utils import config, app_dirs
+from agio.core.utils import app_dirs
 from agio.core.utils.network import download_file
 from agio.core.utils.repository_utils import filter_compatible_package
 from .entity import Entity
@@ -88,31 +87,32 @@ class APackageRelease(Entity):
     def get_version(self):
         return self._data.get('name')
 
-    def get_installation_command(self):
+    def get_installation_command(self, **kwargs):
         package = self.get_package()
+        force_download = kwargs.pop('force_download', False)
 
         if assets := self.get_assets():
-            url_list = [asset['url'] for asset in assets]
-            cmd = filter_compatible_package(url_list)
-            cmd = cmd.strip()
-            if not cmd:
+            name_list = [asset['name'] for asset in assets]
+            name = filter_compatible_package(name_list)
+            if not name:
                 raise PackageError(f"Error fetching whl file, Compatible asset not found")
-            if cmd.startswith('https'):
-                # check if is private package saved on private store
-                url_info = urlparse(cmd)
-                if url_info.netloc == urlparse(config.PKG.STORE_URL).netloc:
-                    logger.info(f'Downloading release from store {cmd}')
-                    cmd = download_file(
-                        cmd,
-                        Path(app_dirs.temp_dir(), 'releases').as_posix(),
-                        Path(cmd).name, use_credentials=True
-                    )
-            elif cmd.startswith('git+'):
-                pass
+            url = next(iter([x['url'] for x in assets if x['name'] == name]))
+            if url.startswith('https'):
+                # TODO: check if is private package saved on private store
+                logger.debug(f'Download file {name}: {url}')
+                cmd = download_file(
+                    url,
+                    Path(app_dirs.temp_dir(), 'releases').as_posix(),
+                    name,
+                    skip_exists=not force_download
+                )
+            elif url.startswith('git+'):
+                cmd = url
             else:
-                cmd = os.path.expandvars(Path(cmd).expanduser())
-                if not os.path.exists(cmd):
-                    raise PackageError(f"Error fetching package {self}, file not found: {cmd}")
+                path = os.path.expandvars(Path(url).expanduser())
+                if not os.path.exists(path):
+                    raise PackageError(f"Error fetching package {self}, file not found: {url}")
+                cmd = path
             return cmd
         elif package.source_url:
             # use source repository path. Repository must be installable! (pyproject.toml)

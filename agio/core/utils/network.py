@@ -3,15 +3,19 @@ import requests
 import json
 
 
-def download_file(url: str, dest_dir: str, filename: str = None, params: dict = None, use_credentials = None) -> str:
+def download_file(url: str, dest_dir: str, filename: str = None, params: dict = None,
+                  headers=None, use_credentials = None, allow_redirects=False,
+                  skip_exists: bool = False) -> str:
     """
     Скачивает файл по URL и сохраняет в указанную директорию.
     """
-    os.makedirs(dest_dir, exist_ok=True)
     filename = filename or url.split("/")[-1]
     file_path = os.path.join(dest_dir, filename)
+    if skip_exists and os.path.exists(file_path):
+        return file_path
+    os.makedirs(dest_dir, exist_ok=True)
 
-    with requests.get(url, stream=True, params=params) as response:
+    with requests.get(url, stream=True, params=params, headers=headers, allow_redirects=allow_redirects) as response:
         response.raise_for_status()
         with open(file_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
