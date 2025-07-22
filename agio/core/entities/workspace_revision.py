@@ -111,3 +111,6 @@ class AWorkspaceRevision(Entity):
             settings_data,
             set_current=True
         )
+
+    def set_current(self, is_current: bool):
+        return api.workspace.update_revision(self.id, set_current=is_current)

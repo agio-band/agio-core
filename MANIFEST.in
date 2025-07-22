@@ -3,3 +3,5 @@ global-include __agio__.yml
 
 # resources
 recursive-include agio/core/resources *
+recursive-include agio/core/api/queries *
+recursive-include agio/core/api/templates *
