@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from collections import defaultdict
 
@@ -60,9 +61,10 @@ class InfoCommand(ACommandPlugin):
         from agio.core import package_hub
         print('PACKAGES:')
         print()
+        max_len = max([len(name) for name in package_hub.get_packages().keys()])
         for package in package_hub.get_package_list():
             package: APackageManager
-            print(f"{package.package_name} v{package.package_version} {package.root}")
+            print(f"  {package.package_name:<{max_len+2}} v{package.package_version:<8} | {package.root}")
         print()
 
     def _show_plugins_info(self):
@@ -113,11 +115,30 @@ class EnvCommand(ACommandPlugin):
     name = 'env_cmd'
     command_name = 'env'
     help = 'Show agio env'
+    arguments = [
+        click.option('-p', '--py_envs', is_flag=True, help='Show Python envs'),
+    ]
 
-    def execute(self, *args, **kwargs):
+    def execute(self, py_envs, *args, **kwargs):
         keys = [k for k in os.environ.keys() if k.startswith('AGIO_')]
+        if py_envs:
+            keys.extend([k for k in os.environ.keys() if k.startswith('PYTHON_')])
+            keys.append('PATH')
         max_length = max(len(k) for k in keys)
         for k in keys:
             value = os.environ[k]
-            click.secho(f"{k:>{max_length+2}} = {value}", fg='green')
+            if self.is_multipath(value):
+                parts = value.split(':')
+                click.secho(f"{k:>{max_length + 2}} = {parts[0]}", fg='green')
+                for part in parts[1:]:
+                    click.secho(f"{' ':>{max_length + 5}}{part}", fg='green')
+            else:
+                click.secho(f"{k:>{max_length+2}} = {value}", fg='green')
 
+    def is_multipath(self, value: str) -> bool:
+        if os.pathsep not in value:
+            return False
+        else:
+            if value.startswith('http'):
+                return False
+            return True
