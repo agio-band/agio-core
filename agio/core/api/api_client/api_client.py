@@ -55,7 +55,7 @@ class ApiClient(_ApiClientAuth):
         try:
             response.raise_for_status()
         except HTTPError as e:
-            raise RequestError('Request failed') from e
+            raise RequestError(f'Request failed: {response.text}') from e
         result = response.json()
         if self._debug_query:
             self._print_data(result, 'Response')

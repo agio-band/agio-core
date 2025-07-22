@@ -10,34 +10,30 @@ query GetWorkspaceSettings($revision_id: ID!,
     }
 }
 
-query GetSettingsByWorkspaceRevisionId($workspaceRevisionId: ID!) {
-  # Запрос WorkspaceSettings, ссылающихся на конкретную ревизию
-  workspaceSettingses(
-    filter: {
-      where: {
-        isCurrent: { equalTo: true }, # Сами настройки текущие
-        workspaceRevision: { # Фильтруем по связанной WorkspaceRevision
-          id: { equalTo: $workspaceRevisionId } # <-- Используем переданный ID ревизии
-        }
-      }
-    },
-    first: 1 # Предполагаем одну текущую настройку для данной ревизии
-  ) {
-    edges {
-      node {
-        id
-        data # Ваше поле с данными настроек
-
-        # Запрашиваем связанную ревизию, чтобы получить ее ID и ID воркспейса
-        workspaceRevision {
-          id
-          # Добавляем ID воркспейса, к которому принадлежит эта ревизия
-          workspace {
-            id # <--- ID воркспейса, который вы хотели получить
-            name # Можно добавить и другие поля воркспейса, если нужны
-          }
-        }
-      }
-    }
-  }
-}
+#query GetSettingsByWorkspaceRevisionId($workspaceRevisionId: ID!) {
+#  workspaceSettingses(
+#    filter: {
+#      where: {
+#        isCurrent: { equalTo: true },
+#        workspaceRevision: {
+#          id: { equalTo: $workspaceRevisionId }
+#        }
+#      }
+#    },
+#    first: 1
+#  ) {
+#    edges {
+#      node {
+#        id
+#        data
+#        workspaceRevision {
+#          id
+#          workspace {
+#            id
+#            name
+#          }
+#        }
+#      }
+#    }
+#  }
+#}

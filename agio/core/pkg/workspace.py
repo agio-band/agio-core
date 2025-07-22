@@ -23,12 +23,20 @@ class AWorkspaceManager:
     workspaces_root = Path(config.WS.CACHE_ROOT).expanduser()
     WORKSPACE_ENV_NAME = 'AGIO_WORKSPACE_ID'
     REVISION_ENV_NAME = 'AGIO_WORKSPACE_REVISION_ID'
+    SETTINGS_REVISION_ENV_NAME = 'AGIO_WORKSPACE_SETTINGS_REVISION_ID'
 
-    def __init__(self, revision: AWorkspaceRevision|str):
+    def __init__(self, revision: AWorkspaceRevision|str|dict, **kwargs):
         if revision is not None:
-            if isinstance(revision, str):
-                revision = AWorkspaceRevision(revision)
-        self._revision = revision
+            if isinstance(revision, (str, dict)):
+                self._revision = AWorkspaceRevision(revision)
+            elif isinstance(revision, AWorkspaceRevision):
+                self._revision = revision
+            else:
+                raise TypeError('Invalid revision type')
+        self._kwargs = kwargs
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} revision={self._revision.id}>'
 
     @property
     def workspace_id(self):
@@ -48,6 +56,10 @@ class AWorkspaceManager:
             if not current_revision:
                 raise Exception(f"No current revision found for workspace {workspace}")
             return cls(current_revision)
+
+    @property
+    def settings_id(self):
+        return self._kwargs.get('settings_revision_id')
 
     # meta file
 
@@ -101,7 +113,7 @@ class AWorkspaceManager:
 
     def install(self, clean: bool = False, no_cache: bool = False):
         emit('core.workspace.before_install', {'revision': self})
-        package_list = self.get_package_list()
+        package_list = list(self.get_package_list())
         if not package_list:
             raise Exception('No packages to install')
         install_args = [pkg.get_installation_command() for pkg in package_list]
@@ -112,7 +124,6 @@ class AWorkspaceManager:
                 self.remove()
             py_version_required = self.get_py_version()
             self.venv_manager.create_venv(py_version_required)
-
 
         # debug message
         print('-'*100)
@@ -166,6 +177,11 @@ class AWorkspaceManager:
             self.REVISION_ENV_NAME: str(self.revision.id),
             'VIRTUAL_ENV': self.install_root.as_posix()
         }
+        if self.settings_id:
+            env[self.SETTINGS_REVISION_ENV_NAME] = str(self.settings_id)
         emit('core.workspace.launch_envs', {'envs': env, 'workspace': self})
         return env
+
+    def install_or_update_if_needed(self):
+        return not self.exists()
 

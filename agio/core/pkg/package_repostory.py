@@ -2,12 +2,13 @@ import logging
 from functools import cached_property
 from pathlib import Path
 
-from agio.core.entities import APackageRelease
+from agio.core.entities import APackageRelease, APackage
 from agio.core.exceptions import PackageRepositoryError, PackageError, PackageLoadingError
 from agio.core.pkg.package import APackageManager
 from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
 from agio.core.utils import git_utils
 from agio.core.utils.pkg_manager import get_package_manager
+from agio.core import api
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,16 @@ class APackageRepository:
 
     def remove_release(self):
         pass
+
+    def register_package(self, **kwargs):
+        pkg_meta_data = self.pkg_manager.get_pacakge_metadata()
+        # TODO: check meta data
+        # TODO: check repository files
+        pkg_name = pkg_meta_data.get('name')
+        if not pkg_name:
+            raise PackageError(f"Package name not set")
+        pkg_api = api.package.create_package(pkg_name)
+        return APackage(pkg_api)
 
 
 def get_remote_repository_plugin(repo_url: str, repository_api: str = None):

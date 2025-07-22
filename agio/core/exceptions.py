@@ -36,8 +36,20 @@ class WorkspaceError(AException):
     detail: str = "Workspace Error"
 
 
-class WorkspaceNotExists(WorkspaceError):
+class EntityNotExists(WorkspaceError):
+    detail: str = "Entity does not exist"
+
+
+class WorkspaceNotExists(EntityNotExists):
     detail: str = "Workspace does not exist"
+
+
+class RevisionNotExists(EntityNotExists):
+    detail: str = "Workspace revision does not exist"
+
+
+class SettingsRevisionNotExists(EntityNotExists):
+    detail: str = "Settings revision does not exist"
 
 
 class WorkspaceNotInstalled(WorkspaceError):

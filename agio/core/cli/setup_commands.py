@@ -12,50 +12,37 @@ from agio.core.pkg.workspace import AWorkspaceManager
 @click.group(name='agio')
 @click.option(
     "-d", "--debug", is_flag=True, default=False,
+    envvar='AGIO_DEBUG',
     help="Enable DEBUG mode")
 @click.option(
-    "-n", "--project_name",
-    envvar='AGIO_PROJECT_NAME',
-    help='Execute in project (NAME)',
+    "-p", "--project",
+    # envvar='AGIO_PROJECT',
+    help='Execute in project (ID or NAME)',
     required=False
 )
 @click.option(
-    "-p", "--project_id",
-    envvar='AGIO_PROJECT_ID',
-    help='Execute in project (ID)',
+    "-w", "--workspace",
+    # envvar='AGIO_WORKSPACE',
+    help='Execute in workspace (Workspace ID or NAME, Revision ID or Settings ID)',
     required=False
 )
-@click.option(
-    "-w", "--workspace_id",
-    envvar='AGIO_WORKSPACE_ID',
-    help='Execute in workspace (ID)',
-    required=False
-)
-@click.option(
-    "-s", "--workspace_name",
-    envvar='AGIO_WORKSPACE_NAME',
-    help='Execute in workspace (NAME)',
-    required=False
-)
-@click.option(
-    "-r", "--revision_id",
-    envvar='AGIO_REVISION_ID',
-    help='Execute in revision (ID)',
-    required=False
-)
+# @click.option(
+#     "-r", "--revision",
+#     # envvar='AGIO_WORKSPACE_REVISION',
+#     help='Execute in workspace revision (revision ID or settings revision ID)',
+#     required=False
+# )
 @click.pass_context
-def agio_group(ctx, project_name, project_id, workspace_id, workspace_name, revision_id, debug):
+def agio_group(ctx, project, workspace, debug):
     if not AWorkspaceManager.current():
-        ws: AWorkspace|None = tools.get_workspace_from_args(
-            project_name=project_name,
-            project_id=project_id,
-            workspace_id=workspace_id,
-            workspace_name=workspace_name,
-            revision_id=revision_id,
+        ws: AWorkspaceManager|None = tools.get_workspace_from_args(
+            project=project,
+            workspace=workspace,
         )
         if ws:
+            if ws.need_to_reinstall():
+                ws.install()
             command_args = tools.clear_args(sys.argv)
-
             tools.start_in_workspace(ws, command_args)
             ctx.exit()
     if debug:

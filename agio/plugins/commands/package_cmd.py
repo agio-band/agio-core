@@ -4,6 +4,7 @@ import click
 import logging
 
 from agio.core.entities import APackage, APackageRelease
+from agio.core.pkg import APackageManager
 from agio.core.pkg.package_repostory import APackageRepository
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 
@@ -51,6 +52,26 @@ class PackageBuildCommand(ASubCommand):
 
 
 
+class PackageRegisterCommand(ASubCommand):
+    command_name = "register"
+    arguments = [
+        click.argument("path",
+                        type=click.Path(exists=True, dir_okay=True, resolve_path=True),
+                        default=Path.cwd().absolute().as_posix(),
+                        metavar='[PACKAGE_PATH]'
+                       ),
+    ]
+
+    def execute(self, path: str|Path, **kwargs):
+        """
+        PATH: path to package repository
+        """
+        logger.info(f"Register package {path}...")
+        pkg = APackageRepository(path).register_package(**kwargs)
+        logger.info(f"Package registered: {pkg}")
+
+
+
 class PackageReleaseCommand(ASubCommand):
     command_name = "release"
     arguments = [
@@ -80,6 +101,7 @@ class PackageCommand(ACommandPlugin):
         PackageNewCommand,
         PackageBuildCommand,
         PackageReleaseCommand,
+        PackageRegisterCommand,
     ]
     help = 'Manage packages'
     arguments = [

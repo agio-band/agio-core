@@ -3,18 +3,13 @@ import os
 from functools import cache, cached_property
 from pathlib import Path
 from typing import Any, Generator, Type, Self
-from urllib.parse import urlparse
 
 import yaml
 
 from agio.core.entities import APackage
-from agio.core.utils import config
 from agio.core.exceptions import PackageMetadataError, PackageError
 from agio.core.plugins.base_plugin import APlugin
-from agio.core.utils import app_dirs
 from agio.core.utils.modules_utils import import_object_by_dotted_path
-from agio.core.utils.network import download_file
-from agio.core.utils.repository_utils import filter_compatible_package
 
 logger = logging.getLogger(__name__)
 
@@ -245,5 +240,4 @@ class APackageManager:
         callbacks = self._get_meta_data_field('callbacks') or []
         for path in callbacks:
             yield self.root.joinpath(path).with_suffix('.py').as_posix()
-
 

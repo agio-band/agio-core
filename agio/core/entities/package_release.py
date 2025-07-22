@@ -98,14 +98,15 @@ class APackageRelease(Entity):
                 raise PackageError(f"Error fetching whl file, Compatible asset not found")
             url = next(iter([x['url'] for x in assets if x['name'] == name]))
             if url.startswith('https'):
-                # TODO: check if is private package saved on private store
-                logger.debug(f'Download file {name}: {url}')
-                cmd = download_file(
-                    url,
-                    Path(app_dirs.temp_dir(), 'releases').as_posix(),
-                    name,
-                    skip_exists=not force_download
-                )
+                cmd = url
+                # # TODO: check if is private package saved on private store
+                # logger.debug(f'Download file {name}: {url}')
+                # cmd = download_file(
+                #     url,
+                #     Path(app_dirs.temp_dir(), 'releases').as_posix(),
+                #     name,
+                #     skip_exists=not force_download
+                # )
             elif url.startswith('git+'):
                 cmd = url
             else:
