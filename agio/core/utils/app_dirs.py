@@ -19,7 +19,7 @@ def _get_user_config_dir():
 
 def _get_user_cache_dir():
     if os.name == 'nt':
-        path = os.getenv("LOCALAPPDATA", Path.home() / "AppData" / "Local")
+        path = Path(os.getenv("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
     elif os.name == "darwin":
         path = Path.home() / "Library" / "Caches"
     else:
