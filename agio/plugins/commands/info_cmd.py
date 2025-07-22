@@ -61,7 +61,11 @@ class InfoCommand(ACommandPlugin):
         from agio.core import package_hub
         print('PACKAGES:')
         print()
-        max_len = max([len(name) for name in package_hub.get_packages().keys()])
+
+        sizes = [len(name) for name in package_hub.get_packages().keys()]
+        if not sizes:
+            raise Exception('No packages found')
+        max_len = max(sizes)
         for package in package_hub.get_package_list():
             package: APackageManager
             print(f"  {package.package_name:<{max_len+2}} v{package.package_version:<8} | {package.root}")
@@ -124,6 +128,9 @@ class EnvCommand(ACommandPlugin):
         if py_envs:
             keys.extend([k for k in os.environ.keys() if k.startswith('PYTHON_')])
             keys.append('PATH')
+        if not keys:
+            print('No AGIO env found')
+            return
         max_length = max(len(k) for k in keys)
         for k in keys:
             value = os.environ[k]
