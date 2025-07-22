@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import sys
+import time
 from functools import cached_property
 from pathlib import Path
 from typing import Self
@@ -166,6 +167,10 @@ class AWorkspaceManager:
             emit('core.workspace.removed', {'revision': self})
             return True
         return False
+
+    def touch(self):
+        timestamp_file = self.install_root / 'timestamp'
+        timestamp_file.write_text(str(time.time()))
 
     # launch
     def get_pyexecutable(self) -> str:

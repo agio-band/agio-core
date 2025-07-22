@@ -27,13 +27,8 @@ def start_in_workspace(workspace: AWorkspaceManager, cmd: list[str], envs: dict 
     cmd = workspace_cli_exec + cmd[1:]  # TODO check with real binary
     workspace.install_or_update_if_needed()
     envs = {**(envs or {}), **workspace.get_launch_envs()}
+    workspace.touch()
     start_process(cmd, envs=envs, clear_envs=['PYTHONPATH'], replace=True, workdir=workdir)
-
-
-def ensure_workspace(revision_id: str = None):
-    ws = AWorkspaceManager(revision_id)
-    if not ws.need_to_reinstall():
-        ws.install()
 
 
 def get_workspace_from_args(project=None, workspace=None):
