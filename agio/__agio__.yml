@@ -2,16 +2,16 @@ name: agio_core
 version: 0.0.1
 label: agio Core
 description: |
-  Main agio-pipeline package
+  Main agio-pipe package
 icon: 'core/agio-logo.png'
 tags:
   - core
 
 urls:
-  source_url: "https://github.com/paulwinex/agio-core"
+  source_url: "https://github.com/agio-band/agio-core.git"
   home_page: ""
   documentation: ""
-  bug_tracker: "https://github.com/agio/agio-core/issues"
+  bug_tracker: "https://github.com/agio-band/agio-core/issues"
 
 #resources_dir: "custom/resources" # default "/resources"
 dependencies: []
