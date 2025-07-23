@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 from requests_oauthlib import OAuth2Session
 
+from agio.core.utils.network import get_free_port
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +31,10 @@ def run_oauth_server(
         authorization_base_url,
         token_url,
         stop_event: threading.Event,
-        port=8000,
+        port=None,
 ):
     token = {}
-
+    port = port or get_free_port()
     redirect_uri = f'http://localhost:{port}/oauth_callback'
     oauth = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
     authorization_url, state = oauth.authorization_url(authorization_base_url)
@@ -68,44 +69,12 @@ def run_oauth_server(
     def serve():
         logger.info(f'Auth URL: {authorization_url}')
         webbrowser.open(authorization_url)
-        while not stop_event.is_set():
-            server.handle_request()
-
+        try:
+            while not stop_event.is_set():
+                server.handle_request()
+        except KeyboardInterrupt:
+            server.shutdown()
     thread = threading.Thread(target=serve, daemon=True)
     thread.start()
-    print('thread started...')
-
+    logger.info(f'Waiting callback on http://localhost:{port}')
     return token, thread
-
-def main():
-    logging.basicConfig(level=logging.INFO)
-
-    client_id = 'your-client-id'
-    scope = ['profile']
-    authorization_base_url = 'https://provider.com/oauth/authorize'  # Замените на корректный
-
-    stop_event = threading.Event()
-    token, thread = run_oauth_server(
-        client_id,
-        scope,
-        redirect_uri,
-        authorization_base_url,
-        stop_event
-    )
-
-    logging.info("Ожидание завершения авторизации...")
-    stop_event.wait(timeout=300)  # Ждать максимум 5 минут
-
-    if not token:
-        logging.warning("Авторизация не завершена. Прерывание.")
-    else:
-        logging.info("Токен получен:")
-        logging.info(token)
-
-    stop_event.set()
-    thread.join()
-
-    return token or None
-
-if __name__ == '__main__':
-    main()

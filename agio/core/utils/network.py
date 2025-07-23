@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import socket
 
 
 def download_file(url: str, dest_dir: str, filename: str = None, params: dict = None,
@@ -35,3 +36,9 @@ def upload_file_with_data(url: str, file_path: str, data: dict = None):
         raise Exception(f"Failed: file '{file_path}' not found.")
     except requests.exceptions.RequestException as e:
         raise Exception(f"Upload failed: {e}")
+
+
+def get_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
