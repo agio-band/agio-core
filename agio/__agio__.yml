@@ -16,8 +16,6 @@ urls:
 #resources_dir: "custom/resources" # default "/resources"
 dependencies: []
 
-repository_api: gitea
-
 plugins:
   # services
   - label: Core Service
@@ -73,7 +71,7 @@ plugins:
 
 settings:
   local:
-    layout: package_settings/workspace_layout.yml
+    layout: package_settings/local_layout.yml
     model: package_settings.local_settings.CoreSettings
 
 
