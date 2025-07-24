@@ -15,3 +15,4 @@ from .extended_fields import (
     SlugField,
 )
 from .model_fields import ModelField
+from .special_fields import PluginSelectField
