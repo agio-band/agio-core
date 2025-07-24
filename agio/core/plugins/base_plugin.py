@@ -22,15 +22,12 @@ class _APluginBase:
 
 
 class APlugin(_APluginBase):
-    name = None
-    label = None
-
     def __init__(self, package: APackageManager, plugin_info: dict):
         self._plugin_info = plugin_info
         self._package = package # local package tools
 
     def get_label(self):
-        return self.label or unslugify(self.name)
+        return self._plugin_info.get('label') or unslugify(self.name)
 
     @property
     def path(self):
@@ -38,7 +35,7 @@ class APlugin(_APluginBase):
         return os.path.abspath(class_file)
 
     def __repr__(self):
-        return f"{self.package.name}.{self.name}"
+        return f"{self.package.package_name}.{self.name}"
 
     def __str__(self):
         return self.name
