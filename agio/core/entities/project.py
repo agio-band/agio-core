@@ -2,7 +2,9 @@ from typing import Self, Iterator
 from agio.core.entities import Entity
 
 
-class Project(Entity):
+class AProject(Entity):
+    type_name = "project"
+
     @classmethod
     def get_data(cls, entity_id: str) -> dict:
         pass
@@ -21,6 +23,7 @@ class Project(Entity):
     def delete(self) -> None:
         pass
 
-    def find(self, **kwargs):
+    @classmethod
+    def find(cls, **kwargs):
         pass
 

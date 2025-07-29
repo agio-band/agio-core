@@ -1,4 +1,4 @@
-from agio.core.settings import BaseField
+from agio.core.settings.fields.base_field import BaseField
 
 
 class PluginSelectField(BaseField):

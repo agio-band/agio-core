@@ -14,7 +14,7 @@ urls:
   bug_tracker: "https://github.com/agio-band/agio-core/issues"
 
 #resources_dir: "custom/resources" # default "/resources"
-dependencies: []
+required_packages: []
 
 plugins:
   # services

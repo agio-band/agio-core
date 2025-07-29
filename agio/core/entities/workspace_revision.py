@@ -8,6 +8,7 @@ from .package import APackage
 
 
 class AWorkspaceRevision(Entity):
+    type_name = 'workspace_revision'
 
     @classmethod
     def get_data(cls, entity_id: str) -> dict:

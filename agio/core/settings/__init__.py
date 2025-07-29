@@ -1,6 +1,7 @@
 from ..events import emit
 from .collector import read_local_settings_values
 from .fields.base_field import BaseField
+from .fields.generic_fields import StringField, IntField, BaseField, FloatField
 from .fields.compaund_fields import ListField, SetField, TupleField, DictField
 from .fields.extended_fields import (
     DateTimeField,
@@ -11,7 +12,8 @@ from .fields.extended_fields import (
     Vector2Field,
     RGBColorField
 )
-from .fields.generic_fields import StringField, IntField, BaseField, FloatField
+from .fields.editor_fields import JSONField, MarkdownField
+from .fields.special_fields import PluginSelectField
 from .package_settings import APackageSettings
 from agio.core.utils.settings_hub import LocalSettingsHub
 

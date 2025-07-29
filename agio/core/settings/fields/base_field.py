@@ -32,6 +32,7 @@ class BaseFieldMeta(ABCMeta):
 class BaseField(ABC, metaclass=BaseFieldMeta):
     field_type: Any = None
     default_validators: list[ValidatorBase, ...] = []
+    default_widget = None
     __name_pattern = re.compile(r'^[a-zA-Z](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$')
 
     def __init__(
@@ -69,7 +70,7 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
             'description': description,
             'label': label,
             'docs_url': docs_url,
-            'widget': widget,
+            'widget': widget or self.default_widget,
             'order': order,
             'hint': hint,
         }

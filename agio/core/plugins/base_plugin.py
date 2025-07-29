@@ -65,7 +65,7 @@ class APlugin(_APluginBase):
             full_path = Path(info_file_path).parent / module
             logger.debug(f'Load implementation for plugin: {module}')
             if not full_path.exists():
-                raise PluginLoadingError(f"Module file not found: {full_path}")
+                raise PluginLoadingError(f"Module file not found: {full_path} in {info_file_path}")
             try:
                 module_name = module.split('.')[0].replace('/', '.')
                 # todo: add from package root

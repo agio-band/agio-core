@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class APackageRelease(Entity):
+    type_name = 'package_release'
 
     def __repr__(self):
         return f'<{self.__class__.__name__} {self.get_package_name()} v{self.get_version()} ({self.id!r})>'

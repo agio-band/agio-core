@@ -10,6 +10,8 @@ from ..exceptions import RequestError
 
 
 class AWorkspace(Entity):
+    type_name = 'workspace'
+
     @classmethod
     def get_data(cls, entity_id: str) -> Self:
         data = api.workspace.get_workspace(entity_id)

@@ -3,8 +3,14 @@ from typing import Self, Iterator
 from agio.core.entities import Entity
 
 
-class ACompany(Entity):
-    type = "company"
+class AProductType(Entity):
+
+    def __init__(self, data: str) -> None:
+        pass
+
+    @property
+    def name(self):
+        return 'workfile'
 
     @classmethod
     def get_data(cls, entity_id: str) -> dict:
@@ -26,6 +32,4 @@ class ACompany(Entity):
 
     @classmethod
     def find(cls, **kwargs):
-        pass
-
-    ...
+        return

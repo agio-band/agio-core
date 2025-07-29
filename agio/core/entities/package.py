@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class APackage(Entity):
+    type_name = "package"
 
     @classmethod
     def get_data(cls, entity_id: str) -> dict:

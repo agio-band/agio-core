@@ -6,6 +6,8 @@ class Entity(ABC):
     """
     Base class for database entity
     """
+    type_name = None
+
     def __init__(self, entity: str|dict):
         if isinstance(entity, str):
             # from ID
@@ -17,11 +19,19 @@ class Entity(ABC):
             # from data
             self._id = entity['id']
             self._data = entity
+            if set(self._data.keys()) == {'type', 'id'}:
+                self.reload()
         else:
             raise TypeError('entity must be a string or dict')
 
     def reload(self):
         self._data = self.get_data(self.id)
+
+    @classmethod
+    def from_data(cls, data: dict) -> 'Entity':
+        for cls_ in cls.__subclasses__():
+            if cls_.type_name == data.get('type'):
+                return cls_(data)
 
     @property
     def id(self):
@@ -30,6 +40,10 @@ class Entity(ABC):
     @property
     def data(self):
         return self._data
+
+    @property
+    def type(self):
+        return self.type_name
 
     def __str__(self):
         return str(self._id)
@@ -60,6 +74,11 @@ class Entity(ABC):
     def delete(self) -> None:
         raise NotImplementedError()
 
+    @classmethod
     @abstractmethod
-    def find(self, **kwargs):
+    def find(cls, **kwargs):
         raise NotImplementedError()
+
+    def serialize(self):
+        ...
+

@@ -3,8 +3,8 @@ from typing import Self, Iterator
 from agio.core.entities import Entity
 
 
-class ACompany(Entity):
-    type = "company"
+class AProductVersion(Entity):
+    type_name = "product_version"
 
     @classmethod
     def get_data(cls, entity_id: str) -> dict:
@@ -27,5 +27,3 @@ class ACompany(Entity):
     @classmethod
     def find(cls, **kwargs):
         pass
-
-    ...
