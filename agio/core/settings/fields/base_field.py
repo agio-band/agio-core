@@ -182,12 +182,6 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
             data['dependency']= None
         return data
 
-    # def get_settings(self):
-    #     result = dict(value=self.get())
-    #     if self._data['dependency']['type'] is not None:
-    #         result['dependency'] = self._data['dependency']
-    #     return result
-
     def set_settings(self, saved_settings: dict) -> None:
         self._data.update(saved_settings)
 

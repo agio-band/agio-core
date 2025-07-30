@@ -162,8 +162,9 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
     # Handle Generic types (list[T], dict[K,V], set[T], tuple[T, ...], etc.)
     if hasattr(origin, '__origin__') or origin in (list, set, dict, tuple):
         # Find the appropriate field class
-        field_class = original_field_instance.__class__ if original_field_instance else _get_field_class_for_type(
-            origin, args)
+        field_class = original_field_instance.__class__ \
+            if original_field_instance \
+            else _get_field_class_for_type(origin, args)
         if not field_class:
             raise SettingsInitError(f"Unsupported container type: {origin}")
         field = field_class(default_value)
@@ -212,11 +213,21 @@ class _SettingsMeta(type):
     def __new__(mcs, name, bases, namespace, **kwargs):
         fields = {}
         annotations = namespace.get('__annotations__', {})
+        from pprint import pprint
         for attr_name, attr_value in namespace.items():
             if isinstance(attr_value, BaseField):
                 field = copy.deepcopy(attr_value)
                 field.set_name(attr_name)
                 fields[attr_name] = field
+        if fields:
+            for field_name, field in fields.items():
+                ann = annotations.get(field_name)
+                origin = get_origin(ann)
+                if origin in (list, tuple, set):
+                    args = get_args(ann)
+                    if args:
+                        field.element_type = args[0]
+
         # process type annotations
         for attr_name, annotation in annotations.items():
             if attr_name in fields:

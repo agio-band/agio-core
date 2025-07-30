@@ -5,6 +5,7 @@ from pydantic import TypeAdapter
 from pydantic_core import ValidationError
 
 from agio.core.settings.fields.base_field import BaseField
+from agio.core.settings.fields.js_types import to_js_type
 from agio.core.settings.generic_types import REQUIRED
 
 
@@ -43,13 +44,21 @@ class CollectionField(BaseField, Generic[T], ABC):
             return element
         return TypeAdapter(self.element_type).validate_python(element)
 
-    def _validate(self, value: Any) -> Collection[T]:
+    def _validate(self, value: Any) -> Iterable[T]:
         try:
             iterable = self._convert_input(value)
             return self._validate_elements(iterable)
         except ValidationError as e:
             raise ValueError(f"Element validation failed: {e}")
 
+    def get_additional_info(self):
+        info = super().get_additional_info()
+        info['element_type'] = to_js_type(self._element_type)
+        if info['element_type'] == 'model':
+            info['element_type_schema'] = self.element_type.model_json_schema()
+        elif isinstance(self.element_type, BaseField):
+            info['element_type'] = to_js_type(self.element_type.field_type)
+        return info
 
 class ListField(CollectionField[T]):
     field_type = list[T]

@@ -89,14 +89,19 @@ def _expand_parameter_class(parm_class):
     return params
 
 
+def _fix_param_names(params: dict, package_name: str):
+    for parm in _find_nodes_by_type(params, 'Parameter'):
+        parm['name'] = '.'.join([package_name, parm['name']])
+
+
 def _update_conf(package_name: str, layout: dict) -> tuple[dict, dict]:
     # expand ParameterClass
     new_parameters = {}
     for parm in _find_nodes_by_type(layout, 'ParameterClass'):
         new_parameters = _expand_parameter_class(parm)
     # apply package name
-    for parm in _find_nodes_by_type(layout, 'Parameter'):
-        parm['name'] = '.'.join([package_name, parm['name']])
+    _fix_param_names(layout, package_name)
+    new_parameters = {f'{package_name}.{k}': v for k, v in new_parameters.items()}
     return layout, new_parameters
 
 def collect_layout(layout_type: str) -> dict:
