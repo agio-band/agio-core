@@ -1,7 +1,7 @@
 sections:
   help:
     label: Help
-    order: last
+    order: latest
     content:
       - type: GroupBox
         name: main_help_box
