@@ -1,6 +1,8 @@
 import ast
 import importlib.util
 import sys
+from fnmatch import fnmatch
+from pathlib import Path
 
 
 def import_module_by_path(path: str, name: str = None):
@@ -11,7 +13,7 @@ def import_module_by_path(path: str, name: str = None):
     return module
 
 
-def import_object_by_dotted_path(dotted_path: str) -> object:
+def import_object_by_dotted_path(dotted_path: str) -> type:
     """
     Import and return object inside module by dotted path.
     Path example: "my_module.my_submodule.MyClass"
@@ -53,3 +55,16 @@ def get_class_attrib_value(filepath: str, attribute: str, base_class_name: str):
                 else:
                     raise ValueError(f'No attribute name found on class {class_name}')
     return result
+
+
+def import_modules_from_dir(root: str|Path, parent_name: str, ignore_list=None):
+    files_to_import = []
+    for file in Path(root).rglob('*.py'):
+        if file.is_file():
+            if ignore_list:
+                if any([fnmatch(file.name, x) for x in ignore_list]):
+                    continue
+            files_to_import.append(file)
+    if files_to_import:
+        for file in files_to_import:
+            import_module_by_path(file, '.'.join([parent_name, file.stem]))

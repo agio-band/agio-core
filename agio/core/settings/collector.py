@@ -5,6 +5,9 @@ from pathlib import Path
 from agio.core import package_hub
 from agio.core.settings.generic_types import SettingsType
 from agio.core.utils import pipeline_config_dir
+from agio.core.utils.modules_utils import import_object_by_dotted_path
+from agio.core.settings.package_settings import APackageSettings
+
 
 logger = logging.getLogger(__name__)
 
@@ -53,14 +56,60 @@ def collect_workspace_settings_layout() -> dict:
     return collect_layout(SettingsType.WORKSPACE)
 
 
+def _find_nodes_by_type(obj, type_name: str):
+    if isinstance(obj, dict):
+        if obj.get('type') == type_name:
+            yield obj  # возвращаем сам словарь (изменяемый объект)
+        for value in obj.values():
+            yield from _find_nodes_by_type(value, type_name)
+    elif isinstance(obj, list):
+        for item in obj:
+            yield from _find_nodes_by_type(item, type_name)
+
+
+def _expand_parameter_class(parm_class):
+    new_parm = {
+        'type': 'GroupBox',
+        'content': []
+    }
+    class_to_import = parm_class.pop('class', None)
+    if not class_to_import:
+        raise Exception(f'Class to import not specified')
+    cls = import_object_by_dotted_path(class_to_import)
+    if not issubclass(cls, APackageSettings):
+        raise TypeError(f'Param class {parm_class} must be a subclass of APackageSettings')
+    obj = cls(_init_only=1)
+    new_parm['label'] = obj.label
+    params = obj.__schema__()
+    exclude = parm_class.pop('exclude', None)
+    if exclude:
+        params = {k: v for k, v in params.items() if k not in exclude}
+    new_parm['content'] = [{'type': 'Parameter', 'name': par} for par in params.keys()]
+    parm_class.update(new_parm)
+    return params
+
+
+def _update_conf(package_name: str, layout: dict) -> tuple[dict, dict]:
+    # expand ParameterClass
+    new_parameters = {}
+    for parm in _find_nodes_by_type(layout, 'ParameterClass'):
+        new_parameters = _expand_parameter_class(parm)
+    # apply package name
+    for parm in _find_nodes_by_type(layout, 'Parameter'):
+        parm['name'] = '.'.join([package_name, parm['name']])
+    return layout, new_parameters
+
 def collect_layout(layout_type: str) -> dict:
     # collect packages
     all_packages = package_hub.get_packages()
     # collect layout data
+    parameters = {}
     all_layouts = {}
     for name, pkg in all_packages.items():
         conf = pkg.get_layout_configs(layout_type)
         if conf:
+            conf, params = _update_conf(name, conf)
+            parameters.update(params)
             all_layouts[name] = conf
     # merge layouts to single layout with prefixes
     merged = merge_prefixed_sections(all_layouts)
@@ -71,7 +120,6 @@ def collect_layout(layout_type: str) -> dict:
         if pkg_settings:
             all_settings[name] = pkg_settings
     # collect parameters to single list with prefixes
-    parameters = {}
     for pkg_name, pkg_settings in all_settings.items():
         settings_schema = pkg_settings(_init_only=True).__schema__()
         for parm_name, parm in settings_schema.items():

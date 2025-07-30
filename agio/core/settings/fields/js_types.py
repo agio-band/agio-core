@@ -35,13 +35,13 @@ def type_hint_to_js(py_type) -> Any:
 
     # Union / Optional / T | None
     if origin in UNION_TYPES:
-        js_types = list({type_hint_to_js(t) for t in args})
+        js_types = [type_hint_to_js(t) for t in args]
         return js_types
 
     # list[T] or list[T1, T2]
     if origin in (list, List):
         if args:
-            item_types = list({type_hint_to_js(a) for a in args})
+            item_types = [type_hint_to_js(a) for a in args]
             return item_types if len(item_types) > 1 else [item_types[0]]
         return ["any"]
 

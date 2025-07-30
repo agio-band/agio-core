@@ -209,7 +209,7 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
 
 
 class _SettingsMeta(type):
-    def __new__(mcs, name, bases, namespace):
+    def __new__(mcs, name, bases, namespace, **kwargs):
         fields = {}
         annotations = namespace.get('__annotations__', {})
         for attr_name, attr_value in namespace.items():
@@ -232,6 +232,7 @@ class _SettingsMeta(type):
         # store fields in class
         new_ns = {k: v for k, v in namespace.items() if not isinstance(v, BaseField)}
         new_ns['_fields'] = fields
+        new_ns['_kwargs'] = kwargs
 
         # store required fields in class
         required_fields = [name for name, field in fields.items() if field.is_required()]
@@ -246,10 +247,7 @@ class APackageSettings(metaclass=_SettingsMeta):
 
     def __init__(self, **kwargs):
         class_kwargs = {k: v for k, v in kwargs.items() if k.startswith('_')}
-        self._label = kwargs.pop('_label', None)
-        self._help_text = kwargs.pop('_help_text', None)
-        self._description = kwargs.pop('_description', None)
-        self._layout = kwargs.pop('_layout', None)
+        self._kwargs = getattr(self, '_kwargs', {})
         self._name = ''
         self._fields_data = {}
         self._get_other_parm_func = class_kwargs.pop('_get_other_parm_func', None)
@@ -313,6 +311,10 @@ class APackageSettings(metaclass=_SettingsMeta):
         if not self.__name_pattern.match(name):
             raise ValueError(f"Invalid name: {name}")
         self._name = name
+
+    @property
+    def label(self):
+        return self._kwargs.get('label') or self.__class__.__name__
 
     def find_parameter(self, name: str) -> BaseField:
         """Find a field by name"""
