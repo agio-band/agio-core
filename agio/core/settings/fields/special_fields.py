@@ -13,7 +13,10 @@ class PluginSelectField(BaseField):
     def get_additional_info(self):
         from agio.core import plugin_hub
 
-        names = [(plg.get_label(), plg.name) for plg in plugin_hub.get_plugins_by_type(self.plugin_type)]
+        names = [{
+            'label': plg.get_label(),
+            'value': plg.name
+        } for plg in plugin_hub.get_plugins_by_type(self.plugin_type)]
         info = super().get_additional_info()
         info['enum_options'] = names
         return info

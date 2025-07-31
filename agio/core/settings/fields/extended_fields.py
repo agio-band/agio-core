@@ -240,10 +240,6 @@ class DirectoryField(BaseField):
     field_type = str
 
 
-class PathPatternField(BaseField):
-    field_type = str
-
-
 class SlugField(StringField):
     default_validators = (
         RegexValidator(pattern=r'^[a-z][a-z0-9_]+$'),

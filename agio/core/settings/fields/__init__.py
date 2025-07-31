@@ -11,7 +11,6 @@ from .extended_fields import (
     FrameRangeField,
     PathField,
     DirectoryField,
-    PathPatternField,
     SlugField,
 )
 from .model_fields import ModelField

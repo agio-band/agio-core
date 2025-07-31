@@ -11,6 +11,7 @@ from agio.core.settings.generic_types import REQUIRED
 T = TypeVar('T')
 K = TypeVar('K')
 V = TypeVar('V')
+D = TypeVar('D')
 
 
 class CollectionField(BaseField[list[T]]):
@@ -55,6 +56,7 @@ class CollectionField(BaseField[list[T]]):
         info = super().get_additional_info()
         compound_info = to_js_type(self._element_type)
         info['element_type'] = compound_info['field_type']
+        info['element_type_schema'] = compound_info.get('type_schema')
         return info
 
 class ListField(CollectionField[T]):
@@ -144,4 +146,5 @@ class DictField(BaseField, Generic[K, V]):
         return value
 
 
-
+class TableField(BaseField, Generic[D]):    # TODO
+    field_type = list[list[D, ...]]
