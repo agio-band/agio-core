@@ -15,12 +15,9 @@ class ModelField(BaseField):
         if not model or not (inspect.isclass(model) and issubclass(model, BaseModel)):
             raise ValueError("ModelField must be initialized with a Pydantic BaseModel class.")
         self.model = model
-        self.field_type = model # Устанавливаем field_type в класс модели
+        self.field_type = model
         super().__init__(default_value)
-        # Генерируем и сохраняем Pydantic схему при инициализации
-        # _iterate_pydantic_type_hints будет вызываться здесь для проверки
-        # вложенных полей Pydantic модели на наличие BaseField
-        list(iter(_iterate_pydantic_type_hints(self.model))) # Принудительно запускаем итерацию для проверки
+        list(iter(_iterate_pydantic_type_hints(self.model)))
         self._pydantic_schema = self.model.model_json_schema()
 
     def _validate(self, value: Any) -> Any:
@@ -46,9 +43,7 @@ class ModelField(BaseField):
 
     def get_schema(self) -> dict:
         schema = super().get_schema()
-        # Переопределяем field_type и field_name в соответствии с требованиями
-        schema['field_type'] = "object" # Pydantic model is an object in JSON schema
-        schema['field_name'] = "ModelField"
-        # Добавляем полную Pydantic схему модели
-        schema['schema'] = self._pydantic_schema
+        schema['field_type'] = "model"
+        # schema['field_name'] = "ModelField"
+        schema['type_schema'] = self._pydantic_schema
         return schema

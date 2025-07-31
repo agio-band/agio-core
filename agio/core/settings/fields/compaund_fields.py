@@ -1,4 +1,3 @@
-from abc import ABC
 from typing import Generic, Any, Type, Iterable, Collection, Union, Sized, TypeVar
 
 from pydantic import TypeAdapter
@@ -14,7 +13,8 @@ K = TypeVar('K')
 V = TypeVar('V')
 
 
-class CollectionField(BaseField, Generic[T], ABC):
+class CollectionField(BaseField[list[T]]):
+    # _element_type: Type[T] | None = None
     def __init__(self, default_value: Any = REQUIRED, **kwargs):
         self._element_type: Type[T] | None = None
         super().__init__(default_value, **kwargs)
@@ -53,11 +53,8 @@ class CollectionField(BaseField, Generic[T], ABC):
 
     def get_additional_info(self):
         info = super().get_additional_info()
-        info['element_type'] = to_js_type(self._element_type)
-        if info['element_type'] == 'model':
-            info['element_type_schema'] = self.element_type.model_json_schema()
-        elif isinstance(self.element_type, BaseField):
-            info['element_type'] = to_js_type(self.element_type.field_type)
+        compound_info = to_js_type(self._element_type)
+        info['element_type'] = compound_info['field_type']
         return info
 
 class ListField(CollectionField[T]):
@@ -145,5 +142,6 @@ class DictField(BaseField, Generic[K, V]):
                 raise ValueError(f"Dict validation failed: {e}")
 
         return value
+
 
 

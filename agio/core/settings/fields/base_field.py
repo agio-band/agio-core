@@ -1,11 +1,10 @@
-import builtins
 import inspect
 import re
-import types
 from abc import ABC, ABCMeta
 from functools import cached_property
-from typing import Any, Callable, Type, Union, Sequence, List
+from typing import Any, Callable, Type, Union, TypeVar, Generic
 from weakref import ref
+
 from pydantic import TypeAdapter, BaseModel
 from pydantic_core import ValidationError
 
@@ -18,7 +17,7 @@ from agio.core.utils.text_utils import unslugify
 ValidatorInstance = ValidatorBase
 ValidatorFactory = Callable[..., ValidatorBase]
 ValidatorClass = Type[ValidatorBase]
-
+FieldType = TypeVar('FieldType')
 ValidatorType = Union[ValidatorInstance, ValidatorFactory, ValidatorClass]
 
 
@@ -29,8 +28,8 @@ class BaseFieldMeta(ABCMeta):
         return cls
 
 
-class BaseField(ABC, metaclass=BaseFieldMeta):
-    field_type: Any = None
+class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
+    field_type: type[FieldType] = None
     default_validators: list[ValidatorBase, ...] = []
     default_widget = None
     __name_pattern = re.compile(r'^[a-zA-Z](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$')
@@ -49,6 +48,8 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
         hint: str = None,
         **kwargs
     ):
+        if self.field_type is None:
+            raise ValueError(f'Field type not set for {self.__class__.__name__}')
         self._data: dict[str, Any] = {
             # values
             'value': NOT_SET,
@@ -89,10 +90,10 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
         self.__parent_settings = ref(settings)
 
     def __str__(self):
-        return f"{self._data['value']}"
+        return f"{self.__class__.__name__}({self._data['value']})"
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} [{self.field_type}] ({self._data['value']})>"
+        return f"{self.__class__.__name__} [{self.field_type}] ({self._data['value']})"
 
     @cached_property
     def type_adapter(self) -> TypeAdapter:
@@ -241,14 +242,15 @@ class BaseField(ABC, metaclass=BaseFieldMeta):
         return value
 
     def get_schema(self) -> dict:
+        field_info = to_js_type(self.field_type)
         schema = {
-            'field_type': to_js_type(self.field_type),
-            'field_name': self.__class__.__name__,
+            **field_info,
+            **self.get_additional_info(),
+            'widget': self.__class__.__name__,
             'required': self.is_required(),
             'default': self._serialize_value(self._data['default']),
             'validators': self._get_validators_schema(),
             # 'dependency': self._data['dependency'],
-            **self.get_additional_info()
         }
         if self._data['description']:
             schema['description'] = self._data['description']

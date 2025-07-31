@@ -1,7 +1,8 @@
 from datetime import datetime
+from functools import cached_property
 from numbers import Real
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Union, get_args, TypeVar
 
 from pydantic import EmailStr, AnyUrl
 
@@ -84,11 +85,11 @@ class VectorField(ListField[float]):
         if isinstance(value, tuple):
             value = list(value)
 
-        value_list = super()._validate(value)
+        value_list = tuple(super()._validate(value))
 
         if self.element_count and len(value_list) != self.element_count:
             raise ValueError(f"Vector must have exactly {self.element_count} elements")
-        return tuple(value_list)
+        return value_list
 
 
 class Vector2Field(VectorField):
@@ -120,95 +121,115 @@ class Vector4Field(Vector3Field):
 ColorRGBType = tuple[int, int, int]
 ColorRGBAType = tuple[int, int, int, int]
 ColorInputType = Union[str, tuple[Real, ...], list[Real]]
+ColorType = TypeVar('ColorType', bound=tuple[int, ...]) # A generic type for color tuples
 
 
-class RGBColorField(BaseField):
-    field_type = ColorRGBType  # RGB tuple[int, int, int]
+class _BaseColorField(BaseField[ColorType]):
+    """
+    A base class for color fields, providing unified set/get logic
+    for RGB and RGBA.
+    """
+    field_type: type[ColorType] # To be defined by subclasses (e.g., ColorRGBType, ColorRGBAType)
+    component_names: list[str] = [] # To be defined by subclasses
+
+    @cached_property
+    def _element_count(self) -> int:
+        """Dynamically determines the number of color components based on field_type."""
+        return len(get_args(self.field_type))
 
     def set(self, value: ColorInputType) -> None:
-        """Автоматически определяет формат и вызывает соответствующий метод"""
+        """
+        Sets the color value.
+        Accepts HEX strings or tuples/lists with the appropriate number of components.
+        """
         if isinstance(value, str):
-            self.set_hex(value)
-        elif isinstance(value, (tuple, list)):
-            if len(value) == 4:
-                self.set_rgba(*value)
-            elif len(value) == 3:
-                self.set_rgb(*value)
+            # Hex always produces RGB, so we need to ensure it matches the expected count
+            rgb_components = self._hex_to_rgb(value)
+            if self._element_count == 3:
+                validated = self._validate_components(*rgb_components)
+            elif self._element_count == 4:
+                # If RGBA, default alpha to 255 (or 1.0) when setting from hex
+                validated = self._validate_components(*rgb_components, 255)
             else:
-                raise ValueError("Color must have 3 (RGB) or 4 (RGBA) components")
+                raise ValueError("Unsupported color type for hex conversion.")
+        elif isinstance(value, (tuple, list)):
+            if len(value) == self._element_count:
+                validated = self._validate_components(*value)
+            else:
+                raise ValueError(
+                    f"Color must have {self._element_count} components, got {len(value)}"
+                )
         else:
             raise ValueError(f"Unsupported color format: {type(value)}")
 
-    def set_hex(self, hex_str: str) -> None:
-        """Установка цвета из HEX строки (#RGB, #RRGGBB)"""
-        hex_str = hex_str.strip().lower()
-        if not (hex_str.startswith('#') and len(hex_str) in (4, 7)):
-            raise ValueError("Invalid HEX format. Expected #RGB or #RRGGBB")
+        super().set(self.field_type(validated)) # Cast to the specific tuple type
 
-        hex_part = hex_str[1:]
-        if not all(c in '0123456789abcdef' for c in hex_part):
-            raise ValueError("HEX string contains invalid characters")
+    def get(self, as_hex: bool = False, as_float: bool = False) -> Union[str, ColorType, tuple[float, ...]]:
+        """
+        Gets the color value in various formats.
+        :param as_hex: If True, returns color as a HEX string.
+        :param as_float: If True, returns color components as floats (0.0-1.0).
+        """
+        current_value = super().get()
 
-        rgb = self._hex_to_rgb(hex_str)
-        super().set(rgb)
-
-    def set_rgb(self, r: Real, g: Real, b: Real) -> None:
-        """Установка цвета из RGB компонентов (0-255 или 0.0-1.0)"""
-        validated = (
-            self._validate_component(r, 'Red'),
-            self._validate_component(g, 'Green'),
-            self._validate_component(b, 'Blue')
-        )
-        super().set(validated)
-
-    def set_rgba(self, r: Real, g: Real, b: Real, a: Real) -> None:
-        """Установка цвета из RGBA компонентов (альфа игнорируется)"""
-        self.set_rgb(r, g, b)  # Просто используем RGB компоненты
-
-    def _validate_component(self, value: Real, name: str = 'Component') -> int:
-        """Проверяет и нормализует цветовой компонент"""
-        if not isinstance(value, Real):
-            raise ValueError(f"{name} must be a number, got {type(value)}")
-
-        value_float = float(value)
-        if 0.0 <= value_float <= 1.0:
-            return int(value_float * 255)
-        elif 0.0 <= value_float <= 255.0:
-            return int(value_float)
+        if as_hex:
+            # Only 3 components can be represented as hex. If RGBA, we just take RGB.
+            if len(current_value) >= 3:
+                r, g, b = current_value[0], current_value[1], current_value[2]
+                return f"#{r:02x}{g:02x}{b:02x}"
+            else:
+                raise ValueError("Cannot convert to HEX: color type does not have RGB components.")
+        elif as_float:
+            return tuple(comp / 255.0 for comp in current_value)
         else:
-            raise ValueError(f"{name} value {value} out of range (0-255 or 0.0-1.0)")
+            return current_value
+
+    def _validate_components(self, *values: Real) -> tuple[int, ...]:
+        """
+        Validates and normalizes color components.
+        Handles both 0-255 and 0.0-1.0 ranges.
+        """
+        validated = []
+        for i, value in enumerate(values):
+            name = self.component_names[i] if i < len(self.component_names) else f"Component {i+1}"
+            if not isinstance(value, Real):
+                raise ValueError(f"{name} must be a number, got {type(value)}")
+
+            value_float = float(value)
+            if 0.0 <= value_float <= 1.0:
+                validated.append(int(value_float * 255))
+            elif 0.0 <= value_float <= 255.0:
+                validated.append(int(value_float))
+            else:
+                raise ValueError(f"{name} value {value} out of range (0-255 or 0.0-1.0)")
+        return tuple(validated)
 
     @staticmethod
     def _hex_to_rgb(hex_str: str) -> ColorRGBType:
-        """Конвертирует HEX строку в RGB tuple"""
-        hex_str = hex_str.lstrip('#')
+        """Converts a HEX string (#RGB or #RRGGBB) to an RGB tuple (0-255)."""
+        hex_str = hex_str.strip().lstrip('#')
+        if not all(c in '0123456789abcdefABCDEF' for c in hex_str):
+            raise ValueError("HEX string contains invalid characters")
         if len(hex_str) == 3:
             hex_str = ''.join([c * 2 for c in hex_str])
+        elif len(hex_str) != 6:
+            raise ValueError("Invalid HEX format. Expected #RGB or #RRGGBB")
+
         return (
             int(hex_str[0:2], 16),
             int(hex_str[2:4], 16),
             int(hex_str[4:6], 16)
         )
 
-    # Методы get остаются без изменений
-    def get_hex(self) -> str:
-        r, g, b = self.get()
-        return f"#{r:02x}{g:02x}{b:02x}"
 
-    def get_rgb(self) -> ColorRGBType:
-        return self.get()
+class RGBColorField(_BaseColorField[ColorRGBType]):
+    field_type = ColorRGBType
+    component_names = ["red", "green", "blue"]
 
-    def get_rgba(self, alpha: int = 255) -> ColorRGBAType:
-        r, g, b = self.get()
-        return (r, g, b, alpha)
 
-    def get_rgb_float(self) -> tuple[float, float, float]:
-        r, g, b = self.get()
-        return r / 255.0, g / 255.0, b / 255.0
-
-    def get_rgba_float(self, alpha: float = 1.0) -> tuple[float, float, float, float]:
-        r, g, b = self.get_rgb_float()
-        return (r, g, b, alpha)
+class RGBAColorField(_BaseColorField[ColorRGBAType]):
+    field_type = ColorRGBAType
+    component_names = ["red", "green", "blue", "alpha"]
 
 
 class PathField(BaseField):

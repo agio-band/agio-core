@@ -146,7 +146,9 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
         non_none_args = [arg for arg in args if arg is not type(None)]
         if len(non_none_args) == 1:
             field = _create_field_from_annotation(name, non_none_args[0], default_value)
-            # Create a NullableField wrapper that allows None
+            if field:
+                return field
+            # TODO: Create a NullableField wrapper that allows None or raise error?
             class NullableField(field.__class__):
                 def _validate(self, value: Any) -> Any:
                     if value is None:
@@ -179,7 +181,6 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
                     field.element_types = args
             elif origin is dict:
                 field._key_type, field._value_type = args
-
         return field
 
     # Handle Pydantic BaseModel types
@@ -213,7 +214,6 @@ class _SettingsMeta(type):
     def __new__(mcs, name, bases, namespace, **kwargs):
         fields = {}
         annotations = namespace.get('__annotations__', {})
-        from pprint import pprint
         for attr_name, attr_value in namespace.items():
             if isinstance(attr_value, BaseField):
                 field = copy.deepcopy(attr_value)
@@ -226,7 +226,7 @@ class _SettingsMeta(type):
                 if origin in (list, tuple, set):
                     args = get_args(ann)
                     if args:
-                        field.element_type = args[0]
+                        field._element_type = args[0]
 
         # process type annotations
         for attr_name, annotation in annotations.items():
