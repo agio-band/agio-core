@@ -30,7 +30,7 @@ UNION_TYPES = {Union, types.UnionType}
 
 
 def type_hint_to_js(py_type) -> Any:
-
+    from agio.core.settings import BaseField
 
     origin = get_origin(py_type)
     args = get_args(py_type)
@@ -73,6 +73,9 @@ def type_hint_to_js(py_type) -> Any:
     if isinstance(py_type, type) and issubclass(py_type, BaseModel):
         return model_to_js_schema(py_type)
 
+    # settings field
+    if origin and issubclass(origin, BaseField):
+        return to_js_type(origin.field_type)
     # Pydantic or custom types (EmailStr, HttpUrl...)
     if isinstance(py_type, type):
         return py_type.__name__
@@ -85,35 +88,41 @@ def model_to_js_schema(model_cls: type) -> dict:
     return {name: type_hint_to_js(hint) for name, hint in hints.items()}
 
 
-def to_js_type1(type_hint: Any) -> Any:
-    from agio.core.settings import BaseField
-
-    origin = get_origin(type_hint)
-    if issubclass(type_hint, BaseModel):
-        return model_to_js_schema(type_hint)
-    elif origin and isclass(origin) and issubclass(origin, BaseField):
-        return to_js_type(type_hint.field_type)
-    else:
-        return type_hint_to_js(type_hint)
+# def to_js_type1(type_hint: Any) -> Any:
+#     from agio.core.settings import BaseField
+#
+#     origin = get_origin(type_hint)
+#     if issubclass(type_hint, BaseModel):
+#         return model_to_js_schema(type_hint)
+#     elif origin and isclass(origin) and issubclass(origin, BaseField):
+#         return to_js_type(type_hint.field_type)
+#     else:
+#         return type_hint_to_js(type_hint)
 
 
 def to_js_type(python_type: Any) -> str:
     from agio.core.settings import BaseField
     origin = get_origin(python_type) or python_type
-    if origin is str:
-        return "string"
-    if origin is int:
-        return "integer"
-    if origin is float:
-        return "number"
-    if origin is bool:
-        return "boolean"
-    if origin is list:
-        return "array"
-    if origin is dict:
-        return "object"
+    if origin in BASE_TYPE_MAP:
+        return BASE_TYPE_MAP[origin]
     if issubclass(origin, BaseModel):
         return "model"
     if issubclass(origin, BaseField):
         return to_js_type(origin.field_type)
+    # if origin in (tuple, Tuple):
+    #     args = get_args(python_type)
+    #     return {'field_type': 'array', 'element_count': len(args)}
+    #     return [type_hint_to_js(a) for a in args]
     return str(python_type).replace('typing.', '').replace('NoneType', 'null').lower()
+#
+# def to_js_type(python_type: Any) -> str:
+#     from agio.core.settings import BaseField
+#     origin = get_origin(python_type) or python_type
+#     if origin in BASE_TYPE_MAP:
+#         return BASE_TYPE_MAP[origin]
+#     if issubclass(origin, BaseModel):
+#         return "model"
+#     if issubclass(origin, BaseField):
+#         return to_js_type(origin.field_type)
+#     print('TOSTR', origin)
+#     return str(python_type).replace('typing.', '').replace('NoneType', 'null').lower()
