@@ -4,7 +4,7 @@ from pathlib import Path
 
 from agio.core import package_hub
 from agio.core.settings.generic_types import SettingsType
-from agio.core.utils import pipeline_config_dir
+from agio.core.utils import pipeline_config_dir, text_utils
 from agio.core.utils.modules_utils import import_object_by_dotted_path
 from agio.core.settings.package_settings import APackageSettings
 
@@ -57,9 +57,12 @@ def collect_workspace_settings_layout() -> dict:
 
 
 def _find_nodes_by_type(obj, type_name: str):
+    """
+    Iter items by type
+    """
     if isinstance(obj, dict):
         if obj.get('type') == type_name:
-            yield obj  # возвращаем сам словарь (изменяемый объект)
+            yield obj
         for value in obj.values():
             yield from _find_nodes_by_type(value, type_name)
     elif isinstance(obj, list):
@@ -89,6 +92,18 @@ def _expand_parameter_class(parm_class):
     return params
 
 
+def _rextract_markdown(param: dict):
+    file_path = param.pop('abs_file', '')
+    if not file_path:
+        raise Exception(f'Param {param} must have a file path')
+    file_path = Path(file_path)
+    if not file_path.exists():
+        raise Exception(f'File not found: {file_path}')
+    text = text_utils.render_markdown_from_file(file_path)
+    param['type'] = 'Html'
+    param['text'] = text
+
+
 def _fix_param_names(params: dict, package_name: str):
     for parm in _find_nodes_by_type(params, 'Parameter'):
         parm['name'] = '.'.join([package_name, parm['name']])
@@ -99,10 +114,14 @@ def _update_conf(package_name: str, layout: dict) -> tuple[dict, dict]:
     new_parameters = {}
     for parm in _find_nodes_by_type(layout, 'ParameterClass'):
         new_parameters = _expand_parameter_class(parm)
+    # expand content from files
+    for parm in _find_nodes_by_type(layout, 'MarkdownText'):
+        _rextract_markdown(parm)
     # apply package name
     _fix_param_names(layout, package_name)
     new_parameters = {f'{package_name}.{k}': v for k, v in new_parameters.items()}
     return layout, new_parameters
+
 
 def collect_layout(layout_type: str) -> dict:
     # collect packages

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from unidecode import unidecode
 import re
 
@@ -39,4 +41,35 @@ def snake_case_to_camel_case(name: str, titled_first_letter: bool = True) -> str
     return parts[0] + ''.join(word.capitalize() for word in parts[1:])
 
 
+def render_markdown_from_file(file_path: str|Path) -> str:
+    """
+    Converts a markdown file to a HTML text
+    """
+    file_path = Path(file_path)
+    if not file_path.exists():
+        raise FileNotFoundError(file_path)
+    return render_markdown_from_string(file_path.read_text(encoding='utf-8'))
 
+
+def render_markdown_from_string(text: str) -> str:
+    """
+    Converts a Markdown text to an HTML text
+
+    # TODO: delete any js using bleach
+    safe_html = bleach.clean(
+        unsafe_html,
+        tags=['a', 'p', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br', 'blockquote'],
+        attributes={'a': ['href', 'title']},
+        protocols=['http', 'https', 'mailto'],
+        strip=True
+    )
+    """
+    import mistune
+
+    class CustomRenderer(mistune.HTMLRenderer):
+        def image(self, *args, **kwargs):
+            return '*Images not supported*'
+
+    markdown = mistune.create_markdown(renderer=CustomRenderer())
+    html = markdown(text)
+    return html

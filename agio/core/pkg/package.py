@@ -234,7 +234,28 @@ class APackageManager:
             raise PackageMetadataError(f'Layout path is directory {layout_config_full_path}')
         with layout_config_full_path.open(encoding='utf-8') as layout_file:
             layout_config = yaml.safe_load(layout_file)
+        self._expand_file_fields(layout_config)
         return layout_config
+
+    def _expand_file_fields(self, values):
+
+        def iter_params_wit_file_field(obj):
+            if isinstance(obj, dict):
+                if obj.get('local_file'):
+                    yield obj
+                for value in obj.values():
+                    yield from iter_params_wit_file_field(value)
+            elif isinstance(obj, list):
+                for item in obj:
+                    yield from iter_params_wit_file_field(item)
+
+        for parm in iter_params_wit_file_field(values):
+            file = Path(parm.get('local_file'))
+            if not file.is_absolute():
+                abs_path = self.root.joinpath(file).resolve()
+                parm['abs_file']  = abs_path.as_posix()
+            else:
+                parm['abs_file'] = file.as_posix()
 
     def get_callbacks(self):
         callbacks = self._get_meta_data_field('callbacks') or []
