@@ -9,14 +9,14 @@ from agio.core.settings.generic_types import REQUIRED
 
 
 class ModelField(BaseField):
-    def __init__(self, default_value: Any = REQUIRED, model: Type[BaseModel] = None):
+    def __init__(self, default: Any = REQUIRED, model: Type[BaseModel] = None):
         from agio.core.settings.package_settings import _iterate_pydantic_type_hints
 
         if not model or not (inspect.isclass(model) and issubclass(model, BaseModel)):
             raise ValueError("ModelField must be initialized with a Pydantic BaseModel class.")
         self.model = model
         self.field_type = model
-        super().__init__(default_value)
+        super().__init__(default)
         list(iter(_iterate_pydantic_type_hints(self.model)))
         self._pydantic_schema = self.model.model_json_schema()
 

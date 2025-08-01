@@ -36,7 +36,7 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
 
     def __init__(
         self,
-        default_value: Any = REQUIRED,
+        default: Any = REQUIRED,
         *,
         validators: list[ValidatorBase, ...] = None,
         label: str = None,
@@ -62,7 +62,7 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
             },
 
             # props
-            'required': default_value is REQUIRED,
+            'required': default is REQUIRED,
             'default': None,
             'validators': list(self.default_validators) + (validators or []),
             'kwargs': kwargs,
@@ -77,7 +77,7 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
         }
         self._name: str = kwargs.pop('field_name', '')
         self.__parent_settings = None   # settings class
-        self._init_default(default_value)
+        self._init_default(default)
 
     def _get_class_config_value(self, name: str, default=None) -> Any:
         return self.__class__._creation_flags.get(name, default)
@@ -103,6 +103,8 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
         if default_value in (REQUIRED, NOT_SET):
             self._data['default'] = None
         else:
+            if callable(default_value):
+                default_value = default_value()
             self._data['default'] = default_value
             if default_value is not None:
                 self._data['value'] = self._validate(default_value)

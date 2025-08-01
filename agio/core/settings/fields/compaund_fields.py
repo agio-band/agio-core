@@ -16,9 +16,9 @@ D = TypeVar('D')
 
 class CollectionField(BaseField[list[T]]):
     # _element_type: Type[T] | None = None
-    def __init__(self, default_value: Any = REQUIRED, **kwargs):
+    def __init__(self, default: Any = REQUIRED, **kwargs):
         self._element_type: Type[T] | None = None
-        super().__init__(default_value, **kwargs)
+        super().__init__(default, **kwargs)
 
     @property
     def element_type(self) -> Type[T] | None:
@@ -57,6 +57,7 @@ class CollectionField(BaseField[list[T]]):
         compound_info = to_js_type(self._element_type)
         info['element_type'] = compound_info['field_type']
         info['element_type_schema'] = compound_info.get('type_schema')
+        info['element_widget'] = self._data['kwargs'].get('element_widget')
         return info
 
 class ListField(CollectionField[T]):
@@ -146,5 +147,5 @@ class DictField(BaseField, Generic[K, V]):
         return value
 
 
-class TableField(BaseField, Generic[D]):    # TODO
-    field_type = list[list[D, ...]]
+# class TableField(BaseField, Generic[D]):    # TODO
+#     field_type = list[list[D, ...]]
