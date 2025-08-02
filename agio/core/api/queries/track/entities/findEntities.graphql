@@ -1,0 +1,37 @@
+query FindEntity(
+    $filter: EntityWhere,
+    $limit: Int!,
+    $after: String,
+    $order: EntityOrdering
+) {
+    entities (
+        filter: {
+            where: $filter
+        },
+        first: $limit,
+        after: $after,
+        ordering: $order
+    ){
+        edges {
+            node{
+              id
+              name
+              projectId
+              class{
+                name
+              }
+              # fields
+              links{
+                toId
+                roleId
+              }
+
+              parent{
+                name
+                id
+                parentId
+              }
+            }
+        }
+    }
+}

@@ -1,12 +1,12 @@
 from agio.core.api import client
 
 
-def iter_entities(query: str,
-                  entities_data_key: str,
-                  variables: dict = None,
-                  limit: int = None,
-                  items_per_page: int = 25,
-                  ):
+def iter_query_list(query: str,
+                    entities_data_key: str,
+                    variables: dict = None,
+                    limit: int = None,
+                    items_per_page: int = 50,
+                    ):
     """
     required in response:
 

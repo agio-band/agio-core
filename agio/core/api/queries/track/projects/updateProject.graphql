@@ -1,0 +1,5 @@
+mutation UpdateProject($id: ID!, $input: ProjectUpdateInput!) {
+  updateProject(id: $id, input: $input) {
+    ok
+  }
+}

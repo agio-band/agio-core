@@ -1,0 +1,30 @@
+query GetEntityList($where: EntityWhere, $first: Int!) {
+    entities (
+        filter: {
+            where: $where
+        },
+        first: $first
+    ){
+        edges {
+            node{
+              id
+              name
+              projectId
+              class{
+                name
+              }
+              # fields
+              links{
+                toId
+                roleId
+              }
+
+              parent{
+                name
+                id
+                parentId
+              }
+            }
+        }
+    }
+}

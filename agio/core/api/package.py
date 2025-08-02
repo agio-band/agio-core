@@ -2,7 +2,7 @@ from typing import Iterator
 from uuid import UUID
 from . import client
 from .utils import NOTSET
-from .utils.query_tools import iter_entities
+from .utils.query_tools import iter_query_list
 
 
 # packages
@@ -62,7 +62,7 @@ def update_package(
 
 
 def iter_packages(limit: int = None) -> Iterator[dict]:
-    yield from iter_entities(
+    yield from iter_query_list(
         'ws/package/getPackageList',
         entities_data_key='packages',
         limit=limit,
@@ -133,7 +133,7 @@ def get_package_release_by_name_and_version(package_name: str, version: str) -> 
 
 
 def iter_package_releases(package_id: UUID|str, limit: int = None) -> Iterator[dict]:
-    yield from iter_entities(
+    yield from iter_query_list(
         'ws/release/getPackageReleaseList',
         entities_data_key='packageReleases',
         variables={'packageId': package_id},

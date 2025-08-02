@@ -1,0 +1,33 @@
+query GetEntityById($projectId: ID!, $className: String!, $name: String!) {
+  entities(
+    filter: {
+      where: {
+          name: { equalTo: $name },
+          project: { id: { equalTo: $projectId } },
+          class: {name: {equalTo: $className}}
+      }
+    }
+    first: 1
+  ) {
+    edges {
+      node {
+        id
+        name
+        projectId
+#       fields
+        class {
+          name
+        }
+        links {
+          toId
+          roleId
+        }
+        parent {
+          name
+          id
+          parentId
+        }
+      }
+    }
+  }
+}

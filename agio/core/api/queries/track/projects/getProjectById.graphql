@@ -1,0 +1,17 @@
+query GetProjectById($id: ID!) {
+  project(id: $id) {
+    id
+    name
+    code
+    fields
+    company {
+      id
+      name
+      email
+    }
+    workspace {
+      id
+      name
+    }
+  }
+}

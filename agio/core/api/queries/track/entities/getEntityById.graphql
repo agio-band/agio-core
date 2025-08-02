@@ -1,0 +1,28 @@
+query GetEntityById($id: ID!) {
+  entities(
+      filter: {
+        where: { id: { equalTo: $id } }
+      },
+      first: 1
+  ) {
+    edges {
+      node {
+        id
+        name
+        projectId
+        class {
+          name
+        }
+        links {
+          toId
+          roleId
+        }
+        parent {
+          name
+          id
+          parentId
+        }
+      }
+    }
+  }
+}

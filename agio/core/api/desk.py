@@ -3,7 +3,7 @@ from uuid import UUID
 
 from . import client
 from .schemas.desk import UserProfileResponseSchema, CurrentCompanyResponseSchema, CompanyResponseSchema
-from .utils.query_tools import iter_entities
+from .utils.query_tools import iter_query_list
 from .utils.response_typing import response_schema
 
 
@@ -41,7 +41,7 @@ def update_company(company_id: UUID, update_data: dict) -> CompanyResponseSchema
 
 
 def iter_companies(limit: int = None) -> Iterator[dict]:
-    yield from iter_entities(
+    yield from iter_query_list(
         'desk/company/getCompanyList',
         entities_data_key='companies',
         limit=limit,

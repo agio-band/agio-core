@@ -3,7 +3,7 @@ from uuid import UUID
 
 from . import client
 from .utils import NOTSET
-from .utils.query_tools import iter_entities
+from .utils.query_tools import iter_query_list
 from ..exceptions import RevisionNotExists, SettingsRevisionNotExists, WorkspaceNotExists
 
 
@@ -20,7 +20,7 @@ def get_workspace(workspace_id: UUID|str, full: bool = False) -> dict:
 
 
 def iter_workspaces(company_id: UUID|str, limit: int = None) -> Iterator[dict]:
-    yield from iter_entities(
+    yield from iter_query_list(
         'ws/workspace/getWorkspaceList',
         entities_data_key='workspaces',
         variables=dict(companyId=company_id),
@@ -156,7 +156,7 @@ def update_revision(
 
 
 def iter_revisions(workspace_id: UUID|str, limit: int = None) -> Iterator[dict]:
-    yield from iter_entities(
+    yield from iter_query_list(
         'ws/revision/getWorkspaceRevisionList',
         entities_data_key='workspaceRevisions',
         variables=dict(
@@ -185,7 +185,7 @@ def find_revision(
         raise NotImplementedError
         # entity_filter['workspace'] = {'name': {'equalTo': str(workspace_name)}}
     try:
-        return next(iter_entities(
+        return next(iter_query_list(
             'ws/revision/findWorkspaceRevision',
             entities_data_key='workspaceRevisions',
             variables=dict(
@@ -256,7 +256,7 @@ def get_revision_settings(settings_id: UUID|str) -> dict:
 
 
 def iter_revision_settings(revision_id: UUID|str) -> Iterator[dict]:
-    yield from iter_entities(
+    yield from iter_query_list(
         'ws/settings/getRevisionSettingsList',
         entities_data_key='workspaceSettingses',
         variables=dict(revisionId=revision_id)

@@ -1,0 +1,12 @@
+query projectEntityClasses($id: ID!) {
+  project(id: $id) {
+    entityClasses {
+      id
+      name
+      parentEntityClasses {
+        id
+        name
+      }
+    }
+  }
+}

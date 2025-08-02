@@ -1,0 +1,29 @@
+query GetProjectByName($name: String!, $companyId: ID!) {
+  projects(
+    filter: {
+      where: {
+          name: { equalTo: $name },
+          company: { id: { equalTo: $companyId } }
+      }
+    }
+    first: 1
+  ) {
+    edges {
+      node {
+        id
+        name
+        code
+        fields
+        company {
+          id
+          name
+          email
+        }
+        workspace {
+          id
+          name
+        }
+      }
+    }
+  }
+}

@@ -12,6 +12,10 @@ query projectsList($limit: Int!, $filter: ProjectFilter) {
           }
           logo(params: {type: "fit", width: 250, height: 250})
         }
+        workspace {
+          id
+          name
+        }
       }
     }
   }
