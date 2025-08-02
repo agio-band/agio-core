@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Self
 
 from agio.core import api
-from agio.core.entities import AWorkspaceRevision, AWorkspace
+from agio.core.domains import AWorkspaceRevision, AWorkspace
 from agio.core.events import emit
 from agio.core.exceptions import WorkspaceNotInstalled
 from agio.core.utils import config, pkg_manager, venv_utils

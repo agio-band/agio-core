@@ -31,33 +31,41 @@ class PackageRepositoryError(AException):
     detail: str = "Package Repository Error"
 
 
-# workspace
-class WorkspaceError(AException):
+# api
+class ApiError(AException):
     detail: str = "Workspace Error"
 
 
-class EntityNotExists(WorkspaceError):
+class NotExistsError(ApiError):
     detail: str = "Entity does not exist"
 
 
-class WorkspaceNotExists(EntityNotExists):
+class WorkspaceNotExists(NotExistsError):
     detail: str = "Workspace does not exist"
 
 
-class RevisionNotExists(EntityNotExists):
+class RevisionNotExists(NotExistsError):
     detail: str = "Workspace revision does not exist"
 
 
-class SettingsRevisionNotExists(EntityNotExists):
+class SettingsRevisionNotExists(NotExistsError):
     detail: str = "Settings revision does not exist"
 
 
-class WorkspaceNotInstalled(WorkspaceError):
+class WorkspaceNotInstalled(ApiError):
     detail: str = "Workspace Not Installed"
 
 
 class MakeReleaseError(AException):
     detail: str = "Make Release Error"
+
+
+class ProjectNotExists(NotExistsError):
+    detail: str = "Project does not exist"
+
+
+class EntityNotExists(NotExistsError):
+    detail: str = "Entity does not exist"
 
 
 # Event hub

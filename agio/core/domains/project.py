@@ -1,8 +1,8 @@
 from typing import Self, Iterator
-from agio.core.entities import Entity
+from agio.core.domains import DomainBase
 
 
-class AProject(Entity):
+class AProject(DomainBase):
     type_name = "project"
 
     @classmethod

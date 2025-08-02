@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 import logging
 
-from agio.core.entities import APackage, APackageRelease
+from agio.core.domains import APackage, APackageRelease
 from agio.core.pkg import APackageManager
 from agio.core.pkg.package_repostory import APackageRepository
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand

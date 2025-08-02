@@ -6,7 +6,7 @@ from typing import Any, Generator, Type, Self
 
 import yaml
 
-from agio.core.entities import APackage
+from agio.core.domains import APackage
 from agio.core.exceptions import PackageMetadataError, PackageError
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils.modules_utils import import_object_by_dotted_path
@@ -29,6 +29,9 @@ class APackageManager:
             )
         )
         self._package = None
+
+    def __repr__(self):
+        return f'APackageManager({repr(self.package_name)})'
 
     # info file
 
@@ -61,7 +64,7 @@ class APackageManager:
             raise PackageMetadataError(f"Manifest file is not a dictionary [{self._info_file}]")
         return info_data
 
-    def _get_meta_data_field(self, field_path: str, default = None) -> Any:
+    def get_meta_data_field(self, field_path: str, default = None) -> Any:
         parts = field_path.split('.')
         current_level = self._info_data.copy()
         while parts:
@@ -111,37 +114,37 @@ class APackageManager:
 
     @cached_property
     def label(self):
-        return self._get_meta_data_field('label')
+        return self.get_meta_data_field('label')
 
     @cached_property
     def description(self):
-        return self._get_meta_data_field('description')
+        return self.get_meta_data_field('description')
 
     @property
     def package_name(self):
-        return self._get_meta_data_field('name')
+        return self.get_meta_data_field('name')
 
     @property
     def package_version(self):
-        return self._get_meta_data_field('version')
+        return self.get_meta_data_field('version')
 
     @property
     def python_dependencies(self):
-        return self._get_meta_data_field('dependencies')
+        return self.get_meta_data_field('dependencies')
 
     @property
     def packages_dependencies(self):
-        return self._get_meta_data_field('agio_dependencies')
+        return self.get_meta_data_field('agio_dependencies')
 
     @property
     def source_url(self):
-        return self._get_meta_data_field('urls').get('source_url', None)
+        return self.get_meta_data_field('urls').get('source_url', None)
 
     @property
     def repository_api(self):
-        return self._get_meta_data_field('repository_api')
+        return self.get_meta_data_field('repository_api')
 
-    # entities
+    # domains
 
     @cached_property
     def package(self):
@@ -196,7 +199,7 @@ class APackageManager:
     @cache
     def get_settings_class(self, settings_type: str):
         required = False
-        settings_path = self._get_meta_data_field(f'settings.{settings_type}.model')
+        settings_path = self.get_meta_data_field(f'settings.{settings_type}.model')
         if settings_path is None:
             # default path
             settings_path = f'package_settings.{settings_type}_settings.Settings'
@@ -204,7 +207,7 @@ class APackageManager:
             required = True
         import_path = self.get_import_path(settings_path)
         try:
-            return import_object_by_dotted_path(import_path)
+            return import_object_by_dotted_path(*import_path.rsplit('.', 1))
         except (ModuleNotFoundError, AttributeError):
             if required:
                 raise PackageError(f"Settings class not found: {settings_path}")
@@ -217,7 +220,7 @@ class APackageManager:
 
     def get_layout_configs(self, layout_type: str) -> dict | None:
         required = False
-        rel_path = self._get_meta_data_field(f'settings.{layout_type}.layout')
+        rel_path = self.get_meta_data_field(f'settings.{layout_type}.layout')
         if rel_path is None:
             rel_path = f'package_settings/{layout_type}_layout.yml'
         else:
@@ -258,7 +261,7 @@ class APackageManager:
                 parm['abs_file'] = file.as_posix()
 
     def get_callbacks(self):
-        callbacks = self._get_meta_data_field('callbacks') or []
+        callbacks = self.get_meta_data_field('callbacks') or []
         for path in callbacks:
             yield self.root.joinpath(path).with_suffix('.py').as_posix()
 

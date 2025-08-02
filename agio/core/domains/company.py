@@ -1,16 +1,10 @@
 from typing import Self, Iterator
 
-from agio.core.entities import Entity
+from agio.core.domains import DomainBase
 
 
-class AProductType(Entity):
-
-    def __init__(self, data: str) -> None:
-        pass
-
-    @property
-    def name(self):
-        return 'workfile'
+class ACompany(DomainBase):
+    type = "company"
 
     @classmethod
     def get_data(cls, entity_id: str) -> dict:
@@ -32,4 +26,6 @@ class AProductType(Entity):
 
     @classmethod
     def find(cls, **kwargs):
-        return
+        pass
+
+    ...

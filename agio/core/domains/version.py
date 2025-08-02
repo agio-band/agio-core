@@ -1,9 +1,9 @@
 from typing import Self, Iterator
 
-from agio.core.entities import Entity
+from agio.core.domains import DomainBase
 
 
-class AProductVersion(Entity):
+class AProductVersion(DomainBase):
     type_name = "product_version"
 
     @classmethod

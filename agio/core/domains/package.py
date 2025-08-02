@@ -3,13 +3,13 @@ from typing import Generator, Self
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
-from .entity import Entity
+from .entity import DomainBase
 from .package_release import APackageRelease
 
 logger = logging.getLogger(__name__)
 
 
-class APackage(Entity):
+class APackage(DomainBase):
     type_name = "package"
 
     @classmethod

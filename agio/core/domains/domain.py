@@ -2,23 +2,21 @@ from abc import ABC, abstractmethod
 from typing import Self, Iterator
 
 
-class Entity(ABC):
+class DomainBase(ABC):
     """
     Base class for database entity
     """
     type_name = None
 
-    def __init__(self, entity: str|dict):
-        if isinstance(entity, str):
+    def __init__(self, data: str | dict):
+        if isinstance(data, str):
             # from ID
-            self._id = entity
-            self._data = self.get_data(entity)
+            self._data: dict = self.get_data(data)
             if not self._data:
-                raise Exception(f"No data found for {entity}")
-        elif isinstance(entity, dict):
+                raise Exception(f"No data found for {data}")
+        elif isinstance(data, dict):
             # from data
-            self._id = entity['id']
-            self._data = entity
+            self._data: dict = data
             if set(self._data.keys()) == {'type', 'id'}:
                 self.reload()
         else:
@@ -28,14 +26,14 @@ class Entity(ABC):
         self._data = self.get_data(self.id)
 
     @classmethod
-    def from_data(cls, data: dict) -> 'Entity':
+    def from_data(cls, data: dict) -> 'DomainBase':
         for cls_ in cls.__subclasses__():
             if cls_.type_name == data.get('type'):
                 return cls_(data)
 
     @property
     def id(self):
-        return self._id
+        return self._data['id']
 
     @property
     def data(self):
@@ -46,7 +44,7 @@ class Entity(ABC):
         return self.type_name
 
     def __str__(self):
-        return str(self._id)
+        return str(self.id)
 
     def __repr__(self):
         return f"<{self.__class__.__name__}('{self}')>"

@@ -7,7 +7,7 @@ import sys
 import click
 
 from agio.core import api
-from agio.core.exceptions import WorkspaceNotExists, EntityNotExists
+from agio.core.exceptions import WorkspaceNotExists, NotExistsError
 from agio.core.utils.process_utils import start_process
 from agio.core.pkg.workspace import AWorkspace, AWorkspaceManager
 
@@ -45,7 +45,7 @@ def get_workspace_from_args(project=None, workspace=None):
                 if not revision:
                     continue
                 return AWorkspaceManager(revision, **(extra_args or {}))
-            except EntityNotExists:
+            except NotExistsError:
                 continue
         raise WorkspaceNotExists
     elif project:

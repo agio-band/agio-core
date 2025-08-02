@@ -4,12 +4,12 @@ from uuid import UUID
 from agio.core import api
 from agio.core.api.utils import NOTSET
 from . import APackageRelease, APackage
-from .entity import Entity
+from .entity import DomainBase
 from .workspace_revision import AWorkspaceRevision
 from ..exceptions import RequestError
 
 
-class AWorkspace(Entity):
+class AWorkspace(DomainBase):
     type_name = 'workspace'
 
     @classmethod

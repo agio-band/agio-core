@@ -13,13 +13,12 @@ def import_module_by_path(path: str, name: str = None):
     return module
 
 
-def import_object_by_dotted_path(dotted_path: str) -> type:
+def import_object_by_dotted_path(dotted_path: str, object_name: str) -> type:
     """
     Import and return object inside module by dotted path.
     Path example: "my_module.my_submodule.MyClass"
     """
-    module_name, object_name = dotted_path.rsplit(".", 1)
-    module = importlib.import_module(module_name)
+    module = importlib.import_module(dotted_path)
     return getattr(module, object_name)
 
 

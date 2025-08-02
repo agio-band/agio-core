@@ -3,7 +3,7 @@ import logging
 from abc import ABC
 import click
 
-from agio.core.entities import APackage
+from agio.core.domains import APackage
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils import context

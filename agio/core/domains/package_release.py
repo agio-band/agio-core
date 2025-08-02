@@ -9,12 +9,12 @@ from agio.core.exceptions import PackageError
 from agio.core.utils import app_dirs
 from agio.core.utils.network import download_file
 from agio.core.utils.repository_utils import filter_compatible_package
-from .entity import Entity
+from .entity import DomainBase
 
 logger = logging.getLogger(__name__)
 
 
-class APackageRelease(Entity):
+class APackageRelease(DomainBase):
     type_name = 'package_release'
 
     def __repr__(self):

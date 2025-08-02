@@ -3,11 +3,11 @@ from typing import Iterator, Self
 from agio.core import api
 from agio.core.api.utils import NOTSET
 from . import APackageRelease
-from .entity import Entity
+from .entity import DomainBase
 from .package import APackage
 
 
-class AWorkspaceRevision(Entity):
+class AWorkspaceRevision(DomainBase):
     type_name = 'workspace_revision'
 
     @classmethod

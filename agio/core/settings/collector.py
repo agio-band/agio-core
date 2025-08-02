@@ -78,7 +78,8 @@ def _expand_parameter_class(parm_class):
     class_to_import = parm_class.pop('class', None)
     if not class_to_import:
         raise Exception(f'Class to import not specified')
-    cls = import_object_by_dotted_path(class_to_import)
+    cls = import_object_by_dotted_path(*class_to_import.rsplit('.', 1))
+    new_parm.update(parm_class)
     if not issubclass(cls, APackageSettings):
         raise TypeError(f'Param class {parm_class} must be a subclass of APackageSettings')
     obj = cls(_init_only=1)

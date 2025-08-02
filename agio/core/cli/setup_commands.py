@@ -4,7 +4,6 @@ import click
 
 from agio.core.cli import tools
 from agio.core import plugin_hub
-from agio.core.entities import AWorkspace
 from agio.core.pkg.workspace import AWorkspaceManager
 
 

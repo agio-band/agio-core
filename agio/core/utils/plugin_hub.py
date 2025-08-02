@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from typing import Iterator
 
-from agio.core.entities import APackage
+from agio.core.domains import APackage
 from agio.core.exceptions import PluginLoadingError, PluginNotFoundError
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils.singleton import Singleton
