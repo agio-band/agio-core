@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from uuid import UUID
@@ -27,14 +28,15 @@ class ApiClient(_ApiClientAuth):
         self._debug_query = bool(val)
 
     def _serialize_values(self, value: dict):
-        data = json.dumps(value, cls=JsonSerializer)
-        return json.loads(data)
+        return json.dumps(value, cls=JsonSerializer)
+        # data = json.dumps(value, cls=JsonSerializer)
+        # return json.loads(data)
 
     def make_query(self, query_file: str, **variables) -> dict:
         """Read query from file and execute query"""
         query_text = self._load_query(query_file)
         variables = self._remove_notset_values(variables)
-        variables = self._serialize_values(variables)
+        # variables = self._serialize_values(variables)
         return self.make_query_raw(query_text, **variables)
 
     def make_query_raw(self, query: str, **variables) -> dict:
@@ -49,7 +51,7 @@ class ApiClient(_ApiClientAuth):
             })
         if self._debug_query:
             self._print_data(data, "Request")
-        response = self.session.post(self._base_api_url, json=data)
+        response = self.session.post(self._base_api_url, data=self._serialize_values(data))
         if not response.ok:
             logger.exception(f"Request failed with status code: {response.status_code}")
         try:
@@ -92,6 +94,7 @@ class ApiClient(_ApiClientAuth):
                 data[i] = self._remove_notset_values(data[i], sentinel)
         return data
 
+
 class JsonSerializer(json.JSONEncoder):
     custom_hook = None
 
@@ -100,4 +103,6 @@ class JsonSerializer(json.JSONEncoder):
             return str(o)
         elif isinstance(o, datetime):
             return o.isoformat()
+        elif isinstance(o, defaultdict):
+            return dict(o)
         return super().default(o)
