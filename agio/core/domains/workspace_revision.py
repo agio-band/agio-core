@@ -11,8 +11,8 @@ class AWorkspaceRevision(DomainBase):
     type_name = 'workspace_revision'
 
     @classmethod
-    def get_data(cls, entity_id: str) -> dict:
-        return api.workspace.get_revision(entity_id)
+    def get_data(cls, object_id: str) -> dict:
+        return api.workspace.get_revision(object_id)
 
     def update(self,
                set_current: bool = NOTSET,

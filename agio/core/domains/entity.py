@@ -18,8 +18,8 @@ class AEntity(DomainBase):
             raise RuntimeError('Entity class does not match entity class')
 
     @classmethod
-    def get_data(cls, entity_id: str) -> dict:
-        return api.track.get_entity(entity_id)
+    def get_data(cls, object_id: str) -> dict:
+        return api.track.get_entity(object_id)
 
     def update(self, **kwargs) -> None:
         raise NotImplementedError('Should be implemented in subclass')

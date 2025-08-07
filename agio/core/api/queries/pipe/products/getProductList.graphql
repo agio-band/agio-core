@@ -1,0 +1,22 @@
+query GetProductList($first: Int!, $filter: PublishFilter) {
+    publishes(
+        first: $first,
+        filter: $filter
+    ) {
+        edges {
+            node {
+                id
+                name
+                type
+                fields
+                entityId
+            }
+        }
+        pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+        }
+    }
+}

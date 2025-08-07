@@ -13,7 +13,7 @@ class AProductType(DomainBase):
         return 'workfile'
 
     @classmethod
-    def get_data(cls, entity_id: str) -> dict:
+    def get_data(cls, object_id: str) -> dict:
         pass
 
     def update(self, **kwargs) -> None:

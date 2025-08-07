@@ -1,0 +1,19 @@
+query GetPublishVersionsById($id: ID!) {
+    publishVersion(id: $id) {
+        id
+        name
+        fields
+        publish {
+            id
+            name
+            type
+        }
+        entity {
+            id
+            name
+        }
+        fields
+#        upstreams
+#        downstreams
+    }
+}

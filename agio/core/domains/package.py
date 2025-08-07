@@ -13,8 +13,8 @@ class APackage(DomainBase):
     type_name = "package"
 
     @classmethod
-    def get_data(cls, entity_id: str) -> dict:
-        return api.package.get_package(entity_id)
+    def get_data(cls, object_id: str) -> dict:
+        return api.package.get_package(object_id)
 
     @classmethod
     def create(cls, name: str) -> Self:

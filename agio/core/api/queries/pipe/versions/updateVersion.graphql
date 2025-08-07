@@ -1,0 +1,13 @@
+mutation UpdateVersion(
+    $id: ID!,
+    $fields: Map!
+) {
+    updatePublishVersion(
+      id: $id,
+      input: {
+       fields: $fields
+      }
+    ) {
+        ok
+    }
+}

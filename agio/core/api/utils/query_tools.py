@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from agio.core.api import client
 
 
@@ -42,3 +44,7 @@ def iter_query_list(query: str,
             current_cursor = page_info['endCursor']
         else:
             break
+
+
+def deep_dict():
+    return defaultdict(deep_dict)

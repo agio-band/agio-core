@@ -1,0 +1,19 @@
+mutation CreateVersion(
+    $name: String!,
+    $publish: ID!,
+    $entity: ID!,
+    $fields: Map
+) {
+    createPublishVersion(
+        input: {
+            name: $name,
+            publish: $publish,
+            entity: $entity,
+            fields: $fields
+        }
+    )
+    {
+        publishVersionId
+    }
+}
+

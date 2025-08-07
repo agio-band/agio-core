@@ -1,5 +1,7 @@
+from typing import Any
 from uuid import UUID
 
+from agio.core.api.utils import NOTSET
 from agio.core.api.utils.query_tools import iter_query_list
 from agio.core.api import client
 from agio.core.exceptions import ProjectNotExists, EntityNotExists
@@ -26,15 +28,33 @@ def get_project_by_name(company_id: str|UUID, name: str) -> dict:
 
 
 def create_project(payload: dict) -> dict:
-    pass
+    raise NotImplementedError
 
 
-def update_project(project_id: UUID, payload: dict) -> dict:
-    pass
+def update_project(
+        project_id: UUID,
+        state: str = NOTSET,
+        company_id: str|UUID = NOTSET,
+        facility_ids: list[str] = NOTSET,
+        fields: dict[str, Any] = NOTSET,
+        workspace_id: str|UUID = NOTSET,
+) -> dict:
+    return client.make_query(
+        'track/projects/updateProject',
+        id=str(project_id),
+        input=dict(
+            state = state,
+            companyId = str(company_id),
+            facilityIds = facility_ids,
+            fields = fields,
+            workspaceId = str(workspace_id),
+        )
+    )
+
 
 
 def delete_project(project_id: str|UUID) -> None:
-    pass
+    raise NotImplementedError
 
 
 # entities
@@ -57,7 +77,7 @@ def get_entity_by_name(project_id: str|UUID, entity_class: str, name: str) -> di
         name=name,
     )
     if data['data']['entities']['edges']:
-        return data['data']['entities']['edges'][0]
+        return data['data']['entities']['edges'][0]['node']
     raise EntityNotExists
 
 
@@ -67,7 +87,7 @@ def iter_entities(
         parent_id: str|UUID = None,
         name: str = None,       # supported regex
         items_per_page: int = 50
-) -> list:
+    ) -> list:
     where_filter = {
         'project': {'id': {'equalTo': project_id}},
         'class': {'name': {'equalTo', entity_class}}

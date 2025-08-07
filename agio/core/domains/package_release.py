@@ -21,8 +21,8 @@ class APackageRelease(DomainBase):
         return f'<{self.__class__.__name__} {self.get_package_name()} v{self.get_version()} ({self.id!r})>'
 
     @classmethod
-    def get_data(cls, entity_id: str) -> dict:
-        return api.package.get_package_release(entity_id)
+    def get_data(cls, object_id: str) -> dict:
+        return api.package.get_package_release(object_id)
 
     def update(self,
                label: str = NOTSET,

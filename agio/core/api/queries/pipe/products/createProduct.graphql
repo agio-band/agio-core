@@ -1,0 +1,19 @@
+mutation CreateNewProduct (
+    $name: String!,
+    $entityId: ID!,
+    $type: String!,
+    $variant: String!,
+    $fields: Map
+) {
+    createPublish(
+        input: {
+            name: $name,
+            entity: $entityId,
+            type: $type,
+            variant: $variant,
+            fields: $fields,
+        })
+    {
+        publishId
+    }
+}

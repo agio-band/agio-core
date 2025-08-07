@@ -1,0 +1,23 @@
+query GetVersionList($limit: Int!, $filter: PublishVersionFilter) {
+    publishVersions(first: $limit, filter: $filter) {
+        edges {
+            node {
+                id
+                name
+                fields
+                publish {
+                    id
+                    name
+                    type
+                }
+                fields
+            }
+        }
+        pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+        }
+    }
+}

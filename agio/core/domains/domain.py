@@ -51,7 +51,7 @@ class DomainBase(ABC):
 
     @classmethod
     @abstractmethod
-    def get_data(cls, entity_id: str) -> dict:
+    def get_data(cls, object_id: str) -> dict:
         raise NotImplementedError()
 
     @abstractmethod

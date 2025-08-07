@@ -1,0 +1,23 @@
+query GetLatestVersionList( $filter: PublishVersionFilter) {
+    publishVersions(
+      first: 1,
+      filter: $filter,
+      ordering: {
+        sort: NAME,
+        direction: DESC
+      }
+    ) {
+        edges {
+            node {
+                id
+                name
+            }
+        }
+        pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+        }
+    }
+}

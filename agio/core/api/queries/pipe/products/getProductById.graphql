@@ -1,0 +1,10 @@
+query GetProductById($id: ID!) {
+    publish(id: $id) {
+        id
+        name
+        type
+        fields
+        entityId
+        fields
+    }
+}

@@ -13,8 +13,8 @@ class AWorkspace(DomainBase):
     type_name = 'workspace'
 
     @classmethod
-    def get_data(cls, entity_id: str) -> Self:
-        data = api.workspace.get_workspace(entity_id)
+    def get_data(cls, object_id: str) -> Self:
+        data = api.workspace.get_workspace(object_id)
         if data:
             return cls(data)
 
