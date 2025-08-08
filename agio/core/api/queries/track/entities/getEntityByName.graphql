@@ -14,7 +14,7 @@ query GetEntityById($projectId: ID!, $className: String!, $name: String!) {
         id
         name
         projectId
-#       fields
+        fields
         class {
           name
         }

@@ -9,6 +9,7 @@ query GetProductList($first: Int!, $filter: PublishFilter) {
                 name
                 type
                 fields
+                variant
                 entityId
             }
         }

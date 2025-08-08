@@ -30,7 +30,7 @@ class _ApiClientAuth:
     def __init__(self, *args, **kwargs):
         self._expire_time = None
         self.session = requests.Session()
-        self.session.headers['Content-Type'] = 'application/json'
+        # self.session.headers['Content-Type'] = 'application/json'
         self._restore_session()
 
     def login(self, client_id: str = None):

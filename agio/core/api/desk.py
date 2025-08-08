@@ -9,12 +9,12 @@ from .utils.response_typing import response_schema
 
 # User and profile
 
-@response_schema(UserProfileResponseSchema)
+# @response_schema(UserProfileResponseSchema)
 def get_profile() -> dict:
     """
     Return current user profile. Auth required.
     """
-    return client.make_query('desk/account/currentUser')['data']['currentUser']
+    return client.make_query('desk/account/currentUserFull')['data']['currentUser']
 
 
 

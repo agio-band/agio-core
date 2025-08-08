@@ -65,7 +65,7 @@ def get_entity(entity_id: str|UUID) -> dict:
         id=str(entity_id),
     )
     if data['data']['entities']['edges']:
-        return data['data']['entities']['edges'][0]
+        return data['data']['entities']['edges'][0]['node']
     raise EntityNotExists
 
 

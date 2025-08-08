@@ -5,6 +5,7 @@ query GetProductById($id: ID!) {
         type
         fields
         entityId
+        variant
         fields
     }
 }
