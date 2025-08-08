@@ -1,0 +1,8 @@
+mutation UpdateEntityById($id: ID!, $input: EntityUpdateInput){
+    updateEntity(
+        id: $id,
+        input: $input
+    ){
+        ok
+    }
+}

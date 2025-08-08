@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Any
 from uuid import UUID
 
@@ -50,7 +51,6 @@ def update_project(
             workspaceId = str(workspace_id),
         )
     )
-
 
 
 def delete_project(project_id: str|UUID) -> None:
@@ -106,6 +106,42 @@ def iter_entities(
     )
 
 
+
+def create_entity(project_id: str|UUID,
+                  entity_class: str,
+                  name: str,
+                  fields: dict) -> dict:
+    class_id = get_entity_class_id(entity_class)
+    return client.make_query(
+        'track/entities/createEntity',
+        projectId=str(project_id),
+        classId=class_id,
+        name=name,
+        fields=fields or {},
+    )
+
+
+def update_entity(
+        entity_id: str|UUID,
+        name: str = NOTSET,
+        fields: dict[str, Any] = NOTSET,
+        # state: str = NOTSET,
+    ):
+    return client.make_query(
+        'track/entities/updateEntity',
+        id=str(entity_id),
+        input={
+            # 'state': state,
+            'name': name,
+            'fields': fields,
+        },
+    )
+
+
+def delete_entity(entity_id: str|UUID) -> None:
+    raise NotImplementedError
+
+
 def get_entity_children(entity_id: str|UUID) -> list:
     yield from iter_query_list(
         'track/entities/findEntities',
@@ -135,3 +171,16 @@ def get_entity_parent(entity: str|UUID|dict) -> list:
         next_entity = get_entity(next_entity['parentId'])
     return parents[1:]
 
+# entity classes
+
+@cache
+def get_entity_class_id(project_id: str | UUID,
+                        entity_class: str) -> UUID:
+    resp = client.make_query(
+        'track/entity_classes/getEntityClassById',
+        projectId=str(project_id),
+        name=entity_class,
+    )['data']['entityClasses']['edges']
+    if resp:
+        return resp[0]['node']['id']
+    raise EntityNotExists

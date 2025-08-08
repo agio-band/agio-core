@@ -1,7 +1,7 @@
-from http.client import responses
 from uuid import UUID
 
 from agio.core.api import client
+from agio.core.api.utils import NOTSET
 from agio.core.api.utils.query_tools import iter_query_list, deep_dict
 
 
@@ -38,7 +38,7 @@ def create_product(
         entity_id: str|UUID,
         product_type: str,
         variant: str,
-        fields: dict|None = None,
+        fields: dict|None = NOTSET,
     ):
     return client.make_query(
         'pipe/products/createProduct',
@@ -115,11 +115,9 @@ def update_version(version_id: str|UUID, fields: dict):
 def get_next_version_number(
         task_id: str|UUID,
         product_id: str|UUID,
-        variant: str,
 ) -> int:
     filters = deep_dict()
     filters['where']['entity']['id']['equalTo'] = task_id
-    filters['where']['publish']['variant']['equalTo'] = variant
     filters['where']['publish']['id']['equalTo'] = product_id
     response =  client.make_query(
         'pipe/versions/getLatestVersion',
@@ -133,7 +131,7 @@ def get_next_version_number(
 
 
 def create_version(
-        version: int,
+        version: str,
         product_id: UUID,
         task_id: UUID,
         fields: dict,

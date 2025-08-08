@@ -1,0 +1,17 @@
+query GetEntityClassByName($projectId: ID!, $name: String!){
+    entityClasses(
+        first: 1,
+        filter: {
+            where: {
+                name: {equalTo: $name},
+                project: {id: {equalTo: $projectId}}
+            }
+        }
+    ){
+        edges {
+            node {
+                id
+            }
+        }
+    }
+}
