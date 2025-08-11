@@ -1,0 +1,21 @@
+query getCompabyById ($first: Int!) {
+  companies(
+    first: $first
+  )
+  {
+		edges{
+      node{
+        id
+        name
+        code
+        logo(params: {type: "fit", width: 480, height: 480})
+      }
+    }
+    pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+    }
+  }
+}

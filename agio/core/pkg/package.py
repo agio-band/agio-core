@@ -118,7 +118,7 @@ class APackageManager:
 
     @cached_property
     def description(self):
-        return self.get_meta_data_field('description')
+        return self.get_meta_data_field('description', '').strip()
 
     @property
     def package_name(self):

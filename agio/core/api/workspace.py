@@ -113,17 +113,21 @@ def create_revision(
         package_release_ids: list[str | UUID],
         set_current: bool = True,
         status: str = 'ready',  # TODO
-        layout: dict = None,
-        comment: str = None,
+        layout: dict = NOTSET,
+        comment: str = NOTSET,
+        metadata: dict = NOTSET
     ) -> str:
     return client.make_query(
         'ws/revision/createWorkspaceRevision',
-        workspaceId=workspace_id,
-        packageReleaseIds=package_release_ids,
-        isCurrent=set_current,
-        status=status,
-        layout=layout or {},
-        comment=comment or '',
+        input= dict(
+            workspaceId=workspace_id,
+            status=status,
+            isCurrent=set_current,
+            packageReleaseIds=package_release_ids,
+            layout=layout or {},
+            comment=comment or '',
+            metadata=metadata or {},
+        )
     )['data']['createWorkspaceRevision']['workspaceRevisionId']
 
 

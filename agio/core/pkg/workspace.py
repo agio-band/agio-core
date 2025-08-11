@@ -8,7 +8,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Self
 
-from agio.core import api
+from agio.core import api, env_names
 from agio.core.domains import AWorkspaceRevision, AWorkspace
 from agio.core.events import emit
 from agio.core.exceptions import WorkspaceNotInstalled
@@ -22,9 +22,6 @@ class AWorkspaceManager:
     """Manage workspaces on local host"""
     _meta_file_name = '__agio_ws__.json'
     workspaces_root = Path(config.WS.CACHE_ROOT).expanduser()
-    WORKSPACE_ENV_NAME = 'AGIO_WORKSPACE_ID'
-    REVISION_ENV_NAME = 'AGIO_WORKSPACE_REVISION_ID'
-    SETTINGS_REVISION_ENV_NAME = 'AGIO_WORKSPACE_SETTINGS_REVISION_ID'
 
     def __init__(self, revision: AWorkspaceRevision|str|dict, **kwargs):
         if revision is not None:
@@ -78,9 +75,9 @@ class AWorkspaceManager:
     # define
     @classmethod
     def current(cls) -> Self:
-        if ws_id := os.getenv(cls.WORKSPACE_ENV_NAME):
+        if ws_id := os.getenv(env_names.WORKSPACE_ENV_NAME):
             return cls.from_workspace(ws_id)
-        elif rev_id := os.getenv(cls.REVISION_ENV_NAME):
+        elif rev_id := os.getenv(env_names.REVISION_ENV_NAME):
             return cls(rev_id)
 
     # props
@@ -178,13 +175,13 @@ class AWorkspaceManager:
 
     def get_launch_envs(self):
         env = {
-            self.WORKSPACE_ENV_NAME: str(self.revision.workspace_id),
-            self.REVISION_ENV_NAME: str(self.revision.id),
+            env_names.WORKSPACE_ENV_NAME: str(self.revision.workspace_id),
+            env_names.REVISION_ENV_NAME: str(self.revision.id),
             'VIRTUAL_ENV': self.install_root.as_posix()
         }
         if self.settings_id:
-            env[self.SETTINGS_REVISION_ENV_NAME] = str(self.settings_id)
-        emit('core.workspace.launch_envs', {'envs': env, 'workspace': self})
+            env[env_names.SETTINGS_REVISION_ENV_NAME] = str(self.settings_id)
+        emit('core.workspace.get_launch_envs', {'envs': env, 'workspace': self})
         return env
 
     def install_or_update_if_needed(self):

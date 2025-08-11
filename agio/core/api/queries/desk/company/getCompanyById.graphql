@@ -1,0 +1,8 @@
+query getCompanyById ($id:ID!) {
+  company(id: $id){
+    id
+    name
+    email
+    code
+  }
+}

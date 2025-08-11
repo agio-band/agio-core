@@ -1,6 +1,6 @@
-query GetProductList($first: Int!, $filter: PublishFilter) {
+query GetProductList($limit: Int!, $filter: PublishFilter) {
     publishes(
-        first: $first,
+        first: $limit,
         filter: $filter
     ) {
         edges {

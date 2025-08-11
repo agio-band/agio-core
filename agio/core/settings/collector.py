@@ -2,12 +2,10 @@ import json
 import logging
 from pathlib import Path
 
-from agio.core import package_hub
 from agio.core.settings.generic_types import SettingsType
 from agio.core.utils import pipeline_config_dir, text_utils
 from agio.core.utils.modules_utils import import_object_by_dotted_path
 from agio.core.settings.package_settings import APackageSettings
-
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +19,11 @@ def _get_settings_file(file_name: str) -> Path:
 
 
 
-def read_local_settings_values():
+def read_local_settings_values(company = None, project = None):
+    # TODO: add company overrides
     path_list = [
         _get_settings_file('common_settings')
     ]
-    # TODO: add studio overrides
     # TODO: add project overrides
     # read data
     settings_data = {}
@@ -125,6 +123,8 @@ def _update_conf(package_name: str, layout: dict) -> tuple[dict, dict]:
 
 
 def collect_layout(layout_type: str) -> dict:
+    from agio.core import package_hub
+
     # collect packages
     all_packages = package_hub.get_packages()
     # collect layout data

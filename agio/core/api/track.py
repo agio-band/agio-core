@@ -1,9 +1,9 @@
 from functools import cache
-from typing import Any
+from typing import Any, Iterator
 from uuid import UUID
 
 from agio.core.api.utils import NOTSET
-from agio.core.api.utils.query_tools import iter_query_list
+from agio.core.api.utils.query_tools import iter_query_list, deep_dict
 from agio.core.api import client
 from agio.core.exceptions import ProjectNotExists, EntityNotExists
 
@@ -35,26 +35,57 @@ def create_project(payload: dict) -> dict:
 def update_project(
         project_id: UUID,
         state: str = NOTSET,
-        company_id: str|UUID = NOTSET,
         facility_ids: list[str] = NOTSET,
         fields: dict[str, Any] = NOTSET,
-        workspace_id: str|UUID = NOTSET,
-) -> dict:
+        workspace_id: str|UUID|None = NOTSET,
+) -> bool:
     return client.make_query(
         'track/projects/updateProject',
         id=str(project_id),
         input=dict(
-            state = state,
-            companyId = str(company_id),
-            facilityIds = facility_ids,
-            fields = fields,
-            workspaceId = str(workspace_id),
+            state = state if state is not NOTSET else NOTSET,
+            facilityIds = facility_ids if facility_ids is not NOTSET else NOTSET,
+            fields = fields if fields is not NOTSET else NOTSET,
+            workspaceId = workspace_id if workspace_id is not NOTSET else NOTSET,
         )
+    )['data']['updateProject']['ok']
+
+
+def iter_projects(company_id: str|UUID, items_per_page: int = 50) -> Iterator[dict]:
+    return iter_query_list(
+        'track/projects/projectsList',
+        'projects',
+        variables={
+            "companyId": company_id,
+            'limit': items_per_page
+        }
     )
 
-
-def delete_project(project_id: str|UUID) -> None:
-    raise NotImplementedError
+def find_project(
+        company_id: str|UUID,
+        company_name: str|None = NOTSET,
+        name: str = NOTSET,
+        code: str|None = NOTSET,
+        state: str = NOTSET,
+) -> dict:
+    filters = deep_dict()
+    if company_id:
+        filters['company']['id']['equalTo'] = company_id
+    if company_name:
+        filters['company']['name']['equalTo'] = company_name
+    if name:
+        filters['name']['equalTo'] = name
+    if state:
+        filters['state']['equalTo'] = state
+    if code:
+        filters['code']['equalTo'] = code
+    data = client.make_query(
+        'track/projects/findProject',
+        filters=filters
+    )
+    if data['data']['projects']['edges']:
+        for item in data['data']['projects']['edges']:
+            yield item['node']
 
 
 # entities
@@ -66,7 +97,7 @@ def get_entity(entity_id: str|UUID) -> dict:
     )
     if data['data']['entities']['edges']:
         return data['data']['entities']['edges'][0]['node']
-    raise EntityNotExists
+    raise EntityNotExists(detail='Entity not found: {}'.format(entity_id))
 
 
 def get_entity_by_name(project_id: str|UUID, entity_class: str, name: str) -> dict:
@@ -90,7 +121,7 @@ def iter_entities(
     ) -> list:
     where_filter = {
         'project': {'id': {'equalTo': project_id}},
-        'class': {'name': {'equalTo', entity_class}}
+        'class': {'name': {'equalTo': entity_class}}
     }
     if parent_id:
         where_filter['parent'] = {'id': {'equalTo': parent_id}}
@@ -110,15 +141,23 @@ def iter_entities(
 def create_entity(project_id: str|UUID,
                   entity_class: str,
                   name: str,
-                  fields: dict) -> dict:
-    class_id = get_entity_class_id(entity_class)
+                  parent_id: str = NOTSET,
+                  fields: dict = NOTSET,
+                  ) -> dict:
+    class_id = get_entity_class_id(project_id, entity_class)
     return client.make_query(
         'track/entities/createEntity',
-        projectId=str(project_id),
-        classId=class_id,
-        name=name,
-        fields=fields or {},
-    )
+        input=dict(
+            classId=class_id,
+            name=name,
+            projectId=project_id,
+            parentId=parent_id,
+            fields=fields or {},
+            links=[],   # TODO
+            classLinks=[], # TODO
+            assignees=[] # TODO
+        )
+    )["data"]["createEntity"]["entityId"]
 
 
 def update_entity(
@@ -177,7 +216,7 @@ def get_entity_parent(entity: str|UUID|dict) -> list:
 def get_entity_class_id(project_id: str | UUID,
                         entity_class: str) -> UUID:
     resp = client.make_query(
-        'track/entity_classes/getEntityClassById',
+        'track/entity_classes/getEntityClassByName',
         projectId=str(project_id),
         name=entity_class,
     )['data']['entityClasses']['edges']

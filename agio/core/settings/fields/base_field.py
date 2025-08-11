@@ -50,6 +50,10 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
     ):
         if self.field_type is None:
             raise ValueError(f'Field type not set for {self.__class__.__name__}')
+        if default is Ellipsis:
+            default = REQUIRED
+        if callable(default):
+            default = default()
         self._data: dict[str, Any] = {
             # values
             'value': NOT_SET,
@@ -75,7 +79,7 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
             'order': order,
             'hint': hint,
         }
-        self._name: str = kwargs.pop('field_name', '')
+        self._name: str = kwargs.pop('_field_name', '')
         self.__parent_settings = None   # settings class
         self._init_default(default)
 
@@ -166,7 +170,7 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
         self._data['value'] = self._validate(value)
 
     def get(self) -> Any:
-        if self._data['value'] is not NOT_SET:
+        if self._data['value'] != NOT_SET:
             return self._data['value']
         if not self._data['required']:
             return self._data['default']
@@ -181,8 +185,14 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
 
     def get_settings(self):
         data = {k: v for k, v in self._data.items() if k in self._get_save_values_list()}
+        if data['value'] == REQUIRED:
+            raise ParameterError(f"Parameter {self.name} is required")
         if not data['dependency']['type']:
-            data['dependency']= None
+            data.pop('dependency', None)
+        if data['value'] == NOT_SET:
+            data.pop('value')
+        if not data.get('locked'):
+            data.pop('locked', None)
         return data
 
     def set_settings(self, saved_settings: dict) -> None:

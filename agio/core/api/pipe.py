@@ -50,6 +50,22 @@ def create_product(
     )['data']['createPublish']['publishId']
 
 
+def find_product(entity_id: str|UUID, product_type: str, variant: str):
+    filters = deep_dict()
+    filters['where']['entity']['id']['equalTo'] = entity_id
+    if product_type:
+        filters['where']['type']['equalTo'] = product_type
+    if variant:
+        filters['where']['variant']['equalTo'] = variant
+    resp = client.make_query(
+        'pipe/products/getProductList',
+        filter=filters,
+        limit=1
+    )
+    if resp['data']['publishes']['edges']:
+        return resp['data']['publishes']['edges'][0]['node']
+
+
 # Published Version
 
 def iter_prodict_versions(

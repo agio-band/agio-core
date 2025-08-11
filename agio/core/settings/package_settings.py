@@ -13,7 +13,7 @@ from agio.core.settings.fields.base_field import BaseField
 from agio.core.settings.fields.compaund_fields import CollectionField
 from agio.core.settings.fields.model_fields import ModelField
 from agio.core.settings.generic_types import REQUIRED
-from agio.core.settings.serializers import JsonSerializer
+from agio.core.utils.json_serializer import JsonSerializer
 
 
 def _get_field_class_for_type(python_type: type, args: tuple = None) -> Type[BaseField] | None:
@@ -196,7 +196,7 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
     field_class = original_field_instance.__class__ if original_field_instance else _get_field_class_for_type(origin,
                                                                                                               args)
     if field_class:
-        field = field_class(default_value=default_value)
+        field = field_class(default_value)
         field.field_type = annotation
         return field
 
@@ -365,7 +365,9 @@ class APackageSettings(metaclass=_SettingsMeta):
         for name, field in self._fields_data.items():
             if skip_default and field.is_default():
                 continue
-            result[name] = field.get_settings()
+            field_settings = field.get_settings()
+            if field_settings:
+                result[name] = field_settings
         return result
 
     def __to_json__(self, serialize_hook=None, **kwargs) -> str:

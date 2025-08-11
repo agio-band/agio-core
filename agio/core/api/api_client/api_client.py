@@ -1,10 +1,7 @@
 import json
 import logging
 import os
-from collections import defaultdict
-from datetime import datetime
 from pathlib import Path
-from uuid import UUID
 
 from requests.exceptions import HTTPError
 
@@ -12,6 +9,7 @@ from agio.core.api.api_client.base import _ApiClientAuth
 from agio.core.api.utils import NOTSET
 from agio.core.exceptions import RequestError
 from agio.core.utils import config
+from agio.core.utils.json_serializer import JsonSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +44,6 @@ class ApiClient(_ApiClientAuth):
         }
         if variables:
             data.update({
-                # "variables": {k: v for k, v in variables.items() if v is not None},
                 "variables": variables,
             })
         if self._debug_query:
@@ -100,16 +97,3 @@ class ApiClient(_ApiClientAuth):
             for i in range(len(data)):
                 data[i] = self._remove_notset_values(data[i], sentinel)
         return data
-
-
-class JsonSerializer(json.JSONEncoder):
-    custom_hook = None
-
-    def default(self, o):
-        if isinstance(o, UUID):
-            return str(o)
-        elif isinstance(o, datetime):
-            return o.isoformat()
-        elif isinstance(o, defaultdict):
-            return dict(o)
-        return super().default(o)

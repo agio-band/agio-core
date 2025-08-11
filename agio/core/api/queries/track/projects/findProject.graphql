@@ -1,14 +1,11 @@
-query GetProjectByName($name: String!, $companyId: ID!) {
-  projects(
+query FindProject($filters: ProjectWhere){
+  projects (
     filter: {
-      where: {
-          name: { equalTo: $name },
-          company: { id: { equalTo: $companyId } }
-      }
-    }
-    first: 1
-  ) {
-    edges {
+            where: $filters
+        },
+        first: 1,
+  ){
+    edges{
       node {
         id
         name

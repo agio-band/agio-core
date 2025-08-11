@@ -68,6 +68,10 @@ class EntityNotExists(NotExistsError):
     detail: str = "Entity does not exist"
 
 
+class ProductNotExists(NotExistsError):
+    detail: str = "Product does not exist"
+
+
 # Event hub
 class EventHubError(AException):
     detail = 'Event hub error'

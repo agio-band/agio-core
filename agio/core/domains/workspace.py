@@ -1,7 +1,7 @@
+import os
 from typing import Self, Iterator
-from uuid import UUID
 
-from agio.core import api
+from agio.core import api, env_names
 from agio.core.api.utils import NOTSET
 from . import APackageRelease, APackage
 from .entity import DomainBase
@@ -10,13 +10,11 @@ from ..exceptions import RequestError
 
 
 class AWorkspace(DomainBase):
-    type_name = 'workspace'
+    domain_name = 'workspace'
 
     @classmethod
     def get_data(cls, object_id: str) -> Self:
-        data = api.workspace.get_workspace(object_id)
-        if data:
-            return cls(data)
+        return api.workspace.get_workspace(object_id)
 
     def update(self, name: str = NOTSET, description: str = None) -> None:
         if api.workspace.update_workspace(
@@ -50,6 +48,13 @@ class AWorkspace(DomainBase):
         data = api.workspace.find_workspace(company_id=company_id, name=name)
         if data:
             return cls(data)
+
+    @classmethod
+    def current(cls):
+        ws_id = os.getenv(env_names.WORKSPACE_ENV_NAME)
+        if not ws_id:
+            raise RuntimeError('Workspace is not initialized')
+        return cls(ws_id)
 
     def get_current_revision(self):
         revision = api.workspace.get_revision_by_workspace_id(self.id)

@@ -1,0 +1,8 @@
+mutation CreateEntity($input: EntityCreateInput!) {
+    createEntity(
+        input: $input
+    ) {
+        entityId
+
+	}
+}

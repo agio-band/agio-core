@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from typing import Self, Iterator
 
@@ -6,9 +7,11 @@ class DomainBase(ABC):
     """
     Base class for database entity
     """
-    type_name = None
+    domain_name = None
 
     def __init__(self, data: str | dict):
+        if self.domain_name is None:
+            raise AttributeError("Domain name not set")
         if isinstance(data, str):
             # from ID
             self._data: dict = self.get_data(data)
@@ -25,12 +28,6 @@ class DomainBase(ABC):
     def reload(self):
         self._data = self.get_data(self.id)
 
-    @classmethod
-    def from_data(cls, data: dict) -> 'DomainBase':
-        for cls_ in cls.__subclasses__():
-            if cls_.type_name == data.get('type'):
-                return cls_(data)
-
     @property
     def id(self):
         return self._data['id']
@@ -41,13 +38,23 @@ class DomainBase(ABC):
 
     @property
     def type(self):
-        return self.type_name
+        return self.domain_name
+
+    @property
+    def fields(self):
+        return json.loads(self._data.get('fields', '{}'))
 
     def __str__(self):
         return str(self.id)
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}('{self}')>"
+        return f"<{self.__class__.__name__}('{self.id}')>"
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
 
     @classmethod
     @abstractmethod
@@ -77,6 +84,6 @@ class DomainBase(ABC):
     def find(cls, **kwargs):
         raise NotImplementedError()
 
-    def serialize(self):
-        ...
+    def to_dict(self):
+        return self._data
 

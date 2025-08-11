@@ -1,5 +1,6 @@
+from __future__ import annotations
+from ..domains import project as project_domain
 from ..events import emit
-from .collector import read_local_settings_values
 from .fields.base_field import BaseField
 from .fields.generic_fields import StringField, IntField, BaseField, FloatField
 from .fields.compaund_fields import ListField, SetField, TupleField, DictField
@@ -12,29 +13,37 @@ from .fields.extended_fields import (
     Vector2Field,
     RGBColorField
 )
-from .fields.editor_fields import JSONField, MarkdownField
-from .fields.special_fields import PluginSelectField
-from .package_settings import APackageSettings
-from agio.core.utils.settings_hub import LocalSettingsHub
+from agio.core.settings.fields.editor_fields import JSONField, MarkdownField
+from agio.core.settings.fields.special_fields import PluginSelectField
+from agio.core.settings.package_settings import APackageSettings
+from agio.core.settings import local_settings_manager
+from agio.core.utils.settings_hub import LocalSettingsHub, WorkspaceSettingsHub
+from agio.core.domains.workspace import AWorkspace
+from ..exceptions import SettingsRevisionNotExists
 
 
-def get_local_settings() -> LocalSettingsHub:
-    # read local settings from files
-    local_settings = read_local_settings_values()
+def get_local_settings(project: project_domain.AProject = None) -> LocalSettingsHub:
     # create local settings instance with applied values
-    settings = LocalSettingsHub(local_settings)
-    emit('core.settings.local_settings_loaded', {'settings': settings})
-    return settings
+    local_settings = local_settings_manager.load_local_settings(project)
+    emit('core.settings.local_settings_loaded', {'settings': local_settings})
+    return local_settings
 
-#
-# def get_workspace_settings() -> WorkspaceSettingsHub:
-#     # create workspace instance
-#     ws = AWorkspace.current()
-#     if not ws:
-#         raise RuntimeError('Workspace is not initialized')
-#     # get workspace settings from server
-#     settings_data = {}  # TODO
-#     # create workspace settings instance with applied values
-#     settings = WorkspaceSettingsHub(settings_data)
-#     emit('core.settings.workspace_settings_loaded', {'settings': settings, 'workspace': ws})
-#     return settings
+
+def save_local_settings(settings: LocalSettingsHub, project: project_domain.AProject = None) -> str:
+    return local_settings_manager.save_local_settings(settings, project)
+
+
+def get_workspace_settings(workspace: AWorkspace = None) -> WorkspaceSettingsHub:
+    # create workspace instance
+    ws = workspace or AWorkspace.current()
+    # get workspace settings from server
+    try:
+        revision = ws.get_current_revision()
+        settings_data = revision.get_settings_data()  # TODO
+    except SettingsRevisionNotExists:
+        settings_data = {}
+    # create workspace settings instance with applied values
+    settings = WorkspaceSettingsHub(settings_data)
+    emit('core.settings.workspace_settings_loaded', {
+        'settings': settings, 'workspace': ws, 'revision': revision})
+    return settings

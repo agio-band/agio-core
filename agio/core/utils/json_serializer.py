@@ -1,5 +1,7 @@
 import json
+from collections import defaultdict
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -14,6 +16,12 @@ class JsonSerializer(json.JSONEncoder):
             return o.model_dump()
         elif isinstance(o, datetime):
             return o.isoformat()
+        elif isinstance(o, UUID):
+            return str(o)
+        elif isinstance(o, datetime):
+            return o.isoformat()
+        elif isinstance(o, defaultdict):
+            return dict(o)
         if self.__class__.custom_hook:
             try:
                 return self.__class__.custom_hook(o)
@@ -21,8 +29,3 @@ class JsonSerializer(json.JSONEncoder):
                 pass
         return super().default(o)
 
-
-def custom_serialize_hook(obj):
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    raise NotSupportedTypeError

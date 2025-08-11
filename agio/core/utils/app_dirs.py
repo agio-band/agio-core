@@ -47,6 +47,10 @@ def config_dir() -> Path:
     return local_app_dir() / 'config'
 
 
+def settings_dir() -> Path:
+    return local_app_dir() / 'settings'
+
+
 def default_workspace_install_dir() -> Path:
     return local_app_dir() / 'workspaces'
 

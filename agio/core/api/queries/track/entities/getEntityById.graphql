@@ -21,6 +21,9 @@ query GetEntityById($id: ID!) {
           name
           id
           parentId
+          class {
+            name
+          }
         }
       }
     }

@@ -1,21 +1,22 @@
 from typing import Any
 
-from agio.core import package_hub
 from agio.core.events import emit
-from agio.core.settings.package_settings import APackageSettings
-from agio.core.settings.collector import write_local_settings
+from agio.core.settings import package_settings as package_settings_class
+from agio.core.settings import collector
 
 
 class ASettingsHub:
     settings_type: str = None
 
     def __init__(self, settings_data: dict[str, Any], **kwargs):
+        from agio.core import package_hub
+
         if self.settings_type is None:
             raise RuntimeError('Settings type not set')
         package_names = set()
         for key in settings_data.keys():
             if key.count('.') != 1:
-                raise ValueError(f'Invalid key: {key}. Correct format is "package.parameter"')
+                raise ValueError(f'Invalid key: "{key}". Correct format is "package.parameter"')
             package_names.add(key.rsplit('.')[0])
 
         self._package_settings = {}
@@ -44,18 +45,20 @@ class ASettingsHub:
     def iter_package_settings(self):
         yield from self._package_settings.items()
 
-    def get(self, param_name: str) -> Any:
+    def _check_patm_name(self, param_name: str):
         if param_name.count('.') != 1:
             raise NameError(f"Invalid parameter name: {param_name}")
+
+    def get(self, param_name: str) -> Any:
+        self._check_patm_name(param_name)
         package_name, param_name = param_name.split(".")
-        package_settings: APackageSettings = self._package_settings.get(package_name)
+        package_settings: package_settings_class.APackageSettings = self._package_settings.get(package_name)
         if not package_settings:
             raise KeyError(f"Package {package_name} not found in workspace settings")
         return package_settings.get(param_name)
 
     def set(self, param_name: str, value: Any):
-        if param_name.count('.') != 1:
-            raise NameError(f"Invalid parameter name: {param_name}")
+        self._check_patm_name(param_name)
         package_name, param_name = param_name.split(".")
         package_settings = self._package_settings.get(package_name)
         if not package_settings:
@@ -63,14 +66,33 @@ class ASettingsHub:
         return package_settings.set(param_name, value)
 
     def set_default(self, param_name: str) -> None:
+        """
+        Reset parameter to default value
+        """
+        self._check_patm_name(param_name)
         parm = self.get_parameter(param_name)
         return parm.set_default()
+
+    def lock(self, param_name: str) -> None:
+        self._check_patm_name(param_name)
+        parm = self.get_parameter(param_name)
+        return parm.lock()
+
+    def unlock(self, param_name: str) -> None:
+        self._check_patm_name(param_name)
+        parm = self.get_parameter(param_name)
+        return parm.unlock()
+
+    def is_locked(self, param_name: str) -> bool:
+        self._check_patm_name(param_name)
+        parm = self.get_parameter(param_name)
+        return parm.is_locked()
 
     def get_parameter(self, param_name: str) -> Any:
         if param_name.count('.') != 1:
             raise NameError(f"Invalid parameter name: {param_name}")
         package_name, param_name = param_name.split(".")
-        package_settings: APackageSettings = self._package_settings.get(package_name)
+        package_settings: package_settings_class.APackageSettings = self._package_settings.get(package_name)
         if not package_settings:
             raise KeyError(f"Package {package_name} not found in workspace settings")
         return package_settings.get_parameter(param_name)
@@ -85,13 +107,24 @@ class ASettingsHub:
     def save(self):
         raise NotImplementedError()
 
+    def _print_parameters(self):
+        """
+        Display parameter list for debugging
+        """
+        max_len = max(map(len, sum([list(k.__schema__().keys()) for k in self._package_settings.values()], [])))
+        for name, pkg in self._package_settings.items():
+            print('_' * (max_len + 20))
+            print(name)
+            for param_name, schema in pkg.__schema__().items():
+                print(f'  {param_name:>{max_len + 1}}: {schema["field_type"]:>8}: {schema.get("default")}')
+
 
 class LocalSettingsHub(ASettingsHub):
     settings_type: str = 'local'
 
     def save(self):
         data = self.dump()
-        write_local_settings(data)
+        collector.write_local_settings(data)
         emit('core.settings.local_settings_saved', {'settings': self})
 
 

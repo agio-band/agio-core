@@ -1,0 +1,9 @@
+
+# current workspace ID
+WORKSPACE_ENV_NAME = 'AGIO_WORKSPACE_ID'
+# current workspace_revision ID
+REVISION_ENV_NAME = 'AGIO_WORKSPACE_REVISION_ID'
+# current settings revision ID
+SETTINGS_REVISION_ENV_NAME = 'AGIO_WORKSPACE_SETTINGS_REVISION_ID'
+# debug mode
+DEBUG = 'DEBUG'

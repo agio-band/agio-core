@@ -18,5 +18,11 @@ query projectsList($limit: Int!, $filter: ProjectFilter) {
         }
       }
     }
+     pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+    }
   }
 }

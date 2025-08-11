@@ -60,10 +60,13 @@ def import_modules_from_dir(root: str|Path, parent_name: str, ignore_list=None):
     files_to_import = []
     for file in Path(root).rglob('*.py'):
         if file.is_file():
+            if file.stem.startswith('_'):
+                continue
             if ignore_list:
                 if any([fnmatch(file.name, x) for x in ignore_list]):
                     continue
             files_to_import.append(file)
     if files_to_import:
         for file in files_to_import:
-            import_module_by_path(file, '.'.join([parent_name, file.stem]))
+            import_path = '.'.join([parent_name, file.stem])
+            import_module_by_path(file, import_path)

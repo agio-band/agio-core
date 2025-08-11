@@ -4,11 +4,10 @@ from agio.core import api
 from agio.core.api.utils import NOTSET
 from . import APackageRelease
 from .entity import DomainBase
-from .package import APackage
 
 
 class AWorkspaceRevision(DomainBase):
-    type_name = 'workspace_revision'
+    domain_name = 'workspace_revision'
 
     @classmethod
     def get_data(cls, object_id: str) -> dict:
@@ -34,12 +33,13 @@ class AWorkspaceRevision(DomainBase):
                status: str = NOTSET,
                layout: dict = NOTSET,
                comment: str = NOTSET,
+               metadata: dict = NOTSET,
                ) -> Self:
         release_ids = []
         for package_release in package_releases:
             if isinstance(package_release, str):
                 release_ids.append(package_release)
-            elif isinstance(package_release, APackage):
+            elif isinstance(package_release, APackageRelease):
                 release_ids.append(package_release.id)
             elif isinstance(package_release, dict):
                 release_ids.append(package_release["id"])
@@ -49,9 +49,10 @@ class AWorkspaceRevision(DomainBase):
             workspace_id=workspace_id,
             package_release_ids=release_ids,
             set_current=set_current,
-            status=status,
+            status=status or 'ready', # TODO
             layout=layout,
             comment=comment,
+            metadata=metadata or {}
         )
         return cls(revision_id)
 
@@ -88,8 +89,10 @@ class AWorkspaceRevision(DomainBase):
     def get_layout(self):
         return self._data.get("layout")
 
-    def get_settings(self):
-        return self._data.get("settings")
+    def get_settings_data(self):
+        if '_settings_data' not in self._data:
+            self._data["_settings_data"] = api.workspace.get_settings_by_revision_id(self.id)['data']
+        return self._data["_settings_data"]
 
     def get_package_list(self):
         for pkg_data in self._data.get("packageReleases"):
@@ -106,11 +109,11 @@ class AWorkspaceRevision(DomainBase):
             layout=layout
         )
 
-    def set_settings(self, settings_data: dict) -> str:
+    def set_settings_data(self, settings_data: dict, set_current: bool = True) -> str:
         return api.workspace.create_revision_settings(
             self.id,
             settings_data,
-            set_current=True
+            set_current=set_current
         )
 
     def set_current(self, is_current: bool):

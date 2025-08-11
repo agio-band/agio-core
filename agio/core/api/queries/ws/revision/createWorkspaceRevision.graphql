@@ -1,22 +1,7 @@
-mutation CreateWorkspaceRevision(
-    $workspaceId: String!,
-    $isCurrent: Boolean!
-    $status: String!
-    $packageReleaseIds: [String!]!
-    $layout: Map!
-    $comment: String!
-) {
-    createWorkspaceRevision(
-        input:{
-            workspaceId: $workspaceId,
-            status: $status,
-            isCurrent: $isCurrent,
-            packageReleaseIds: $packageReleaseIds,
-            layout: $layout,
-            comment: $comment
-        })
-    {
-        workspaceRevisionId
-    }
-
+mutation CreateWorkspaceRevision($input: WorkspaceRevisionCreateInput!) {
+  createWorkspaceRevision(
+    input: $input
+  ) {
+    workspaceRevisionId
+  }
 }
