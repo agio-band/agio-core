@@ -154,7 +154,7 @@ def create_version(
         ):
     return client.make_query(
         'pipe/versions/createVersion',
-        name=str(version),
+        name=version,
         publish=product_id,
         entity=task_id,
         fields=fields

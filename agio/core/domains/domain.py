@@ -24,6 +24,9 @@ class DomainBase(ABC):
                 self.reload()
         else:
             raise TypeError('entity must be a string or dict')
+        fields_data = self._data.get('fields')
+        if isinstance(fields_data, str):
+            self.data['fields'] = json.loads(fields_data)
 
     def reload(self):
         self._data = self.get_data(self.id)
@@ -42,7 +45,7 @@ class DomainBase(ABC):
 
     @property
     def fields(self):
-        return json.loads(self._data.get('fields', '{}'))
+        return self._data.get('fields', {})
 
     def __str__(self):
         return str(self.id)
