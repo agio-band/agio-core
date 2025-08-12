@@ -2,9 +2,9 @@ import shlex
 
 def parse_args_to_dict(src_args: list|str) -> dict:
     if isinstance(src_args, str):
-        tokens = shlex.split(src_args)
+        tokens = list(shlex.split(src_args))
     else:
-        tokens = src_args
+        tokens = list(src_args)
     result = {}
     key = None
     values = []
@@ -25,7 +25,6 @@ def parse_args_to_dict(src_args: list|str) -> dict:
                 return int(value)
         except ValueError:
             return value
-
     while tokens:
         token = tokens.pop(0)
         if token.startswith('-'):

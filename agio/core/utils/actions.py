@@ -152,8 +152,19 @@ def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
             action = ActionItem(**action_data)
             if not action.is_match(menu_name, app_name):
                 continue
-            action.name = f"{plugin.package.name}.{action.name}"
+            action.name = f"{plugin.package.package_name}.{action.name}"
             grp.add_items(action)
             # TODO add divider
     return grp
 
+def get_action_func(action_full_name: str) -> Callable:
+    from agio.core import plugin_hub
+
+    service_name, action_name = action_full_name.split('.')
+    service = plugin_hub.find_plugin_by_name('service', service_name)
+    if not service:
+        raise Exception(f'Service {service_name} not found')
+    action_func = service.get_action(action_name)
+    if not action_func:
+        raise Exception(f'Action {action_full_name} not found')
+    return action_func

@@ -1,4 +1,6 @@
 
+# current company ID
+COMPANY_ENV_NAME = 'AGIO_COMPANY_ID'
 # current workspace ID
 WORKSPACE_ENV_NAME = 'AGIO_WORKSPACE_ID'
 # current workspace_revision ID

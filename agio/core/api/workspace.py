@@ -5,6 +5,7 @@ from . import client
 from .utils import NOTSET
 from .utils.query_tools import iter_query_list
 from ..exceptions import RevisionNotExists, SettingsRevisionNotExists, WorkspaceNotExists
+from . import track
 
 
 def get_workspace(workspace_id: UUID|str, full: bool = False) -> dict:
@@ -172,21 +173,21 @@ def iter_revisions(workspace_id: UUID|str, limit: int = None) -> Iterator[dict]:
 
 def find_revision(
         workspace_id: str = None,
-        workspace_name: str = None,
+        # workspace_name: str = None,
         ready_only: bool = True,
         is_current: bool = False
 ) -> dict|None:
     entity_filter = {}
     if ready_only:
         entity_filter['status'] = {"equalTo": "ready"}
-    if not any([workspace_id, workspace_name]):
-        raise ValueError('Workspace id or ws name are required')
+    # if not any([workspace_id, workspace_name]):
+    #     raise ValueError('Workspace id or ws name are required')
     if workspace_id:
         entity_filter['workspace'] = {'id': {'equalTo': str(workspace_id)}}
     if is_current:
         entity_filter['isCurrent'] = {'equalTo': True}
-    elif workspace_name:
-        raise NotImplementedError
+    # elif workspace_name:
+    #     raise NotImplementedError
         # entity_filter['workspace'] = {'name': {'equalTo': str(workspace_name)}}
     try:
         return next(iter_query_list(
@@ -212,21 +213,13 @@ def get_current_revision(workspace_id: UUID|str) -> dict|None:
         raise RevisionNotExists
 
 
-def get_revision_by_project_name(project_name: str) -> dict:
-    raise NotImplementedError
-
-
 def get_revision_by_project_id(project_id: str) -> dict:
-    raise NotImplementedError
+    project = track.get_project(project_id)
+    return get_revision_by_workspace_id(project['workspace']['id'])
 
 
 def get_revision_by_workspace_id(workspace_id: str) -> dict:
-    return find_revision(workspace_id=workspace_id, is_current=True)
-
-
-def get_revision_by_workspace_name(workspace_name: str) -> dict:
-    raise NotImplementedError
-    # return find_revision(workspace_name=workspace_name, is_current=True)
+    return find_revision(workspace_id, is_current=True)
 
 
 def delete_revision(revision_id: UUID|str) -> bool:
@@ -290,6 +283,7 @@ def get_settings_by_revision_id(revision_id: UUID|str) -> dict:
 
 
 def get_revision_by_settings_id(settings_id: UUID|str) -> dict:
+    # TODO Cache
     settings = get_revision_settings(settings_id)
     if settings:
         revision_id = settings['workspaceRevisionId']

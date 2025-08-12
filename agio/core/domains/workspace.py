@@ -66,6 +66,15 @@ class AWorkspace(DomainBase):
 
         return AWorkspaceManager(self.get_current_revision())
 
+    @property
+    def company_id(self):
+        return self._data['company']['id']
+
+    def get_company(self):
+        from .company import ACompany
+
+        return ACompany(self.company_id)
+
     def _find_release(self, input_data: dict|str|APackageRelease|APackage) -> APackageRelease:
         if isinstance(input_data, APackageRelease):
             return input_data

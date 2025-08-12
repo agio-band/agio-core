@@ -2,9 +2,9 @@ import os
 import sys
 import click
 
-from agio.core.cli import tools
-from agio.core import plugin_hub
+from agio.core  import plugin_hub
 from agio.core.pkg.workspace import AWorkspaceManager
+from agio.core.utils import launch_utils
 
 
 # base command
@@ -14,40 +14,21 @@ from agio.core.pkg.workspace import AWorkspaceManager
     envvar='AGIO_DEBUG',
     help="Enable DEBUG mode")
 @click.option(
-    "-p", "--project",
-    # envvar='AGIO_PROJECT',
-    help='Execute in project (ID or NAME)',
-    required=False
-)
-@click.option(
     "-w", "--workspace",
-    # envvar='AGIO_WORKSPACE',
-    help='Execute in workspace (Workspace ID or NAME, Revision ID or Settings ID)',
+    help='Execute in workspace (Workspace ID, Revision ID, Settings ID, Project ID)',
     required=False
 )
-# @click.option(
-#     "-r", "--revision",
-#     # envvar='AGIO_WORKSPACE_REVISION',
-#     help='Execute in workspace revision (revision ID or settings revision ID)',
-#     required=False
-# )
 @click.pass_context
-def agio_group(ctx, project, workspace, debug):
-    if not AWorkspaceManager.current():
-        ws: AWorkspaceManager|None = tools.get_workspace_from_args(
-            project=project,
-            workspace=workspace,
-        )
+def agio_group(ctx, workspace, debug):
+    if not AWorkspaceManager.is_defined() and workspace:
+        # exec in different env if not defined
+        ws: AWorkspaceManager|None = launch_utils.get_launch_context_from_args(workspace)
         if ws:
-            if ws.need_to_reinstall():
-                ws.install()
-            command_args = tools.clear_args(sys.argv)
-            tools.start_in_workspace(ws, command_args)
+            command_args = launch_utils.clear_args(sys.argv)
+            launch_utils.start_in_workspace(command_args, ws)
             ctx.exit()
     if debug:
         os.environ['DEBUG'] = 'true'
-    # workspace_id = os.getenv('AGIO_WORKSPACE_ID')
-    # revision_id = os.getenv('AGIO_WORKSPACE_REVISION_ID')
 
 
 @agio_group.command

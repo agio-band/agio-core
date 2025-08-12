@@ -32,6 +32,7 @@ class AWorkspaceManager:
             else:
                 raise TypeError('Invalid revision type')
         self._kwargs = kwargs
+        self._extra_launch_envs = kwargs.get('launch_envs', {})
 
     def __repr__(self):
         return f'<{self.__class__.__name__} revision={self._revision.id}>'
@@ -79,6 +80,10 @@ class AWorkspaceManager:
             return cls.from_workspace(ws_id)
         elif rev_id := os.getenv(env_names.REVISION_ENV_NAME):
             return cls(rev_id)
+
+    @classmethod
+    def is_defined(cls):
+        return bool(os.getenv(env_names.WORKSPACE_ENV_NAME))
 
     # props
 
@@ -173,15 +178,20 @@ class AWorkspaceManager:
     def get_pyexecutable(self) -> str:
         return self.venv_manager.python_executable
 
+    def  add_launch_envs(self, launch_envs: dict):
+        self._extra_launch_envs.update(launch_envs)
+
     def get_launch_envs(self):
         env = {
+            **self._extra_launch_envs,
+            env_names.COMPANY_ENV_NAME: self.get_workspace().company_id,
             env_names.WORKSPACE_ENV_NAME: str(self.revision.workspace_id),
             env_names.REVISION_ENV_NAME: str(self.revision.id),
             'VIRTUAL_ENV': self.install_root.as_posix()
         }
         if self.settings_id:
             env[env_names.SETTINGS_REVISION_ENV_NAME] = str(self.settings_id)
-        emit('core.workspace.get_launch_envs', {'envs': env, 'workspace': self})
+        emit('core.workspace.get_launch_envs', {'envs': env, 'revision': self._revision})
         return env
 
     def install_or_update_if_needed(self):

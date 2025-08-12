@@ -62,7 +62,7 @@ def iter_projects(company_id: str|UUID, items_per_page: int = 50) -> Iterator[di
     )
 
 def find_project(
-        company_id: str|UUID,
+        company_id: str|UUID = NOTSET,
         company_name: str|None = NOTSET,
         name: str = NOTSET,
         code: str|None = NOTSET,

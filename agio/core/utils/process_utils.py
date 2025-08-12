@@ -6,6 +6,7 @@ import signal
 import subprocess
 import argparse
 import ctypes
+from contextlib import contextmanager
 from typing import Iterable
 
 
@@ -27,6 +28,9 @@ def start_process(
         output_file=None,
         workdir: str = None,
         get_output: bool = False,
+        open_pipe: bool = False,
+        pipe_open_mode='text',  # text|binary
+        exit_on_done=False,
         **kwargs
 ):
     """
@@ -35,6 +39,24 @@ def start_process(
     Automatically terminates child process if parent is killed (when not detached).
     Propagates exit code from child to parent if the child crashes.
     """
+    if get_output and open_pipe:
+        raise Exception("open_pipe and get_output are mutually exclusive")
+    if detached and open_pipe:
+        raise Exception('Argument open_pipe cannot be used with detached=True')
+    if open_pipe and replace:
+        raise Exception('Argument open_pipe cannot be used with replace=True')
+    if detached and replace:
+        raise Exception('Argument replace cannot be used with detached=True')
+    if replace and get_output:
+        raise Exception('Argument replace cannot be used with get_output=True')
+    if open_pipe:
+        if pipe_open_mode == "text":
+            pipe_mode = 'r'
+        elif pipe_open_mode == "binary":
+            pipe_mode = 'rb'
+        else:
+            raise ValueError("pipe_open_mode must be 'text' or 'binary'")
+
     new_env = os.environ.copy()
     if clear_envs:
         for env in clear_envs:
@@ -48,6 +70,7 @@ def start_process(
     if isinstance(command, Iterable):
         command = list(map(str, command))
     if replace:
+
         if isinstance(command, str):
             command = shlex.split(command)
         executable = command[0]
@@ -83,7 +106,6 @@ def start_process(
         stdout = open(os.devnull, "w")
         stderr = subprocess.STDOUT
 
-
     if sys.platform == "win32":
         if detached:
             creationflags |= subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
@@ -101,19 +123,32 @@ def start_process(
             else:
                 command = f'{terminal} -e "{subprocess.list2cmdline(command)}"'
                 use_shell = True
+
+    close_fds = True if sys.platform != "win32" else False,
+
+    write_fd = read_fd = None
+    if open_pipe:
+        read_fd, write_fd = os.pipe()
+        os.set_inheritable(write_fd, True)
+        close_fds = False
+        new_env['AGIO_CUSTOM_PIPE_FILE_NO'] = str(write_fd)
+        new_env['AGIO_CUSTOM_PIPE_FILE_MODE'] = pipe_open_mode
+
     process = subprocess.Popen(
         command,
         env=new_env,
         stdout=stdout,
         stderr=stderr,
         stdin=stdin,
-        close_fds=True if sys.platform != "win32" else False,
+        close_fds=close_fds,
         start_new_session=start_new_session,
         creationflags=creationflags,
         shell=use_shell,
         cwd=workdir,
         **kwargs
     )
+    if write_fd:
+        os.close(write_fd)
 
     if detached and output_file and not get_output:
         stdout.close()
@@ -138,23 +173,83 @@ def start_process(
                 output, error = process.communicate()
                 logging.debug(f'Exit Code: {process.returncode}')
                 if process.returncode != 0:
-                  print(error.decode(), file=sys.stderr)
+                    print(error.decode(), file=sys.stderr)
                 return output.decode()
+            elif open_pipe:
+                if not read_fd:
+                    raise Exception("open_pipe requires read_fd object")
+                with os.fdopen(read_fd, pipe_mode) as data_pipe_handler:
+                    data = data_pipe_handler.read()
+                return data
             else:
                 process.wait()
                 logging.debug(f'Exit Code: {process.returncode}')
-                sys.exit(process.returncode)
+                if exit_on_done:
+                    sys.exit(process.returncode)
 
         except KeyboardInterrupt:
             terminate_child(process)
-            sys.exit(1)
+            if exit_on_done:
+                sys.exit(1)
     elif non_blocking or detached:
         # Return the Popen object if non-blocking or detached.
         return process
     return None
 
 
-def process_exists(pid):
+def write_to_pipe(data: str):
+    """
+    Use open_pipe=True with function start_process to create custom pipe and write to him in child process
+    """
+    if not pipe_is_allowed():
+        raise Exception("Data Pipe is not allowed")
+    mode = os.getenv('AGIO_CUSTOM_PIPE_FILE_MODE')
+    if not mode:
+        if isinstance(data, bytes):
+            mode = 'wb'
+        elif isinstance(data, str):
+            mode = 'w'
+        else:
+            raise TypeError('data must be str or bytes')
+    pipe_num = os.getenv('AGIO_CUSTOM_PIPE_FILE_NO')
+    if not pipe_num:
+        raise ValueError('Custom pipe file not set')
+    with os.fdopen(int(pipe_num), mode) as data_pipe_handler:
+        data_pipe_handler.write(data)
+        data_pipe_handler.flush()
+
+
+@contextmanager
+def data_pipe():
+    """
+    Use open_pipe=True with function start_process to create custom pipe and write to him in child process
+    Context manager allow you to write multiple times.
+    Use write_to_pipe(data) to write and close in single step/
+
+    Usage:
+    >>> with data_pipe() as pipe:
+    >>>     ...
+    >>>     pipe.write('text1')
+    >>>     ...
+    >>>     pipe.write('text2')
+    """
+    pipe_num = os.getenv('AGIO_CUSTOM_PIPE_FILE_NO')
+    if not pipe_num:
+        raise ValueError('Custom pipe file not set')
+    mode = os.getenv('AGIO_CUSTOM_PIPE_FILE_MODE')
+    with os.fdopen(int(pipe_num), mode) as data_pipe_handler:
+        yield data_pipe_handler
+        data_pipe_handler.flush()
+
+
+def pipe_is_allowed():
+    return bool(os.getenv('AGIO_CUSTOM_PIPE_FILE_NO'))
+
+
+def process_exists(pid) -> bool:
+    """
+    Process is running
+    """
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -166,6 +261,7 @@ def process_exists(pid):
 
 
 def restart_with_env(envs: dict):
+    """Restart current process with extend envs"""
     cmd = [sys.executable]+sys.argv
     envs = {**os.environ.copy(), **envs}
     start_process(cmd, envs=envs, replace=True, workdir=os.getcwd())
@@ -199,6 +295,7 @@ if __name__ == "__main__":
     parser.add_argument("-w", "--workdir", help="Working directory for the command")
     parser.add_argument("-g", "--get-output", action="store_true",
                         help="Get output from the process (only when not detached and not non-blocking)")
+    parser.add_argument("-x", "--exit-on-done", help="Exit when subprocess exited", action="store_true", default=True)
     parser.add_argument("command", nargs=argparse.REMAINDER, help="Command to execute")
 
     args = parser.parse_args()
