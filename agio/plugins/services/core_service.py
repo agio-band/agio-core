@@ -15,9 +15,9 @@ class CoreService(ServicePlugin):
                  order=98,
                  is_visible_callback=client.is_logged_in)
     def logout(self, *args, **kwargs):
-        emit('core.before_logout')
+        emit('core.auth.before_logout')
         client.logout()
-        emit('core.on_logout')
+        emit('core.auth.on_logout')
 
     @make_action(label='Log In',
                  menu_name='tray.main_menu',
@@ -25,9 +25,9 @@ class CoreService(ServicePlugin):
                  order=99,
                  is_visible_callback=lambda: not client.is_logged_in())
     def login(self, *args, **kwargs):
-        emit('core.before_login')
+        emit('core.auth.before_login')
         client.login()
-        emit('core.on_login')
+        emit('core.auth.on_login')
 
     @make_action(menu_name='tray.main_menu',
                  app_name='desk',
