@@ -57,7 +57,7 @@ def start_in_workspace(
     else:
         py_exec = get_default_env_executable()
         ws_envs = {}
-    cmd = [py_exec] + command
+    cmd = shlex.split(py_exec, posix=os.name!='nt') + command
     envs = {**(envs or {}), **ws_envs}
     return process_utils.start_process(
         cmd, envs=envs,

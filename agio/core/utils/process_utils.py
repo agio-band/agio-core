@@ -155,11 +155,12 @@ def start_process(
 
     if not detached:
         if sys.platform == "win32":
-            job = ctypes.windll.kernel32.CreateJobObjectW(None, None)
-            info = ctypes.wintypes.JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
-            info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-            ctypes.windll.kernel32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info))
-            ctypes.windll.kernel32.AssignProcessToJobObject(job, process._handle)
+            pass # TODO close child process on parent exited
+            # job = ctypes.windll.kernel32.CreateJobObjectW(None, None)
+            # info = ctypes.wintypes.JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
+            # info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            # ctypes.windll.kernel32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info))
+            # ctypes.windll.kernel32.AssignProcessToJobObject(job, process._handle)
         else:
             def handle_parent_exit(*_):
                 terminate_child(process)
@@ -252,7 +253,7 @@ def process_exists(pid) -> bool:
     """
     try:
         os.kill(pid, 0)
-    except ProcessLookupError:
+    except (ProcessLookupError, OSError):
         return False
     except PermissionError:
         return True
