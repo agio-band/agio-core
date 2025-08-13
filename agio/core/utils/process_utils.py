@@ -5,10 +5,10 @@ import sys
 import signal
 import subprocess
 import argparse
-import ctypes
 from contextlib import contextmanager
 from typing import Iterable
 
+logger = logging.getLogger(__name__)
 
 def terminate_child(proc):
     if sys.platform == "win32":
@@ -133,7 +133,7 @@ def start_process(
         close_fds = False
         new_env['AGIO_CUSTOM_PIPE_FILE_NO'] = str(write_fd)
         new_env['AGIO_CUSTOM_PIPE_FILE_MODE'] = pipe_open_mode
-
+    logger.info('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
     process = subprocess.Popen(
         command,
         env=new_env,
@@ -162,11 +162,12 @@ def start_process(
             # ctypes.windll.kernel32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info))
             # ctypes.windll.kernel32.AssignProcessToJobObject(job, process._handle)
         else:
-            def handle_parent_exit(*_):
-                terminate_child(process)
-                sys.exit(1)
-            signal.signal(signal.SIGTERM, handle_parent_exit)
-            signal.signal(signal.SIGINT, handle_parent_exit)
+            pass # TODO error if called from non main thread
+            # def handle_parent_exit(*_):
+            #     terminate_child(process)
+            #     sys.exit(1)
+            # signal.signal(signal.SIGTERM, handle_parent_exit)
+            # signal.signal(signal.SIGINT, handle_parent_exit)
 
     if wait_for_process:
         try:

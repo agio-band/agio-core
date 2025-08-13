@@ -25,12 +25,14 @@ def exec_agio_command(
         workdir: str = None,
         **kwargs
     ):
+    ws_manager = None
     if isinstance(workspace, str):
         ws_manager = get_launch_context_from_args(workspace)
     elif isinstance(workspace, AWorkspaceManager):
         ws_manager = workspace
     elif workspace is None:
-        ws_manager = AWorkspaceManager.current()
+        pass # TODO use for full local installation
+        # ws_manager = AWorkspaceManager.current()
     else:
         raise TypeError("Workspace must be either a string or AWorkspaceManager.")
     start_in_workspace(
