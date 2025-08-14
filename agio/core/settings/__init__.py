@@ -42,6 +42,7 @@ def get_workspace_settings(workspace: AWorkspace = None) -> WorkspaceSettingsHub
         settings_data = revision.get_settings_data()  # TODO
     except SettingsRevisionNotExists:
         settings_data = {}
+        revision = None
     # create workspace settings instance with applied values
     settings = WorkspaceSettingsHub(settings_data)
     emit('core.settings.workspace_settings_loaded', {
