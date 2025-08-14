@@ -2,12 +2,12 @@ import os
 from pathlib import Path
 from functools import lru_cache
 
-from agio.core.utils import config
+from agio.core.utils import config, package_hub
 
 
 @lru_cache
 def get_resources_dirs():
-    from agio.core import package_hub
+    pkg_hub = package_hub.APackageHub.instance()
 
     resource_dir_list = [
         Path(__file__).parent,
@@ -18,7 +18,7 @@ def get_resources_dirs():
     if from_env:
         resource_dir_list.extend([Path(path) for path in from_env.split(os.pathsep)])
     # from packages
-    for pkg in package_hub.iter_packages():
+    for pkg in pkg_hub.iter_packages():
         resource_dir_list.append(pkg.get_resource_dir())
     return resource_dir_list
 

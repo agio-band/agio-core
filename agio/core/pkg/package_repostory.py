@@ -9,6 +9,7 @@ from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
 from agio.core.utils import git_utils
 from agio.core.utils.pkg_manager import get_package_manager
 from agio.core import api
+from agio.core.utils import plugin_hub
 
 logger = logging.getLogger(__name__)
 
@@ -142,11 +143,10 @@ class APackageRepository:
 
 
 def get_remote_repository_plugin(repo_url: str, repository_api: str = None):
-    from agio.core import plugin_hub
 
     if not repo_url:
         raise PackageLoadingError('No repo url provided')
-    for plugin in plugin_hub.get_plugins_by_type('remote_repository'):
+    for plugin in plugin_hub.APluginHub.instance().get_plugins_by_type('remote_repository'):
         if repository_api and repository_api == plugin.repository_api:
             return plugin
         if plugin.check_is_valid_url(repo_url):

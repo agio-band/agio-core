@@ -1,13 +1,19 @@
+from __future__ import annotations
 import logging
+import traceback
 from collections import defaultdict
-from typing import Iterator
+from typing import Iterator, TYPE_CHECKING
 
-from agio.core.domains import APackage
+# from agio.core.domains import APackage
 from agio.core.exceptions import PluginLoadingError, PluginNotFoundError
-from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils.singleton import Singleton
+if TYPE_CHECKING:
+    from agio.core.pkg import APackageManager
+    from agio.core.plugins.base_plugin import APlugin
+
 
 logger = logging.getLogger(__name__)
+
 
 class APluginHub(metaclass=Singleton):
     def __init__(self, package_hub):
@@ -22,19 +28,26 @@ class APluginHub(metaclass=Singleton):
     def plugins_count(self):
         return sum([len(types) for types in self.plugins.values()])
 
-    def _collect_plugins(self, packages: list[APackage]) -> None:
+    def _collect_plugins(self, packages: list[APackageManager]) -> None:
+        if self.plugins:
+            logger.debug(f"PluginHub already initialized or in progress...")
+            return
         for pkg in packages:
             for plugin in pkg.collect_plugins():
                 if not plugin.name:
                     raise PluginLoadingError(f"Plugin name must be defined: {plugin}")
-
                 if plugin.name in self.plugins[plugin.plugin_type]:
                     if plugin in self.plugins[plugin.plugin_type].values():
                         continue
                     existing_plugin = self.plugins[plugin.plugin_type][plugin.name]
-                    logger.warning(f"Plugin will be overridden by: {plugin.__class__.__name__}.{plugin.name} => {plugin.__class__.__name__}.{existing_plugin.name}")
+                    logger.warning(
+                        f"Plugin will be overridden by: "
+                            f"{plugin.__class__.__module__}.{plugin.__class__.__name__}.{plugin.name}"
+                        f" => "
+                            f"{existing_plugin.__class__.__module__}.{existing_plugin.__class__.__name__}.{existing_plugin.name}")
                     self._overridden_plugins.append(f'{plugin.plugin_type}.{plugin.name}')
                 self.plugins[plugin.plugin_type][plugin.name] = plugin
+        logger.info(f'Plugin hub initialized with {len(self.plugins)} categories')
 
     def get_plugins_by_type(self, type_type: str) -> dict[str, 'APlugin']:
         yield from self.plugins[type_type].values()

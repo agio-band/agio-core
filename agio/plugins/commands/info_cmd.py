@@ -9,6 +9,7 @@ from agio.core.plugins.base_command import ACommandPlugin
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.pkg.package import APackageManager
 from agio.core.pkg.workspace import AWorkspaceManager
+from agio.core.utils import package_hub, plugin_hub
 
 
 class InfoCommand(ACommandPlugin):
@@ -58,25 +59,26 @@ class InfoCommand(ACommandPlugin):
         print(sys.executable)
 
     def _show_packages_info(self):
-        from agio.core import package_hub
+
+        pkg_hub = package_hub.APackageHub.instance()
         print('PACKAGES:')
         print()
 
-        sizes = [len(name) for name in package_hub.get_packages().keys()]
+        sizes = [len(name) for name in pkg_hub.get_packages().keys()]
         if not sizes:
             raise Exception('No packages found')
         max_len = max(sizes)
-        for package in package_hub.get_package_list():
+        for package in pkg_hub.get_package_list():
             package: APackageManager
             print(f"  {package.package_name:<{max_len+2}} v{package.package_version:<8} | {package.root}")
         print()
 
     def _show_plugins_info(self):
-        from agio.core import plugin_hub
+        plg_hub = plugin_hub.APluginHub.instance()
         print('PLUGINS:')
         print()
         all_plugins_by_package = defaultdict(list)
-        for plugin in plugin_hub.iter_plugins():
+        for plugin in plg_hub.iter_plugins():
             plugin: APlugin
             all_plugins_by_package[plugin.package.package_name].append(plugin)
         for package_name, plugins in all_plugins_by_package.items():

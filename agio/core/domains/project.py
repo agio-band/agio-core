@@ -1,12 +1,10 @@
 from typing import Self, Iterator
 from uuid import UUID
 
-from agio.core.domains import DomainBase, AWorkspace
 from agio.core import api
 from agio.core import settings
+from agio.core.domains import DomainBase, AWorkspace
 from agio.core.domains import company
-from agio_pipe.utils import path_solver
-from windows.agio.core.domains import project
 
 
 class AProject(DomainBase):

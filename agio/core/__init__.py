@@ -6,21 +6,16 @@ from .events import emit as _emit
 from .init.init_packages import init_packages
 from .init.init_plugins import init_plugins
 from .utils import setup_logger
-from .utils.process_hub import ProcessHub
-
-__all__ = [
-    'package_hub',
-    'plugin_hub',
-    'process_hub'
-]
+from .utils import process_hub
 
 
 logger = logging.getLogger(__name__)
+init_packages()
+init_plugins()
+_process_hub = process_hub.ProcessHub()
+_subscribe('core.app.exit', _process_hub.shutdown)
+_emit('core.app.logger_created', logger)
 
-package_hub = init_packages()
-plugin_hub = init_plugins(package_hub)
-process_hub = ProcessHub()
-_subscribe('core.app.exit', process_hub.shutdown)
 
 def _before_exit_event(*args):
     print()

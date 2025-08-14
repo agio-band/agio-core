@@ -1,8 +1,9 @@
+import logging
 import os
 import sys
 import click
 
-from agio.core  import plugin_hub
+from agio.core.utils  import plugin_hub
 from agio.core.pkg.workspace import AWorkspaceManager
 from agio.core.utils import launch_utils
 
@@ -21,7 +22,7 @@ from agio.core.utils import launch_utils
 @click.pass_context
 def agio_group(ctx, workspace, debug):
     if not AWorkspaceManager.is_defined() and workspace:
-        # exec in different env if not defined
+        # execute in different env if not current ws is defined
         ws: AWorkspaceManager|None = launch_utils.get_launch_context_from_args(workspace)
         if ws:
             command_args = launch_utils.clear_args(sys.argv)
@@ -40,7 +41,7 @@ def load_plugins():
     """
     Collect command plugins and register in cli
     """
-    all_command_plugins = list(plugin_hub.get_plugins_by_type('command'))
+    all_command_plugins = list(plugin_hub.APluginHub.instance().get_plugins_by_type('command'))
     for plugin in all_command_plugins:
         agio_group.add_command(plugin.command)
 

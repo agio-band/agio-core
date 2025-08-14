@@ -9,8 +9,9 @@ from typing import Iterable, Any, Callable
 from agio.core.events import emit
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.base_plugin import APlugin
-from agio.core.utils.actions import ActionItem
-from agio.core.utils.text_utils import unslugify
+# from agio.core.utils.actions import ActionItem
+# from agio.core.utils.text_utils import unslugify
+from agio.core.utils import text_utils, package_hub, plugin_hub, process_hub, actions
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ def make_action(
             'app_name': app_name,
             # action properties
             'name': func.__name__,
-            'label': label or unslugify(func.__name__),
+            'label': label or text_utils.unslugify(func.__name__),
             'icon': icon,
             'order': order,
             'group': group,
@@ -105,18 +106,15 @@ class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
 
     @property
     def plugin_hub(self):
-        from agio.core import plugin_hub
-        return plugin_hub
+        return plugin_hub.APluginHub.instance()
 
     @property
     def package_hub(self):
-        from agio.core import package_hub
-        return package_hub
+        return package_hub.APackageHub.instance()
 
     @property
     def process_hub(self):
-        from agio.core import process_hub
-        return process_hub
+        return process_hub.ProcessHub.instance()
 
     def before_start(self, **kwargs):
         pass
@@ -142,7 +140,7 @@ class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
             action_menu_name = acton_data.get('menu_name') or self.menu_name
             if not action_menu_name:
                 continue
-            item_data = {k: v for k, v in acton_data.items() if k in ActionItem.get_fields()}
+            item_data = {k: v for k, v in acton_data.items() if k in actions.ActionItem.get_fields()}
             emit('core.services.action_item_created', item_data)
             items.append(item_data)
         return items

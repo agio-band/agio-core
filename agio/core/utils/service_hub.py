@@ -4,6 +4,7 @@ from typing import Iterable
 
 from agio.core.events import subscribe, unsubscribe
 from agio.core.utils.singleton import Singleton
+from agio.core.utils import plugin_hub
 
 
 class AServiceHub(metaclass=Singleton):
@@ -34,14 +35,13 @@ class AServiceHub(metaclass=Singleton):
         return self.stop_event.is_set()
 
     def start_services(self, **kwargs):
-        from agio.core import plugin_hub
 
         already_registered = [s for s in self.service_list if s in self._registered_services]
         if already_registered:
             raise Exception('Service already running: {}'.format(already_registered))
         names_to_register = set(self.service_list)
         services = []
-        for service in plugin_hub.iter_plugins('service'):
+        for service in plugin_hub.APluginHub.instance().iter_plugins('service'):
             if service.name in names_to_register:
                 if service.name in self._registered_services:
                     raise Exception('Service already registered: {}'.format(service.name))

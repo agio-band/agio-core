@@ -12,7 +12,6 @@ def init_packages():
     # load package callbacks
     callback_paths = package_hub.collect_callbacks()
     register_callbacks(callback_paths)
-    emit('core.app.logger_created', logger)
     # now we can execute callbacks
     for pkg in package_hub.iter_packages():
         emit('core.app.package_loaded', pkg)

@@ -2,16 +2,16 @@ import base64
 import logging
 import threading
 import time
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from pathlib import Path
-from urllib.parse import urlparse, parse_qs
-import webbrowser
+# from http.server import HTTPServer, BaseHTTPRequestHandler
+# from pathlib import Path
+# from urllib.parse import urlparse, parse_qs
+# import webbrowser
 
 import requests
 from requests_oauthlib import OAuth2Session
 
 from agio.core.api.api_client.auth_server import run_oauth_server
-from agio.core.events import subscribe_manager
+from agio.core import events
 from agio.core.utils import config
 from agio.core.api.utils import session_utils
 from agio.core.exceptions import AuthorizationError
@@ -69,7 +69,7 @@ class _ApiClientAuth:
             stop_event.set()
             is_canceled = True
 
-        with subscribe_manager('core.app.exit', cancel):
+        with events.subscribe_manager('core.app.exit', cancel):
             thread.join()
         if is_canceled:
             return None

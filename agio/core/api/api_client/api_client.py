@@ -5,7 +5,7 @@ from pathlib import Path
 
 from requests.exceptions import HTTPError
 
-from agio.core.api.api_client.base import _ApiClientAuth
+from agio.core.api.api_client import base
 from agio.core.api.utils import NOTSET
 from agio.core.exceptions import RequestError
 from agio.core.utils import config
@@ -14,7 +14,7 @@ from agio.core.utils.json_serializer import JsonSerializer
 logger = logging.getLogger(__name__)
 
 
-class ApiClient(_ApiClientAuth):
+class ApiClient(base._ApiClientAuth):
     _base_api_url = f'{config.API.PLATFORM_URL}/graphql'
     queries_root = Path(__file__).parent.parent.joinpath('queries')
 

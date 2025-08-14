@@ -3,13 +3,13 @@ from typing import Any
 from agio.core.events import emit
 from agio.core.settings import package_settings as package_settings_class
 from agio.core.settings import collector
+from agio.core.utils import package_hub
 
 
 class ASettingsHub:
     settings_type: str = None
 
     def __init__(self, settings_data: dict[str, Any], **kwargs):
-        from agio.core import package_hub
 
         if self.settings_type is None:
             raise RuntimeError('Settings type not set')
@@ -20,7 +20,7 @@ class ASettingsHub:
             package_names.add(key.rsplit('.')[0])
 
         self._package_settings = {}
-        all_packages = package_hub.get_packages()
+        all_packages = package_hub.APackageHub.instance().get_packages()
         for package_name in all_packages.keys():
             if self.settings_type == LocalSettingsHub.settings_type:
                 package_settings_cls = all_packages[package_name].get_local_settings_class()

@@ -5,6 +5,8 @@ from functools import lru_cache
 from typing import Any, Callable
 
 import requests
+from agio.core.utils import plugin_hub
+
 
 logger = logging.getLogger(__name__)
 EXECUTE_ACTION_URL = 'http://localhost:8080/action'
@@ -82,9 +84,8 @@ class ActionItem:
         return self.action.split('.')[-1]
 
     def get_executable(self):
-        from agio.core import plugin_hub
 
-        plugin = plugin_hub.find_plugin_by_name('service', self.plugin_name)
+        plugin = plugin_hub.APluginHub.instance().find_plugin_by_name('service', self.plugin_name)
         if not plugin:
             raise RuntimeError(f'Plugin "{self.plugin_name}" not found')
         func = plugin.get_action(self.action_name)
@@ -142,12 +143,11 @@ class ActionGroupItem:
 
 @lru_cache
 def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
-    from agio.core import plugin_hub
     from agio.core.utils import context
 
     app_name = app_name or context.app_name
     grp = ActionGroupItem(menu_name, None)
-    for plugin in plugin_hub.iter_plugins('service'):
+    for plugin in plugin_hub.APluginHub.instance().iter_plugins('service'):
         for action_data in plugin.collect_actions():
             action = ActionItem(**action_data)
             if not action.is_match(menu_name, app_name):
@@ -158,10 +158,9 @@ def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
     return grp
 
 def get_action_func(action_full_name: str) -> Callable:
-    from agio.core import plugin_hub
 
     service_name, action_name = action_full_name.split('.')
-    service = plugin_hub.find_plugin_by_name('service', service_name)
+    service = plugin_hub.APluginHub.instance().find_plugin_by_name('service', service_name)
     if not service:
         raise Exception(f'Service {service_name} not found')
     action_func = service.get_action(action_name)
