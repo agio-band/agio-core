@@ -84,19 +84,3 @@ class AProject(DomainBase):
 
         project_settings = get_local_settings(project=self)
         return {k.name: k.path for k in project_settings.get('agio_pipe.local_roots')}
-
-        # from agio.core.settings import get_workspace_settings
-        #
-        # ws_settings = get_workspace_settings(self.get_workspace())
-        # local_settings = get_local_settings(project=self)
-        # templates = ws_settings.get('agio_pipe.publish_templates')
-        # if templates is None:
-        #     raise RuntimeError('No agio publish templates configured')
-        # templates = {tmpl.name: tmpl.pattern for tmpl in templates}
-        # solver = path_solver.TemplateSolver(templates)
-        # context = {
-        #     'project': self,
-        #     'local_roots': {k.name: k.path for k in local_settings.get('agio_pipe.local_roots')},
-        # }
-        # project_root = solver.solve('project', context)
-        # return project_root
