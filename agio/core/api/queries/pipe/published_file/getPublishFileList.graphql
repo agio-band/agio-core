@@ -1,0 +1,21 @@
+query GetPublishFileList($first: Int!, $filter: PublishFileFilter) {
+    publishFiles(
+        first: $first,
+        filter: $filter
+    ) {
+        edges {
+            node {
+                id
+                name
+                path
+              	publishVersionId
+            }
+        }
+        pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+        }
+    }
+}

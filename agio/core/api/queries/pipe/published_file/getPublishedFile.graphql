@@ -1,0 +1,8 @@
+query GetPublishFile($id: ID!) {
+  publishFile(id: $id) {
+    id
+    name
+    path
+    publishVersionId
+  }
+}

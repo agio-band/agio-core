@@ -1,3 +1,4 @@
+import os.path
 from uuid import UUID
 
 from agio.core.api import client
@@ -159,3 +160,51 @@ def create_version(
         entity=task_id,
         fields=fields
     )['data']['createPublishVersion']['publishVersionId']
+
+
+# publish file
+
+def create_publish_file(
+        version_id: str|UUID,
+        path: str,
+        name: str = None
+    ) -> str:
+    name = name or os.path.basename(path)
+    return client.make_query(
+        'pipe/published_file/createPublishFile',
+        input=dict(
+            name=name,
+            path=path,
+            publishVersion=version_id,
+        )
+    )["data"]["createPublishFile"]["publishFileId"]
+
+
+def get_published_file(published_file_id: str|UUID):
+    return client.make_query(
+        'pipe/published_file/getPublishedFile',
+        id=published_file_id,
+    )["data"]["publishFile"]
+
+
+def iter_publish_files(
+        version_id: str|UUID,
+        path: str = NOTSET,
+        name: str = NOTSET,
+        use_regex: bool = False,
+        items_per_page: int = 50
+    ):
+    filters = deep_dict()
+    filters['where']['publishVersion']['id']['equalTo'] = version_id
+    if name:
+        filters['where']['name']['regExp' if use_regex else 'equalTo'] = name
+    if path:
+        filters['where']['path']['regExp' if use_regex else 'equalTo'] = path
+    yield from iter_query_list(
+        'pipe/published_file/getPublishFileList',
+        'publishFiles',
+        variables=dict(
+            filter=filters,
+        ),
+        items_per_page=items_per_page
+    )
