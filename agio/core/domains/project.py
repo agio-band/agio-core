@@ -6,6 +6,7 @@ from agio.core import api
 from agio.core import settings
 from agio.core.domains import company
 from agio_pipe.utils import path_solver
+from windows.agio.core.domains import project
 
 
 class AProject(DomainBase):
@@ -79,21 +80,25 @@ class AProject(DomainBase):
         self.reload()
         return resp
 
-    def get_root(self):
+    def get_roots(self):
         # TODO move to different tool
-        from agio.core.settings import get_workspace_settings
-
-        ws_settings = get_workspace_settings(self.get_workspace())
         from agio.core.settings import get_local_settings
-        local_settings = get_local_settings(project=self)
-        templates = ws_settings.get('agio_pipe.publish_templates')
-        if templates is None:
-            raise RuntimeError('No agio publish templates configured')
-        templates = {tmpl.name: tmpl.pattern for tmpl in templates}
-        solver = path_solver.TemplateSolver(templates)
-        context = {
-            'project': self,
-            'local_roots': {k.name: k.path for k in local_settings.get('agio_pipe.local_roots')},
-        }
-        project_root = solver.solve('project', context)
-        return project_root
+
+        project_settings = get_local_settings(project=self)
+        return {k.name: k.path for k in project_settings.get('agio_pipe.local_roots')}
+
+        # from agio.core.settings import get_workspace_settings
+        #
+        # ws_settings = get_workspace_settings(self.get_workspace())
+        # local_settings = get_local_settings(project=self)
+        # templates = ws_settings.get('agio_pipe.publish_templates')
+        # if templates is None:
+        #     raise RuntimeError('No agio publish templates configured')
+        # templates = {tmpl.name: tmpl.pattern for tmpl in templates}
+        # solver = path_solver.TemplateSolver(templates)
+        # context = {
+        #     'project': self,
+        #     'local_roots': {k.name: k.path for k in local_settings.get('agio_pipe.local_roots')},
+        # }
+        # project_root = solver.solve('project', context)
+        # return project_root
