@@ -18,8 +18,6 @@ class JsonSerializer(json.JSONEncoder):
             return o.isoformat()
         elif isinstance(o, UUID):
             return str(o)
-        elif isinstance(o, datetime):
-            return o.isoformat()
         elif isinstance(o, defaultdict):
             return dict(o)
         if self.__class__.custom_hook:

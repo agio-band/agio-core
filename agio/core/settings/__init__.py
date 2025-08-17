@@ -24,13 +24,13 @@ from ..exceptions import SettingsRevisionNotExists
 
 def get_local_settings(project: project_domain.AProject = None) -> LocalSettingsHub:
     # create local settings instance with applied values
-    local_settings = local_settings_manager.load_local_settings(project)
+    local_settings = local_settings_manager.load_local_settings()#project)
     emit('core.settings.local_settings_loaded', {'settings': local_settings})
     return local_settings
 
 
-def save_local_settings(settings: LocalSettingsHub, project: project_domain.AProject = None) -> str:
-    return local_settings_manager.save_local_settings(settings, project)
+def save_local_settings(settings: LocalSettingsHub):#, project: project_domain.AProject = None) -> str:
+    return local_settings_manager.save_local_settings(settings)#, project)
 
 
 def get_workspace_settings(workspace: AWorkspace = None) -> WorkspaceSettingsHub:

@@ -48,7 +48,6 @@ LOG_SETTINGS = {
     "disable_existing_loggers": False,
     "root": {
         "level": DEFAULT_LEVEL,
-        # "filters": ["host_details_filter"],
         "handlers": [
             "console",
             "file",
@@ -56,7 +55,12 @@ LOG_SETTINGS = {
         ],
     },
     "handlers": {
-        "console": {"class": "logging.StreamHandler", "level": DEFAULT_LEVEL, "formatter": "console"},
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": DEFAULT_LEVEL,
+            "formatter": "console",
+            "stream": "ext://sys.stdout",   # for streaming to stdout instead stderr
+        },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "level": DEFAULT_FILE_LEVEL,

@@ -1,6 +1,7 @@
 import json
 from abc import ABC, abstractmethod
 from typing import Self, Iterator
+from uuid import UUID
 
 
 class DomainBase(ABC):
@@ -9,10 +10,10 @@ class DomainBase(ABC):
     """
     domain_name = None
 
-    def __init__(self, data: str | dict):
+    def __init__(self, data: str | UUID | dict):
         if self.domain_name is None:
             raise AttributeError("Domain name not set")
-        if isinstance(data, str):
+        if isinstance(data, (str, UUID)):
             # from ID
             self._data: dict = self.get_data(data)
             if not self._data:
@@ -23,7 +24,7 @@ class DomainBase(ABC):
             if set(self._data.keys()) == {'type', 'id'}:
                 self.reload()
         else:
-            raise TypeError('entity must be a string or dict')
+            raise TypeError(f'entity must be a string or dict: {type(data)}')
         fields_data = self._data.get('fields')
         if isinstance(fields_data, str):
             self.data['fields'] = json.loads(fields_data)

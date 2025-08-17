@@ -42,8 +42,11 @@ class AProject(DomainBase):
     @classmethod
     def find(cls, company_id: str, **kwargs):
         data = api.track.find_project(company_id, **kwargs)
-        for prj_data in data:
-            yield cls(prj_data)
+        try:
+            for prj_data in data:
+                yield cls(prj_data)
+        except StopIteration:
+            return
 
     def get_company(self):
         return company.ACompany(self._data['company']['id'])
