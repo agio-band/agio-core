@@ -36,6 +36,7 @@ def run_oauth_server(
     token = {}
     port = port or get_free_port()
     redirect_uri = f'http://localhost:{port}/oauth_callback'
+    logger.info('Callback URL: %s', redirect_uri)
     oauth = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
     authorization_url, state = oauth.authorization_url(authorization_base_url)
 

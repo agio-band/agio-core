@@ -70,3 +70,9 @@ def import_modules_from_dir(root: str|Path, parent_name: str, ignore_list=None):
         for file in files_to_import:
             import_path = '.'.join([parent_name, file.stem])
             import_module_by_path(file, import_path)
+
+
+def iter_subclasses(cls):
+    for subclass in cls.__subclasses__():
+        yield subclass
+        yield from iter_subclasses(subclass)

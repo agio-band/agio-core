@@ -1,6 +1,9 @@
 import os
 import re
 import shlex
+import subprocess
+import sys
+from pathlib import Path
 
 from agio.core import api
 from agio.core.exceptions import WorkspaceNotExists, NotExistsError
@@ -105,3 +108,20 @@ def clear_args(args):
     args_str = ' '.join(args)
     clean = re.sub(r".*?(-w|--workspace|-p|--project)\s+(\w+)\s", "", args_str)
     return shlex.split(clean)
+
+
+def start_file(path: str):
+    """
+    Open file or folder using native app
+    """
+    path = Path(path).expanduser().resolve()
+
+    if not path.exists():
+        raise FileNotFoundError(f"Path not found: {path}")
+
+    if sys.platform.startswith("win"):
+        os.startfile(path)
+    elif sys.platform.startswith("darwin"):
+        subprocess.run(["open", str(path)])
+    else:  # Linux, BSD, etc.
+        subprocess.run(["xdg-open", str(path)])
