@@ -78,9 +78,9 @@ def iter_prodict_versions(
     filters = deep_dict()
     filters['where']['entity']['id']['equalTo'] = entity_id
     if variant:
-        filters['where']['variant']['equalTo'] = variant
+        filters['where']['publish']['variant']['equalTo'] = variant
     if product_type:
-        filters['where']['type']['equalTo'] = product_type
+        filters['where']['publish']['type']['equalTo'] = product_type
     yield from iter_query_list(
         'pipe/versions/getVersionList',
         'publishVersions',
@@ -129,12 +129,9 @@ def update_version(version_id: str|UUID, fields: dict):
     )
 
 
-def get_next_version_number(
-        task_id: str|UUID,
-        product_id: str|UUID,
-) -> int:
+def get_next_version_number(product_id: str|UUID) -> int:
     filters = deep_dict()
-    filters['where']['entity']['id']['equalTo'] = task_id
+    # filters['where']['entity']['id']['equalTo'] = task_id
     filters['where']['publish']['id']['equalTo'] = product_id
     response =  client.make_query(
         'pipe/versions/getLatestVersion',

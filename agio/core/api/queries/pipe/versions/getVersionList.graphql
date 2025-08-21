@@ -1,5 +1,9 @@
-query GetVersionList($first: Int!, $filter: PublishVersionFilter) {
-    publishVersions(first: $first, filter: $filter) {
+query GetVersionList($first: Int!, $filter: PublishVersionFilter, $afterCursor: String) {
+    publishVersions(
+        first: $first,
+        filter: $filter,
+        after: $afterCursor
+    ) {
         edges {
             node {
                 id

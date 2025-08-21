@@ -45,6 +45,14 @@ class DomainBase(ABC):
         return self.domain_name
 
     @property
+    def name(self):
+        return self.data["name"]
+
+    @property
+    def code(self):
+        return self.data["code"]
+
+    @property
     def fields(self):
         return self._data.get('fields', {})
 

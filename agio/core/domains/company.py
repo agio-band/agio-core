@@ -9,10 +9,6 @@ from agio.core.domains import project
 class ACompany(DomainBase):
     domain_name = "company"
 
-    @property
-    def name(self):
-        return self.data["name"]
-
     @classmethod
     def get_data(cls, object_id: str) -> dict:
         return api.desk.get_company(object_id)
