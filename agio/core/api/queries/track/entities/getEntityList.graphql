@@ -13,7 +13,7 @@ query GetEntityList($where: EntityWhere, $first: Int!) {
               class{
                 name
               }
-              # fields
+               fields
               links{
                 toId
                 roleId
