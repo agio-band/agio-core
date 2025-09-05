@@ -22,9 +22,15 @@ class _APluginBase:
 
 
 class APlugin(_APluginBase):
+    required_attrs = None
+
     def __init__(self, package: APackageManager, plugin_info: dict):
         self._plugin_info = plugin_info
         self._package = package # local package tools
+        if self.required_attrs:
+            for attr in self.required_attrs:
+                if getattr(self, attr) is None:
+                    raise PluginLoadingError(f'Required attribute "{self.__class__.__name__}.{attr}" must be set.')
 
     def get_label(self):
         return self._plugin_info.get('label') or unslugify(self.name)
