@@ -64,7 +64,7 @@ class UVPackageManager(PackageManagerBase):
             sorted_versions = [x for x in sorted_versions if not re.search(r"[a-z]", x)]
         return sorted_versions[0] if sorted_versions else None
 
-    def create_venv(self, py_version: str|None = None):
+    def _get_available_py_version(self, py_version: str = None) -> str | None:
         available_versions = [x['version'] for x in self.get_available_python_versions()]
         if py_version:
             py_version = venv_utils.find_best_available_version(
@@ -74,20 +74,27 @@ class UVPackageManager(PackageManagerBase):
             )
         else:
             py_version = self._get_latest_version(available_versions)
-        if py_version:
-            py_version = '=='+py_version    # force match version
-            if py_version.strip('=') not in self.get_installed_python_versions():
-                logger.info('Installing python version: %s', py_version)
-                cmd = ['python', 'install', py_version]
-                self.run(cmd, workdir=Path.home().as_posix())
+        return py_version
+
+    def create_venv(self, py_version: str|None = None):
+        if self._custom_python_executable:
+            py_version = self._custom_python_executable
         else:
-            raise RuntimeError('No python version available')
-        logger.info('Create venv with version: %s', py_version)
+            py_version = self._get_available_py_version(py_version)
+            if py_version:
+                # py_version = '==' + py_version  # force match version
+                if py_version not in self.get_installed_python_versions():
+                    logger.info('Installing python version: %s', py_version)
+                    cmd = ['python', 'install', '==' + py_version]
+                    self.run(cmd, workdir=Path.home().as_posix())
+            else:
+                raise RuntimeError('No python version available')
+        logger.info('Create venv with python: %s', py_version)
         cmd = ['init', '--bare']
         cmd.extend(['--python', py_version])
         self.path.mkdir(parents=True, exist_ok=True)
         self.run(cmd, workdir=self.path.as_posix())
-        self.run(['venv'], workdir=self.path.as_posix())
+        self.run(['venv', '--python', py_version], workdir=self.path.as_posix())
         logger.info('Create venv with version %s: %s', py_version, self.path)
 
     def venv_exists(self):
@@ -110,6 +117,8 @@ class UVPackageManager(PackageManagerBase):
         return _install_uv(install_path)
 
     def build_package(self, cleanup=True, **kwargs):
+        if self._custom_python_executable:
+            raise RuntimeError('Dont use this method with custom python interpreter')
         self.run(['pip', 'install', 'build'])
         dist_path = self.path/'dist'
         if dist_path.exists():

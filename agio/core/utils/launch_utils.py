@@ -60,7 +60,7 @@ def start_in_workspace(
         ws_manager.touch()
         ws_envs = ws_manager.get_launch_envs()
     else:
-        py_exec = get_default_env_executable()
+        py_exec = kwargs.get('python_executable') or  get_default_env_executable()
         ws_envs = {}
     cmd = shlex.split(py_exec, posix=os.name!='nt') + command
     envs = {**(envs or {}), **ws_envs}

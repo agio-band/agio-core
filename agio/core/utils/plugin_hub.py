@@ -1,12 +1,12 @@
 from __future__ import annotations
+
 import logging
-import traceback
 from collections import defaultdict
 from typing import Iterator, TYPE_CHECKING
 
-# from agio.core.domains import APackage
 from agio.core.exceptions import PluginLoadingError, PluginNotFoundError
 from agio.core.utils.singleton import Singleton
+
 if TYPE_CHECKING:
     from agio.core.pkg import APackageManager
     from agio.core.plugins.base_plugin import APlugin

@@ -14,12 +14,19 @@ logger = logging.getLogger(__name__)
 
 class PackageManagerBase:
 
-    def __init__(self, package_root: str|Path):
+    def __init__(self, package_root: str|Path, custom_python_executable: str|Path = None):
         self.path = Path(package_root)
         self.path.mkdir(exist_ok=True, parents=True)
+        self._custom_python_executable = None
+        if custom_python_executable:
+            if not Path(custom_python_executable).exists():
+                raise FileNotFoundError(f"File {custom_python_executable} does not exist")
+            self._custom_python_executable = custom_python_executable
 
     @property
     def python_executable(self):
+        if not self.venv_exists():
+            raise FileNotFoundError(f'venv is not installed yet: {self.path}')
         return Path(self.path, '.venv/bin/python' + ('.exe' if os.name == 'nt' else '')).as_posix()
 
     @property
@@ -41,7 +48,6 @@ class PackageManagerBase:
         if full:
             return version
         return '.'.join(version.split('.')[:2])
-
 
     def install_package(self, package_name):
         raise NotImplementedError
