@@ -72,4 +72,4 @@ class APackageHub(metaclass=Singleton):
             for pattern in pkg.get_callbacks():
                 for file in glob.glob(pattern, recursive=True):
                     if os.path.isfile(file):
-                        yield file
+                        yield file, pkg

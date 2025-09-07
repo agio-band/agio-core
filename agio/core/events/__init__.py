@@ -1,5 +1,6 @@
 import logging
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Callable, Any
 
 from agio.core.utils.event_hub import EventHub
@@ -64,16 +65,7 @@ def subscribe_manager(event_name, func, raise_error=False, **kwargs):
 
 
 def register_callbacks(path_list: list[str]):
-    for p in path_list:
-        import_module_by_path(p)
-
-    # import sys
-    # import types
-    #
-    # callbacks_module = types.ModuleType('callbacks_module')
-    # sys.modules['callbacks_module'] = callbacks_module
-    # clb_list = {}
-    # setattr(callbacks_module, 'callbacks', clb_list)
-    # for p in path_list:
-    #     mod = import_module_by_path(p)
-    #     clb_list[p] = mod
+    for path, pkg in path_list:
+        rel_path = Path(path).relative_to(pkg.root.parent)
+        name = '.'.join([*rel_path.parts[:-1], Path(path).stem])
+        import_module_by_path(path, name)

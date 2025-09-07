@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shlex
@@ -10,7 +11,7 @@ from agio.core.exceptions import WorkspaceNotExists, NotExistsError
 from agio.core.pkg import AWorkspaceManager
 from agio.core.utils import process_utils
 # from agio.core.utils import config
-
+logger = logging.getLogger(__name__)
 
 def get_default_env_executable():
     # TODO must by created by installer
@@ -64,6 +65,7 @@ def start_in_workspace(
         ws_envs = {}
     cmd = shlex.split(py_exec, posix=os.name!='nt') + command
     envs = {**(envs or {}), **ws_envs}
+    logger.info('Launching command: %s', ' '.join(cmd))
     return process_utils.start_process(
         cmd, envs=envs,
         # clear_envs=['PYTHONPATH'],    # TODO turn back for full installation of workspaces

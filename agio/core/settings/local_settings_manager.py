@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -7,6 +8,8 @@ from agio.core.domains import project as project_domain
 from agio.core.utils import app_dirs
 from agio.core.utils.json_serializer import JsonSerializer
 from agio.core.utils import settings_hub
+
+logger = logging.getLogger(__name__)
 
 _settings_dir = Path(os.getenv('AGIO_SETTINGS_DIR') or app_dirs.settings_dir())
 _settings_file_name = 'settings.json'
@@ -28,6 +31,7 @@ def load_local_settings(project: str|project_domain.AProject = None) -> settings
     if settings_file.exists():
         settings_data.update(json.loads(settings_file.read_text()))
     settings = settings_hub.LocalSettingsHub(settings_data)
+    logger.debug(f'Loaded settings from {settings_file}')
     return settings
 
 
@@ -38,4 +42,5 @@ def save_local_settings(settings: settings_hub.LocalSettingsHub, project: str|pr
     settings_file = Path(get_settings_dir(project), _settings_file_name)
     settings_file.parent.mkdir(parents=True, exist_ok=True)
     settings_file.write_text(json.dumps(settings.dump(), indent=2, cls=JsonSerializer))
+    logger.debug(f'Saved local settings to: {settings_file}')
     return settings_file.as_posix()
