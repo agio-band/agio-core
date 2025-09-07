@@ -111,6 +111,8 @@ def start_process(
             creationflags |= subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
         if new_console:
             creationflags |= subprocess.CREATE_NEW_CONSOLE
+        else:
+            creationflags |= subprocess.CREATE_NO_WINDOW # TODO make optional
         stdin = subprocess.DEVNULL if detached else None
     else:
         if detached:
