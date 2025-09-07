@@ -2,7 +2,7 @@ import os
 import signal
 
 from agio.core.events import emit
-from agio.core.api import client
+from agio.core.api import client, profile
 from agio.core.plugins.base_service import ServicePlugin, make_action
 
 
@@ -13,7 +13,8 @@ class CoreService(ServicePlugin):
                  menu_name='tray.main_menu',
                  app_name='desk',
                  order=98,
-                 is_visible_callback=client.is_logged_in)
+                 is_visible_callback=profile.is_logged_in,
+                 )
     def logout(self, *args, **kwargs):
         emit('core.auth.before_logout')
         client.logout()
@@ -23,7 +24,8 @@ class CoreService(ServicePlugin):
                  menu_name='tray.main_menu',
                  app_name='desk',
                  order=99,
-                 is_visible_callback=lambda: not client.is_logged_in())
+                 is_visible_callback=lambda: not profile.is_logged_in(),
+                 )
     def login(self, *args, **kwargs):
         emit('core.auth.before_login')
         client.login()

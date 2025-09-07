@@ -46,11 +46,8 @@ class _ApiClientAuth:
 
     def logout(self):
         self.session.headers.pop('Authorization', None)
+        self._clear_session()
         logger.info('Logged out')
-        return self.session.headers.get('Authorization') is None
-
-    def is_logged_in(self):
-        return self.session.headers.get('Authorization') is not None
 
     def _do_login(self, client_id: str) -> dict|None:
         stop_event = threading.Event()
@@ -104,6 +101,9 @@ class _ApiClientAuth:
         session = self._load_session()
         if session:
             self._set_token(session)
+
+    def _clear_session(self):
+        session_utils.clear_session()
 
     def check_is_expire(self):
         """

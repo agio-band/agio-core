@@ -24,3 +24,11 @@ def load_session():
         return None
     with session_file.open('r') as f:
         return json.load(f)
+
+
+def clear_session():
+    session_file = _get_session_file()
+    if not session_file.exists():
+        return None
+    with session_file.open('w') as f:
+        json.dump({}, f, indent=2)
