@@ -11,9 +11,9 @@ from typing import Self
 from agio.core import api, env_names
 from agio.core.domains import AWorkspaceRevision, AWorkspace
 from agio.core.events import emit
-from agio.core.exceptions import WorkspaceNotInstalled
+from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotExistsError
 from agio.core.utils import config, pkg_manager, venv_utils
-
+from agio.core.utils.launch_utils import LaunchContext
 
 logger = logging.getLogger(__name__)
 
@@ -211,8 +211,46 @@ class AWorkspaceManager:
         emit('core.workspace.get_launch_envs', {'envs': env, 'revision': self._revision})
         return env
 
+    def get_launch_context(self):
+        ctx = LaunchContext(
+            self.get_pyexecutable(),
+            env=self.get_launch_envs()
+        )
+        return ctx
+
     def install_or_update_if_needed(self):
         return
-        if not self.exists():
-            self.install()
+        # if not self.exists():
+        #     self.install()
 
+    @classmethod # TODO cache it
+    def create_from_id(cls, entity_id: str) -> Self:
+        # is workspace id
+        try:
+            revision = api.workspace.get_revision_by_workspace_id(entity_id)
+            return cls(revision)
+        except NotExistsError:
+            pass
+        # is workspace name
+        # TODO api.workspace.get_revision_by_workspace_label
+        # is revision id
+        try:
+            revision = api.workspace.get_revision(entity_id)
+            return cls(revision)
+        except NotExistsError:
+            pass
+        # is settings id
+        try:
+            revision = api.workspace.get_revision_by_settings_id(entity_id)
+            return cls(revision, settings_revision_id=entity_id)
+        except NotExistsError:
+            pass
+        # is project id
+        try:
+            revision = api.workspace.get_revision_by_project_id(entity_id)
+            manager = cls(revision)
+            manager.add_launch_envs({'AGIO_PROJECT_ID': entity_id})
+            return manager
+        except NotExistsError:
+            pass
+        raise WorkspaceNotExists

@@ -10,10 +10,10 @@ import sys
 def debug_flag_is_set():
     first_cmd = ' '.join(sys.argv).split('--')[0]
     first_cmd_args = shlex.split(re.split(r'\s\b\w+\b', first_cmd)[0])
-    return '-d' in first_cmd_args or '--debug' in first_cmd_args
+    return '--debug' in first_cmd_args
 
 
-DEBUG_MODE = bool(os.getenv("DEBUG")) or debug_flag_is_set()
+DEBUG_MODE = bool(os.getenv("DEBUG") or os.getenv('AGIO_DEBUG')) or debug_flag_is_set()
 if DEBUG_MODE:
     print(" Debug mode is on ".center(40, '='), flush=True)
 USER_PREF_DIR = Path(os.getenv("USER_PREF_DIR", "~/.agio")).expanduser().resolve()
@@ -36,12 +36,19 @@ FILE_SIZE = int(FILE_SIZE_MB * 1024 * 1024)
 # # max file count
 MESSAGE_FORMAT = (
     os.getenv("AGIO_LOGGING_MESSAGE_FORMAT")
-    or "%(asctime)s | %(levelname)-8s | %(name)-40s | %(lineno)-4d  | %(message)s"
+    or "%(asctime)s | %(levelname)-8s | %(name)-50s | %(lineno)-4d  | %(message)s"
 )
 MESSAGE_FORMAT_CONSOLE = (
-    os.getenv("AGIO_LOGGING_MESSAGE_FORMAT_CONSOLE") or "%(levelname)-8s | %(name)-40s | %(lineno)-4d  | %(message)s"
+    os.getenv("AGIO_LOGGING_MESSAGE_FORMAT_CONSOLE") or "%(levelname)-8s | %(name)-50s | %(lineno)-4d  | %(message)s"
 )
 DATETIME_FORMAT = os.getenv("AGIO_LOGGING_DATETIME_FORMAT") or "%Y.%m.%d %H:%M:%S"
+
+disabled_loggers = [
+    "urllib3.connectionpool"
+]
+DISABLED_LOGGERS = os.getenv("AGIO_DISABLED_LOGGERS")
+if DISABLED_LOGGERS:
+    disabled_loggers.extend(DISABLED_LOGGERS.split(","))
 
 LOG_SETTINGS = {
     "version": 1,
@@ -95,6 +102,12 @@ LOG_SETTINGS = {
             "format": MESSAGE_FORMAT_CONSOLE,
             "datefmt": DATETIME_FORMAT,
         },
+    },
+    "loggers": {
+        lgr: {
+            "level": "CRITICAL",
+            "propagate": False,
+        } for lgr in disabled_loggers
     },
 }
 # ==== APPLY CONFIG ====

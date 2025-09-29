@@ -7,40 +7,36 @@ from typing import Optional, Dict
 
 import psutil
 
+from agio.core.utils.launch_utils import LaunchContext
 from agio.core.utils.singleton import Singleton
 
 lock = threading.Lock()
 
 
 class ProcessWrapper:
-    def __init__(self, name: str, command: list[str], restart: bool = True,
-                 cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None):
+    def __init__(self, name: str, launch_context: LaunchContext, restart: bool = True):
         self.name = name
-        self.command = command
+        self.launch_context = launch_context
         self.process: Optional[subprocess.Popen] = None
         self._psutil_proc: Optional[psutil.Process] = None
         self._auto_restart = restart
         self._started = False
-        self._cwd = cwd
-        self._env = env if env is not None else {}
 
-    def start(self, cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None):
+    def start(self):
         with lock:
             if self.process and self.process.poll() is None:
                 logging.info(f"Process '{self.name}' is already running.")
                 return
-            if cwd is not None:
-                self._cwd = cwd
-            if env:
-                self._env.update(env)
-            logging.info(f"Starting process '{self.name}': {self.command} in CWD: {self._cwd} with ENV updates: {self._env}")
+            logging.info(f"Starting process '{self.name}': {self.launch_context.command} "
+                         f"in CWD: {self.launch_context.workdir} "
+                         f"with ENV updates: {self.launch_context.envs  }")
             try:
                 self.process = subprocess.Popen(
-                    self.command,
+                    self.launch_context.command,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    cwd=self._cwd,
-                    env={**os.environ.copy(), **self._env},
+                    cwd=self.launch_context.workdir,
+                    env=self.launch_context.envs
                 )
                 try:
                     self._psutil_proc = psutil.Process(self.process.pid)
@@ -50,7 +46,7 @@ class ProcessWrapper:
                     self._started = True
                 threading.Thread(target=self._log_output, daemon=True).start()
             except FileNotFoundError:
-                logging.error(f"Error: Command '{self.command[0]}' not found for process '{self.name}'.")
+                logging.error(f"Error: Command '{self.launch_context.executable}' not found for process '{self.name}'.")
                 self.process = None
                 self._psutil_proc = None
                 self._auto_restart = False
@@ -64,9 +60,13 @@ class ProcessWrapper:
 
     def restart(self, cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None):
         logging.info(f"Restarting process '{self.name}'...")
+        if cwd:
+            self.launch_context.set_workdir(cwd)
+        if env:
+            self.launch_context.set_env(**env)
         self.stop(_hard=False)
         time.sleep(0.2)
-        self.start(cwd=cwd, env=env)
+        self.start()
 
     def stop(self, _hard: bool = False):
         """
@@ -113,8 +113,10 @@ class ProcessWrapper:
             "cpu_percent": self.cpu_usage(),
             "memory_mb": self.mem_usage(),
             "auto_restart": self._auto_restart,
-            "cwd": self._cwd,
-            "env": self._env
+            'executable': self.launch_context.executable,
+            'args': self.launch_context.args,
+            "cwd": self.launch_context.workdir,
+            "env": self.launch_context.envs,
         }
 
     def should_run(self) -> bool:
@@ -154,15 +156,13 @@ class ProcessHub(metaclass=Singleton):
     def register_process(
             self,
             name: str,
-            command: list[str],
+            launch_context: LaunchContext,
             restart: bool = False,
-            cwd: Optional[str] = None,
-            env: Optional[Dict[str, str]] = None
         ):
         with self._lock:
             if name in self._processes:
                 raise ValueError(f"Process '{name}' is already registered.")
-            self._processes[name] = ProcessWrapper(name, command, restart, cwd, env)
+            self._processes[name] = ProcessWrapper(name, launch_context, restart)
             logging.info(f"Registered process '{name}'.")
         return self._processes[name]
 

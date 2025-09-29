@@ -1,6 +1,6 @@
 import shlex
 
-def parse_args_to_dict(src_args: list|str) -> dict:
+def parse_args_to_dict(src_args: list|tuple|str) -> dict:
     if isinstance(src_args, str):
         tokens = list(shlex.split(src_args))
     else:

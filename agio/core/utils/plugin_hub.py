@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 from collections import defaultdict
 from typing import Iterator, TYPE_CHECKING
 
@@ -40,14 +41,15 @@ class APluginHub(metaclass=Singleton):
                     if plugin in self.plugins[plugin.plugin_type].values():
                         continue
                     existing_plugin = self.plugins[plugin.plugin_type][plugin.name]
+                    m1 = sys.modules.get(plugin.__class__.__module__)
+                    m2 = sys.modules.get(existing_plugin.__class__.__module__)
                     logger.warning(
                         f"Plugin will be overridden by: "
-                            f"{plugin.__class__.__module__}.{plugin.__class__.__name__}.{plugin.name}"
-                        f" => "
-                            f"{existing_plugin.__class__.__module__}.{existing_plugin.__class__.__name__}.{existing_plugin.name}")
+                            f"\nOLD: {m1.__file__}:{plugin.__class__.__name__} ({plugin.name})"
+                            f"\nNEW: {m2.__file__}:{existing_plugin.__class__.__name__} ({existing_plugin.name})")
                     self._overridden_plugins.append(f'{plugin.plugin_type}.{plugin.name}')
                 self.plugins[plugin.plugin_type][plugin.name] = plugin
-        logger.info(f'Plugin hub initialized with {len(self.plugins)} categories')
+        logger.debug(f'Plugin hub initialized with {len(self.plugins)} categories')
 
     def get_plugins_by_type(self, type_type: str) -> dict[str, 'APlugin']:
         yield from self.plugins[type_type].values()

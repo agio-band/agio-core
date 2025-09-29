@@ -6,7 +6,7 @@ import click
 from agio.core.domains import APackage
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.base_plugin import APlugin
-from agio.core.utils import context
+from agio.core.utils import context, args_helper
 from agio.core.utils.process_utils import restart_with_env
 
 logger = logging.getLogger(__name__)
@@ -20,12 +20,24 @@ class AbstractCommandPlugin(ABC):
     context_settings = None
     subcommands = []
     help = None
+    allow_extra_args = False # if True command must accept **kwargs
 
     def __init__(self, parent_group=None):
         self._init_click(parent_group)
         self.context = None
 
-    def before_start(self, **kwargs):
+    def get_context_settings(self):
+        ctx = (self.context_settings or {}).copy()
+        if self.allow_extra_args:
+            ctx['ignore_unknown_options'] = True
+        return ctx or None
+
+    def on_before_start(self, **kwargs):
+        # todo: emit event
+        pass
+
+    def on_executed(self, result):
+        # todo: emit event
         pass
 
     def _init_click(self, parent_group=None):
@@ -35,25 +47,37 @@ class AbstractCommandPlugin(ABC):
         @click.pass_context
         def _callback(ctx, **kwargs):
             self.context = ctx
-            self.before_start(**kwargs)
-            return self.execute(**kwargs)
+            extra: tuple|None = kwargs.pop('__extra__', None)
+            if extra is not None:
+                extra: dict = args_helper.parse_args_to_dict(extra)
+                collision = set(kwargs.keys()).intersection(set(extra.keys()))
+                if collision:
+                    raise Exception(f"Extra arguments and common arguments collision: {tuple(collision)}")
+                kwargs.update(extra)
+            self.on_before_start(**kwargs)
+            result = self.execute(**kwargs)
+            self.on_executed(result)
+            return result
+
+        if self.allow_extra_args:
+            _callback = click.argument("__extra__", nargs=-1, type=click.UNPROCESSED)(_callback)
+
         for decorator in reversed(self.arguments):
             _callback = decorator(_callback)
+
         if self.subcommands:
-            cmd = click.group(
+            self.command = click.group(
                 name=self.command_name,
-                context_settings=self.context_settings,
+                context_settings=self.get_context_settings(),
                 help=self.help,
-                invoke_without_command=True
+                invoke_without_command=True,
             )(_callback)
         else:
-            cmd = click.command(
+            self.command = click.command(
                 name=self.command_name,
-                context_settings=self.context_settings,
+                context_settings=self.get_context_settings(),
                 help=self.help
             )(_callback)
-
-        self.command = cmd
 
         if self.subcommands:
             for subcmd in self.subcommands:
@@ -65,7 +89,6 @@ class AbstractCommandPlugin(ABC):
 
         if parent_group:
             parent_group.add_command(self.command)
-
 
     def execute(self, **kwargs):
         pass

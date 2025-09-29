@@ -100,7 +100,7 @@ class PackageManagerBase:
         logger.debug(f'Running command: {" ".join(cmd)}')
         logger.debug(f'In directory: {workdir}')
         kwargs.setdefault('get_output', True)
-        return start_process(cmd, workdir=workdir, clear_envs=['VIRTUAL_ENV'], **kwargs)
+        return start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], **kwargs)
         # env = os.environ.copy()
         # env.pop('VIRTUAL_ENV', None)
         # return subprocess.call(cmd, cwd=workdir, env=env, shell=False)#, **kwargs)

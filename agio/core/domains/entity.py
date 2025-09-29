@@ -19,7 +19,7 @@ class AEntity(DomainBase):
             raise RuntimeError('Entity class is not defined')
         super().__init__(*args, **kwargs)
         if self._data['class']['name'] != self.entity_class:
-            raise RuntimeError('Entity class does not match entity class')
+            raise RuntimeError('Entity class name does not match attribute "entity_class"')
 
     @classmethod
     def get_data(cls, object_id: str) -> dict:

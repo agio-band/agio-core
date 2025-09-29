@@ -19,8 +19,8 @@ def terminate_child(proc):
 
 def start_process(
         command: list[str] | tuple[str] | str,
-        envs: dict = None,
-        clear_envs: list = None,
+        env: dict = None,
+        clear_env: list = None,
         detached: bool = False,
         replace: bool = False,
         new_console: bool = False,
@@ -58,11 +58,11 @@ def start_process(
             raise ValueError("pipe_open_mode must be 'text' or 'binary'")
 
     new_env = os.environ.copy()
-    if clear_envs:
-        for env in clear_envs:
+    if clear_env:
+        for env in clear_env:
             new_env.pop(env, None)
-    if envs:
-        new_env.update(envs)
+    if env:
+        new_env.update(env)
     if workdir:
         if not os.path.isdir(workdir):
             print(f"Error: Working directory '{workdir}' does not exist.")
@@ -264,11 +264,11 @@ def process_exists(pid) -> bool:
         return True
 
 
-def restart_with_env(envs: dict):
+def restart_with_env(env: dict):
     """Restart current process with extend envs"""
     cmd = [sys.executable]+sys.argv
-    envs = {**os.environ.copy(), **envs}
-    start_process(cmd, envs=envs, replace=True, workdir=os.getcwd())
+    env = {**os.environ.copy(), **env}
+    start_process(cmd, env=env, replace=True, workdir=os.getcwd())
 
 
 if __name__ == "__main__":
@@ -309,7 +309,7 @@ if __name__ == "__main__":
 
     result = start_process(
         args.command,
-        envs=args.env,
+        env=args.env,
         detached=args.detached,
         new_console=args.new_console,
         non_blocking=args.non_blocking,

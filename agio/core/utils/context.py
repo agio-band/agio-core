@@ -2,7 +2,9 @@ import os
 
 
 class AppContext:
-
+    """
+    Load context inside app TODO Move to launcher
+    """
     @property
     def app_name(self):
         return os.getenv('AGIO_APP_NAME', 'standalone')

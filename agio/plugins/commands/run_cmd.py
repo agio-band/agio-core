@@ -30,4 +30,4 @@ class RunCommand(ACommandPlugin):
             raise Exception('Command is required')
         if env:
             env = dict(env)
-        start_process(command, envs=env, workdir=cwd, replace=True)
+        start_process(command, env=env, workdir=cwd, replace=True)
