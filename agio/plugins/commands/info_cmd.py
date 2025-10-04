@@ -10,6 +10,7 @@ from agio.core.plugins.base_plugin import APlugin
 from agio.core.pkg.package import APackageManager
 from agio.core.pkg.workspace import AWorkspaceManager
 from agio.core.utils import package_hub, plugin_hub
+from agio.core.api import client
 
 
 class InfoCommand(ACommandPlugin):
@@ -25,6 +26,9 @@ class InfoCommand(ACommandPlugin):
     help = 'Show info about current workspace'
 
     def execute(self, packages, plugins, settings, callbacks, diskusage):
+        if not client.ping():
+            click.secho('Server not available!', err=True,  fg='red', bg='yellow')
+            return
         line = lambda: print('='*70)
         line()
         self._show_workspace_info()

@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class _ApiClientAuth:
     platform_url = config.API.PLATFORM_URL
+    base_api_url = f'{platform_url}/graphql'
     authorization_base_url = f'{config.API.PLATFORM_URL}/.ory/hydra/public/oauth2/auth'
     token_url = f'{config.API.PLATFORM_URL}/.ory/hydra/public/oauth2/token'
     redirect_uri = f'http://localhost:{config.API.AUTH_LOCAL_PORT}/oauth_callback'

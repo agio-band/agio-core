@@ -3,19 +3,18 @@ import logging
 import os
 from pathlib import Path
 
-from requests.exceptions import HTTPError
+import requests
+from requests.exceptions import HTTPError, ConnectionError
 
 from agio.core.api.api_client import base
 from agio.core.api.utils import NOTSET
 from agio.core.exceptions import RequestError
-from agio.core.utils import config
 from agio.core.utils.json_serializer import JsonSerializer
 
 logger = logging.getLogger(__name__)
 
 
 class ApiClient(base._ApiClientAuth):
-    _base_api_url = f'{config.API.PLATFORM_URL}/graphql'
     queries_root = Path(__file__).parent.parent.joinpath('queries')
 
     def __init__(self, *args, **kwargs):
@@ -28,6 +27,13 @@ class ApiClient(base._ApiClientAuth):
     def _serialize_values(self, value: dict):
         # TODO optimise it
         return json.loads(json.dumps(value, cls=JsonSerializer))
+
+    def ping(self):
+        try:
+            requests.get(self.platform_url)
+            return True
+        except (HTTPError, ConnectionError):
+            return False
 
     def make_query(self, query_file: str, **variables) -> dict:
         """Read query from file and execute query"""
@@ -48,7 +54,7 @@ class ApiClient(base._ApiClientAuth):
             })
         if self._debug_query:
             self._pprint_request(data)
-        response = self.session.post(self._base_api_url, json=data)
+        response = self.session.post(self.base_api_url, json=data)
         if not response.ok:
             logger.exception(f"Request failed with status code: {response.status_code}")
         try:
