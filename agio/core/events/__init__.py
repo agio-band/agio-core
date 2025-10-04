@@ -14,18 +14,18 @@ def emit(event_name: str, payload: Any = None) -> None:
     return event_hub.emit(event_name, payload)
 
 
-def subscribe(event_name: str, callback_func: Callable = None, /, raise_error=False, **kwargs):
+def subscribe(event_name: str|list[str], callback_func: Callable = None, /, raise_error=False, **kwargs):
     if not callback_func:
         # used as decorator
         def wrapper(func):
-            success = event_hub.add_callback(event_name, func, raise_error=raise_error, **kwargs)
-            logger.debug(f"Subscribe event '{event_name}' to {func.__name__}: {success}")
-            return success
+            added = event_hub.add_callback(event_name, func, raise_error=raise_error, **kwargs)
+            logger.debug(f"Subscribe event '{event_name}' to {func.__name__}: {len(added)}")
+            return bool(added)
         return wrapper
     else:
-        success = event_hub.add_callback(event_name, callback_func, raise_error=raise_error, **kwargs)
-        logger.debug(f"Subscribe event '{event_name}' to {callback_func.__name__}: {success}")
-        return success
+        added = event_hub.add_callback(event_name, callback_func, raise_error=raise_error, **kwargs)
+        logger.debug(f"Subscribe event '{event_name}' to {callback_func.__name__}: {len(added)}")
+        return bool(added)
 
 def unsubscribe(callback_func: Callable, event_name: str = None):
     removed = event_hub.remove_callback(callback_func, event_name)

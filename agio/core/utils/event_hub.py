@@ -25,21 +25,25 @@ class EventHub(metaclass=Singleton):
         if not callable(callback):
             raise CallbackInitError("Callback must be callable")
 
-    def add_callback(self, event_name: str, callback: Callable, **kwargs) -> bool:
-        self.__check_event_name(event_name)
-        self.__check_callback(callback)
+    def add_callback(self, event_name: str|str, callback: Callable, **kwargs) -> list[str]:
+        if isinstance(event_name, str):
+            event_name = [event_name]
+        added = []
+        for name in event_name:
+            self.__check_event_name(name)
+            self.__check_callback(callback)
 
-        if callback in self._callbacks[event_name]:
-            logger.debug(f"Callback {getattr(callback, '__name__', str(callback))} for event {event_name} already exists.")
-            return False
-        else:
-            self._callbacks[event_name][callback] = {
-                "once": kwargs.get("once", False),
-                "raise_error": kwargs.get("raise_error", False),
-                "name": getattr(callback, '__name__', str(callback))
-            }
-            logger.debug(f"Adding callback {self._callbacks[event_name][callback]['name']} for event {event_name}")
-            return True
+            if callback in self._callbacks[name]:
+                logger.debug(f"Callback {getattr(callback, '__name__', str(callback))} for event {name} already exists.")
+            else:
+                self._callbacks[name][callback] = {
+                    "once": kwargs.get("once", False),
+                    "raise_error": kwargs.get("raise_error", False),
+                    "name": getattr(callback, '__name__', str(callback))
+                }
+                logger.debug(f"Adding callback {self._callbacks[name][callback]['name']} for event {name}")
+                added.append(name)
+        return added
 
     def remove_callback(self, callback: Callable, event_name: str = None) -> bool:
         self.__check_callback(callback)
