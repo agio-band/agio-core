@@ -17,11 +17,7 @@ urls:
 resources_dir: "custom/resources"
 # default "/resources"
 
-dependencies: [
-  "pypackage1>=0.1",
-  "pypackage2>=0.2",
-]
-agio_dependencies: [
+agio_package_dependencies: [
   "agio_core>=0.0.1",
   "my_other_package>=0.0.1",
 ]

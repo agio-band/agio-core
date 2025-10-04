@@ -129,12 +129,8 @@ class APackageManager:
         return self.get_meta_data_field('version')
 
     @property
-    def python_dependencies(self):
-        return self.get_meta_data_field('dependencies')
-
-    @property
     def packages_dependencies(self):
-        return self.get_meta_data_field('agio_dependencies')
+        return self.get_meta_data_field('agio_package_dependencies')
 
     @property
     def source_url(self):
