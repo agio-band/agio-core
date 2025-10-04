@@ -1,21 +1,52 @@
 import shlex
+from collections import defaultdict
+
+
+def parse_args_to_dict_and_list(src_args: str|list|tuple) -> (list, dict):
+    if isinstance(src_args, str):
+        tokens = list(shlex.split(src_args))
+    else:
+        tokens = list(src_args)
+    args = []
+    kwargs = defaultdict(list)
+    it = iter(tokens)
+    for token in it:
+        if token == '--':
+            continue
+        if token.startswith("-"):
+            key = token.lstrip("-")
+            try:
+                value = next(it)
+                if value.startswith("-"):
+                    kwargs[key].append(True)
+                    it = (x for x in [value] + list(it))
+                else:
+                    kwargs[key].append(value)
+            except StopIteration:
+                kwargs[key].append(True)
+        else:
+            args.append(token)
+    final_kwargs = {k: v if len(v) > 1 else v[0] for k, v in kwargs.items()}
+    return args, final_kwargs
+
 
 def parse_args_to_dict(src_args: list|tuple|str) -> dict:
     if isinstance(src_args, str):
         tokens = list(shlex.split(src_args))
     else:
         tokens = list(src_args)
-    result = {}
-    key = None
     values = []
+    args = []
+    kwargs = {}
+    key = None
 
     def add_key_value(k, v):
         if not v:
-            result[k] = True
+            kwargs[k] = True
         elif len(v) == 1:
-            result[k] = v[0]
+            kwargs[k] = v[0]
         else:
-            result[k] = v
+            kwargs[k] = v
 
     def convert(value):
         try:
@@ -37,5 +68,13 @@ def parse_args_to_dict(src_args: list|tuple|str) -> dict:
 
     if key:
         add_key_value(key, values)
+    return kwargs
 
-    return result
+
+def dict_to_args(src_dict: dict) -> list:
+    args = []
+    for key, value in src_dict.items():
+        args.extend((f'--{key}', str(value)))
+    return args
+
+

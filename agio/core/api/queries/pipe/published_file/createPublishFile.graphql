@@ -1,6 +1,10 @@
-mutation CreatePublishFile($input: PublishFileCreateInput!)
+mutation CreatePublishFile($name: String!, $path: String!, $publishVersion: ID!)
 {
-  createPublishFile(input: $input)
+  createPublishFile(input: {
+    name: $name,
+    path: $path,
+    publishVersion: $publishVersion
+  })
   {
     publishFileId
   }

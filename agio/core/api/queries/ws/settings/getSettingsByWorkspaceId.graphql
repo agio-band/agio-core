@@ -1,21 +1,4 @@
 query GetSettingsByWorkspaceId($workspaceId: ID!) {
-#  workspaceRevisions(
-#    filter: {
-#      where: {
-#        workspace: { id: { equalTo: $workspaceId } },
-#        isCurrent: { equalTo: true },
-#        status: {equalTo: "ready"}
-#      }
-#    },
-#    first: 1
-#  ) {
-#    edges {
-#      node {
-#        id
-#      }
-#    }
-#  }
-
   workspaceSettingses(
     filter: {
       where: {
@@ -40,3 +23,19 @@ query GetSettingsByWorkspaceId($workspaceId: ID!) {
   }
 }
 
+#  workspaceRevisions(
+#    filter: {
+#      where: {
+#        workspace: { id: { equalTo: $workspaceId } },
+#        isCurrent: { equalTo: true },
+#        status: {equalTo: "ready"}
+#      }
+#    },
+#    first: 1
+#  ) {
+#    edges {
+#      node {
+#        id
+#      }
+#    }
+#  }

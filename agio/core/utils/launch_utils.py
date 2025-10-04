@@ -199,7 +199,7 @@ def exec_agio_command(
     else:
         raise TypeError("Workspace must be either a string or AWorkspaceManager.")
     start_in_workspace(
-        command=['-m', 'agio'] + args,
+        args=['-m', 'agio'] + args,
         ws_manager=ws_manager,
         envs=envs,
         workdir=workdir,
@@ -228,7 +228,7 @@ def start_in_workspace(
     if workdir:
         ctx.set_workdir(workdir)
     if args:
-        ctx.set_args(args)
+        ctx.add_args(*args)
     logger.info('Launching command: %s', ' '.join(ctx.command))
     return process_utils.start_process(
         ctx.command,

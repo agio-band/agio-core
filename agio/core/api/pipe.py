@@ -169,11 +169,11 @@ def create_publish_file(
     name = name or os.path.basename(path)
     return client.make_query(
         'pipe/published_file/createPublishFile',
-        input=dict(
-            name=name,
-            path=path,
-            publishVersion=version_id,
-        )
+        # input=dict(
+        name=name,
+        path=path,
+        publishVersion=version_id,
+        # )
     )["data"]["createPublishFile"]["publishFileId"]
 
 

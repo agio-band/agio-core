@@ -20,7 +20,7 @@ class AbstractCommandPlugin(ABC):
     context_settings = None
     subcommands = []
     help = None
-    allow_extra_args = False # if True command must accept **kwargs
+    allow_extra_args = False # if True command must accept **kwargs or __extra_args__ argument
 
     def __init__(self, parent_group=None):
         self._init_click(parent_group)
@@ -32,7 +32,7 @@ class AbstractCommandPlugin(ABC):
             ctx['ignore_unknown_options'] = True
         return ctx or None
 
-    def on_before_start(self, **kwargs):
+    def on_before_start(self, *args, **kwargs):
         # todo: emit event
         pass
 
@@ -47,20 +47,22 @@ class AbstractCommandPlugin(ABC):
         @click.pass_context
         def _callback(ctx, **kwargs):
             self.context = ctx
-            extra: tuple|None = kwargs.pop('__extra__', None)
-            if extra is not None:
-                extra: dict = args_helper.parse_args_to_dict(extra)
-                collision = set(kwargs.keys()).intersection(set(extra.keys()))
-                if collision:
-                    raise Exception(f"Extra arguments and common arguments collision: {tuple(collision)}")
-                kwargs.update(extra)
+            # extra: tuple|None = kwargs.pop('__extra__', None)
+            # if extra is not None:
+            #     extra_args, extra_kwargs = args_helper.parse_args_to_dict_and_list(extra)
+            #     collision = set(kwargs.keys()).intersection(set(extra_kwargs.keys()))
+            #     if collision:
+            #         raise Exception(f"Extra arguments and common arguments collision: {tuple(collision)}")
+                # kwargs.update(extra_kwargs)
+                # if extra_args:
+                #     kwargs['__extra_args__'] = tuple(extra_args)
             self.on_before_start(**kwargs)
             result = self.execute(**kwargs)
             self.on_executed(result)
             return result
 
         if self.allow_extra_args:
-            _callback = click.argument("__extra__", nargs=-1, type=click.UNPROCESSED)(_callback)
+            _callback = click.argument("__extra_args__", nargs=-1, type=click.UNPROCESSED)(_callback)
 
         for decorator in reversed(self.arguments):
             _callback = decorator(_callback)
@@ -72,21 +74,18 @@ class AbstractCommandPlugin(ABC):
                 help=self.help,
                 invoke_without_command=True,
             )(_callback)
-        else:
-            self.command = click.command(
-                name=self.command_name,
-                context_settings=self.get_context_settings(),
-                help=self.help
-            )(_callback)
-
-        if self.subcommands:
             for subcmd in self.subcommands:
                 if inspect.isclass(subcmd):
                     subcmd = subcmd()
                 if not isinstance(subcmd, ASubCommand):
                     raise TypeError(f"Subcommand {subcmd} must be an instance of ASubCommand")
                 self.command.add_command(subcmd.command)
-
+        else:
+            self.command = click.command(
+                name=self.command_name,
+                context_settings=self.get_context_settings(),
+                help=self.help
+            )(_callback)
         if parent_group:
             parent_group.add_command(self.command)
 
@@ -101,7 +100,13 @@ class ACommandPlugin(BasePluginClass, AbstractCommandPlugin, APlugin):
         AbstractCommandPlugin.__init__(self, parent_group)
 
     def __str__(self):
-        return f"{self.__class__.__name__} [{self.package.name}]"
+        return f"{self.__class__.__name__} [{self.package.package_name}]"
+
+    def parse_extra_args(self, kwargs: dict) -> (list, dict):
+        if kwargs and "__extra_args__" in kwargs:
+            list_extra = kwargs.pop("__extra_args__")
+            return args_helper.parse_args_to_dict_and_list(list_extra)
+        return (), {}
 
 
 class ASubCommand(ABC):
