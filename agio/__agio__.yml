@@ -5,12 +5,10 @@ description: |
   Main agio-pipe package
 icon: 'core/agio-logo.png'
 tags:
-  - core
-
 urls:
   source_url: "https://github.com/agio-band/agio-core.git"
-  home_page: ""
-  documentation: ""
+  home_page: "https://github.com/agio-band/agio-core.git"
+  documentation: "https://github.com/agio-band/agio-core/blob/master/docs/index.md"
   bug_tracker: "https://github.com/agio-band/agio-core/issues"
 
 #resources_dir: "custom/resources" # default "/resources"
