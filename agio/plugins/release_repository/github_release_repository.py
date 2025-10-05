@@ -44,7 +44,8 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
             schema=parsed.scheme,
             domain=parsed.netloc,
             username=username,
-            repository_name=repo_name,
+            repository_name=re.sub(r"\.git$", '', repo_name),
+            repository_name_full=repo_name,
             repository_path='/'.join(parsed.path.strip('/').split('/')[0:2])
         )
 
@@ -136,7 +137,7 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
         repo_details = self.parse_url(repository_url)
         return "{schema}://api.{domain}".format(**repo_details)
 
-    def get_release_with_tag(self, repository_url: str, tag: str, access_data: dict) -> dict | None:
+    def get_release_with_tag(self, repository_url: str, tag: str, access_data: dict, attempts: int = None) -> dict | None:
         base_url = self.get_api_base_url(repository_url)
         repo_details = self.parse_url(repository_url)
         url = f'{base_url}/repos/{repo_details['username']}/{repo_details['repository_name']}/releases/tags/{tag}'
@@ -144,19 +145,23 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
 
         logger.debug(f"Checking if release exists: {url}")
         retry = 0
-        while retry < config.API.MAX_REQUEST_ATTEMPTS:
+        response = None
+        while retry < (attempts or config.API.MAX_REQUEST_ATTEMPTS):
             response = requests.get(url, headers=headers)
             if response.ok:
                 return response.json()
             elif response.status_code == 404:
                 retry += 1
-                logger.info(f"Error on request {response.reason}")
+                logger.info(f"Error on request {response.reason}: {url}")
                 logger.info('Retry...')
                 time.sleep(.5)
                 continue
             else:
                 logger.warning(f"GitHub API error: {response.status_code} {response.text}")
                 response.raise_for_status()
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
 
     def get_asset_list(self, repository_url: str, tag: str, access_data: dict) -> list:
         release_data = self.get_release_with_tag(repository_url, tag, access_data)

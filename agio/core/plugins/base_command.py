@@ -47,17 +47,8 @@ class AbstractCommandPlugin(ABC):
         @click.pass_context
         def _callback(ctx, **kwargs):
             self.context = ctx
-            # extra: tuple|None = kwargs.pop('__extra__', None)
-            # if extra is not None:
-            #     extra_args, extra_kwargs = args_helper.parse_args_to_dict_and_list(extra)
-            #     collision = set(kwargs.keys()).intersection(set(extra_kwargs.keys()))
-            #     if collision:
-            #         raise Exception(f"Extra arguments and common arguments collision: {tuple(collision)}")
-                # kwargs.update(extra_kwargs)
-                # if extra_args:
-                #     kwargs['__extra_args__'] = tuple(extra_args)
             self.on_before_start(**kwargs)
-            result = self.execute(**kwargs)
+            result = self.execute(**kwargs) # TODO catch Ctrl+C to forced exit
             self.on_executed(result)
             return result
 

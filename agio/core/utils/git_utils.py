@@ -28,7 +28,7 @@ def has_unpushed_commits(repository_root: str):
 def get_tags(repository_root: str, remote_url: str):
     cmd = 'git tag --list'
     output = process_utils.start_process(shlex.split(cmd), workdir=repository_root, get_output=True)
-    local_tags = set(output.split('\n') if output else [])
+    local_tags = set(output.strip().split('\n') if output else [])
     cmd = f'git ls-remote --tags {remote_url}'
     try:
         output = process_utils.start_process(shlex.split(cmd), workdir=repository_root, get_output=True)

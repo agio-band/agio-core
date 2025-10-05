@@ -89,7 +89,7 @@ class PackageReleaseCommand(ASubCommand):
         logger.debug(f"Make package release: {path}")
         repo =  APackageRepository(path)
         pkg_manager = repo.pkg_manager
-        release_data = repo.make_release(**kwargs)
+        release_data = repo.make_release(token=token, **kwargs)
         release = APackageRelease.find(pkg_manager.package_name, release_data['version'])
         logger.info(f"Package release created: {release.id}")
 

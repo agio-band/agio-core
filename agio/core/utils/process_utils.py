@@ -59,8 +59,8 @@ def start_process(
 
     new_env = os.environ.copy()
     if clear_env:
-        for env in clear_env:
-            new_env.pop(env, None)
+        for env_name in clear_env:
+            new_env.pop(env_name, None)
     if env:
         new_env.update(env)
     if workdir:

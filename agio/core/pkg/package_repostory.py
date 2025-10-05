@@ -70,9 +70,14 @@ class APackageRepository:
             logger.debug('Skip unpushed commits check')
         # check version is not exists in remote
         access_data = kwargs.get('access_data', {})
+        if 'token' in kwargs:
+            access_data['token'] = kwargs.pop('token')
         local_tags, remote_tags = git_utils.get_tags(self.root.as_posix(), self.origin)
+        release = None
         if self.pkg_manager.package_version in remote_tags:
-            if self.remote_repository.get_release_with_tag(self.pkg_manager.source_url, self.pkg_manager.package_version, access_data):
+            if release := self.remote_repository.get_release_with_tag(
+                    self.pkg_manager.source_url,
+                    self.pkg_manager.package_version, access_data):
                 raise ValueError(f"Version {self.pkg_manager.package_name} already exists in remote repository")
         # build
         build_path = self.build(**kwargs)
@@ -81,8 +86,9 @@ class APackageRepository:
             self.pkg_manager.source_url,
             self.pkg_manager.package_version,
             build_path,
+            access_data=access_data,
         )
-        release = self.remote_repository.get_release_with_tag(
+        release = release or self.remote_repository.get_release_with_tag(
             self.pkg_manager.source_url,
             self.pkg_manager.package_version,
             access_data)
