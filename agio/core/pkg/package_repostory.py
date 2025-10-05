@@ -149,9 +149,8 @@ class APackageRepository:
 
 
 def get_remote_repository_plugin(repo_url: str, repository_api: str = None):
-
     if not repo_url:
-        raise PackageLoadingError('No repo url provided')
+        raise PackageLoadingError('No repo url provided. Add field "source_url" to __agio__.yml')
     for plugin in plugin_hub.APluginHub.instance().get_plugins_by_type('remote_repository'):
         if repository_api and repository_api == plugin.repository_api:
             return plugin
