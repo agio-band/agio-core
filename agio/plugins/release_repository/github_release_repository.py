@@ -140,7 +140,7 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
     def get_release_with_tag(self, repository_url: str, tag: str, access_data: dict, attempts: int = None) -> dict | None:
         base_url = self.get_api_base_url(repository_url)
         repo_details = self.parse_url(repository_url)
-        url = f'{base_url}/repos/{repo_details['username']}/{repo_details['repository_name']}/releases/tags/{tag}'
+        url = f'{base_url}/repos/{repo_details["username"]}/{repo_details["repository_name"]}/releases/tags/{tag}'
         headers = self.get_headers(access_data)
 
         logger.debug(f"Checking if release exists: {url}")
@@ -173,7 +173,7 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
         headers = self.get_headers(access_data)
         base_url = self.get_api_base_url(repository_url)
         repo_details = self.parse_url(repository_url)
-        releases_url = f'{base_url}/repos/{repo_details['username']}/{repo_details['repository_name']}/releases'
+        releases_url = f'{base_url}/repos/{repo_details["username"]}/{repo_details["repository_name"]}/releases'
         response = requests.get(releases_url, headers=headers)
         if not response.ok:
             raise Exception(response.text)
@@ -190,7 +190,7 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
             logger.warning(f"No release found for tag {tag}")
             return
 
-        delete_url = f'{base_url}/repos/{repo_details['username']}/{repo_details['repository_name']}/releases/{release_id}'
+        delete_url = f'{base_url}/repos/{repo_details["username"]}/{repo_details["repository_name"]}/releases/{release_id}'
         delete_resp = requests.delete(delete_url, headers=headers)
 
         if delete_resp.status_code == 204:
@@ -199,7 +199,7 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
             logger.error(delete_resp.text)
 
 
-        ref_url = f'{base_url}/repos/{repo_details['username']}/{repo_details['repository_name']}/git/refs/tags/{tag}'
+        ref_url = f'{base_url}/repos/{repo_details["username"]}/{repo_details["repository_name"]}/git/refs/tags/{tag}'
         ref_resp = requests.delete(ref_url, headers=headers)
 
         if ref_resp.status_code == 204:

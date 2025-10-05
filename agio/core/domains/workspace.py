@@ -1,5 +1,6 @@
+from __future__ import annotations
 import os
-from typing import Self, Iterator
+from typing import Iterator
 
 from agio.core import api, env_names
 from agio.core.api.utils import NOTSET
@@ -13,7 +14,7 @@ class AWorkspace(DomainBase):
     domain_name = 'workspace'
 
     @classmethod
-    def get_data(cls, object_id: str) -> Self:
+    def get_data(cls, object_id: str) -> dict:
         return api.workspace.get_workspace(object_id)
 
     def update(self, name: str = NOTSET, description: str = None) -> None:
@@ -25,13 +26,13 @@ class AWorkspace(DomainBase):
             self.reload()
 
     @classmethod
-    def iter(cls, company_id: str = None) -> Iterator[Self]:
+    def iter(cls, company_id: str = None) -> Iterator['AWorkspace']:
         company_id = company_id or api.desk.get_current_company()['id']
         for data in api.workspace.iter_workspaces(company_id=company_id):
             yield cls(data)
 
     @classmethod
-    def create(cls, company_id: str, name: str, description: str = NOTSET) -> Self:
+    def create(cls, company_id: str, name: str, description: str = NOTSET) -> 'AWorkspace':
         ws_id = api.workspace.create_workspace(
             company_id=company_id,
             name=name,
@@ -43,7 +44,7 @@ class AWorkspace(DomainBase):
         return api.workspace.delete_workspace(self.id)
 
     @classmethod
-    def find(cls, company_id: str = None, name: str = NOTSET) -> Self:
+    def find(cls, company_id: str = None, name: str = NOTSET) -> 'AWorkspace':
         company_id = company_id or api.desk.get_current_company()['id']
         data = api.workspace.find_workspace(company_id=company_id, name=name)
         if data:

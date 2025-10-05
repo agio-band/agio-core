@@ -1,6 +1,7 @@
+from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
-from typing import Self, Iterator
+from typing import Iterator
 from uuid import UUID
 
 
@@ -79,12 +80,12 @@ class DomainBase(ABC):
 
     @classmethod
     @abstractmethod
-    def iter(cls, **kwargs) -> Iterator[Self]:
+    def iter(cls, **kwargs) -> Iterator['DomainBase']:
         raise NotImplementedError()
 
     @classmethod
     @abstractmethod
-    def create(cls, **kwargs) -> Self:
+    def create(cls, **kwargs) -> 'DomainBase':
         raise NotImplementedError()
 
     @abstractmethod

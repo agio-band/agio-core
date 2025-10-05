@@ -21,7 +21,7 @@ from agio.core.utils import launch_utils
 )
 @click.pass_context
 def agio_group(ctx, workspace, debug, **kwargs):
-    if not AWorkspaceManager.is_defined():
+    if not AWorkspaceManager.is_defined() and workspace:
         # launch new process with some workspace context
         ws: AWorkspaceManager | None = AWorkspaceManager.create_from_id(workspace)
         if ws:

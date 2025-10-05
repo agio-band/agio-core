@@ -1,8 +1,9 @@
+from __future__ import annotations
 import logging
 import os
 from functools import cache, cached_property
 from pathlib import Path
-from typing import Any, Generator, Type, Self
+from typing import Any, Generator, Type
 
 import yaml
 
@@ -94,7 +95,7 @@ class APackageManager:
             return
 
     @classmethod
-    def find_package(cls, path: str|Path) -> Self|None:
+    def find_package(cls, path: str|Path) -> 'APackageManager'|None:
         pkg_root = cls.find_package_root(path)
         if pkg_root:
             return cls(pkg_root)

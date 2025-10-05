@@ -29,7 +29,8 @@ def subscribe(event_name: str|list[str], callback_func: Callable = None, /, rais
 
 def unsubscribe(callback_func: Callable, event_name: str = None):
     removed = event_hub.remove_callback(callback_func, event_name)
-    logger.debug(f"Unsubscribe event {callback_func.__name__} from event '{event_name or "ALL"}': {removed}")
+    event_name = event_name or 'ALL'
+    logger.debug(f"Unsubscribe event {callback_func.__name__} from event '{event_name}': {removed}")
     return removed
 
 

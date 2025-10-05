@@ -1,13 +1,12 @@
+from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Self, Iterator
+from typing import Iterator
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
 from agio.core.exceptions import PackageError
-from agio.core.utils import app_dirs
-from agio.core.utils.network import download_file
 from agio.core.utils.repository_utils import filter_compatible_package
 from .entity import DomainBase
 
@@ -40,7 +39,7 @@ class APackageRelease(DomainBase):
         self._data.update(resp)
 
     @classmethod
-    def iter(cls, package_id: str) -> Iterator[Self]:
+    def iter(cls, package_id: str) -> Iterator['APackageRelease']:
         for release_data in api.package.iter_package_releases(package_id):
             yield cls(release_data)
 
@@ -52,7 +51,7 @@ class APackageRelease(DomainBase):
                label: str,
                description: str = NOTSET,
                metadata: dict = NOTSET,
-               ) -> Self:
+               ) -> 'APackageRelease':
         release_id = api.package.create_package_release(
             package_id=package_id,
             version=version,
@@ -67,7 +66,7 @@ class APackageRelease(DomainBase):
         return api.package.delete_package_release(self.id)
 
     @classmethod
-    def find(cls, package_name: str, version: str) -> Self|None:
+    def find(cls, package_name: str, version: str) -> 'APackageRelease'|None:
         data = api.package.get_package_release_by_name_and_version(package_name, version)
         if data:
             return cls(data)

@@ -1,4 +1,5 @@
-from typing import Iterator, Self
+from __future__ import annotations
+from typing import Iterator
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
@@ -21,7 +22,7 @@ class AWorkspaceRevision(DomainBase):
         api.workspace.update_revision(set_current=set_current, layout=layout, status=status)
 
     @classmethod
-    def iter(cls, workspace_id: str, **kwargs) -> Iterator[Self]:
+    def iter(cls, workspace_id: str, **kwargs) -> Iterator['AWorkspaceRevision']:
         for data in api.workspace.iter_revisions(workspace_id):
             yield cls(**data)
 
@@ -34,7 +35,7 @@ class AWorkspaceRevision(DomainBase):
                layout: dict = NOTSET,
                comment: str = NOTSET,
                metadata: dict = NOTSET,
-               ) -> Self:
+               ) -> 'AWorkspaceRevision':
         release_ids = []
         for package_release in package_releases:
             if isinstance(package_release, str):
@@ -62,13 +63,11 @@ class AWorkspaceRevision(DomainBase):
     @classmethod
     def find(cls,
              workspace_id: str = NOTSET,
-             workspace_name: str = NOTSET,
              is_current: bool = NOTSET,
              ready_only: bool = NOTSET,
-             ) -> Self:
+             ) -> 'AWorkspaceRevision':
         data = api.workspace.find_revision(
             workspace_id=workspace_id,
-            workspace_name=workspace_name,
             ready_only=ready_only,
             is_current=is_current,
         )

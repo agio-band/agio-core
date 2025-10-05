@@ -6,7 +6,6 @@ import sys
 import time
 from functools import cached_property
 from pathlib import Path
-from typing import Self
 
 from agio.core import api, env_names
 from agio.core.domains import AWorkspaceRevision, AWorkspace
@@ -42,7 +41,7 @@ class AWorkspaceManager:
     # creation
 
     @classmethod
-    def from_workspace(cls, workspace: AWorkspace|str) -> Self:
+    def from_workspace(cls, workspace: AWorkspace|str) -> 'AWorkspaceManager':
         if isinstance(workspace, str):
             data = api.workspace.get_revision_by_workspace_id(workspace)
             revision = AWorkspaceRevision(data)
@@ -72,7 +71,7 @@ class AWorkspaceManager:
 
     # define
     @classmethod
-    def current(cls) -> Self:
+    def current(cls) -> 'AWorkspaceManager':
         if ws_id := os.getenv(env_names.WORKSPACE_ENV_NAME):
             return cls.from_workspace(ws_id)
         elif rev_id := os.getenv(env_names.REVISION_ENV_NAME):
@@ -224,7 +223,7 @@ class AWorkspaceManager:
         #     self.install()
 
     @classmethod # TODO cache it
-    def create_from_id(cls, entity_id: str) -> Self:
+    def create_from_id(cls, entity_id: str) -> 'AWorkspaceManager':
         # is workspace id
         try:
             revision = api.workspace.get_revision_by_workspace_id(entity_id)

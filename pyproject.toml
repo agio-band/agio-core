@@ -8,7 +8,7 @@ authors = [
 license = { text = "MIT" }
 #license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "aiofiles>=24.1.0",
     "click>=8.1.8",
@@ -30,7 +30,7 @@ classifiers = [
 ]
 
 [project.scripts]
-agio = "agio:__main__"
+agio = "agio.__main__:main"
 
 [build-system]
 requires = ["uv", "wheel", "setuptools>=61.0"]

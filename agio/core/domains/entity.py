@@ -1,6 +1,7 @@
+from __future__ import annotations
 import json
 from functools import cached_property
-from typing import Self, Iterator
+from typing import Iterator
 from uuid import UUID
 
 from agio.core import api
@@ -34,7 +35,7 @@ class AEntity(DomainBase):
              project_id: str|UUID,
              parent_id: str|UUID,
              name: str = None, # can be regex
-             ) -> Iterator[Self]:
+             ) -> Iterator['AEntity']:
         for data in api.track.iter_entities(project_id, cls.entity_class, parent_id, name):
             yield cls.from_data(data)
 
@@ -44,7 +45,7 @@ class AEntity(DomainBase):
                entity_id: str|UUID,
                name: str,
                fields: dict = None,
-               ) -> Self:
+               ) -> 'AEntity':
         entity_id = api.track.create_entity(
             project_id=project_id,
             parent_id=entity_id,
@@ -62,13 +63,13 @@ class AEntity(DomainBase):
         return api.track.delete_entity(self.id)
 
     @classmethod
-    def find(cls, project_id: str, entity_class: str, entity_name: str) -> Self:
+    def find(cls, project_id: str, entity_class: str, entity_name: str) -> 'AEntity':
         data = api.track.get_entity_by_name(project_id, entity_class, entity_name)
         if data:
             return cls.from_data(data)
 
     @classmethod
-    def from_data(cls, entity_data) -> type[Self]: # TODO merge from_data and from ID
+    def from_data(cls, entity_data) -> type['AEntity']: # TODO merge from_data and from ID
         entity_id = entity_data.get('id')
         if entity_id is None:
             raise KeyError('Field id is missing')
@@ -82,7 +83,7 @@ class AEntity(DomainBase):
         return cls_(entity_data)
 
     @classmethod
-    def from_id(cls, entity_id: str) -> Self:
+    def from_id(cls, entity_id: str) -> 'AEntity':
         entity_data = api.track.get_entity(entity_id)
         entity_class = entity_data.get('class', {}).get('name')
         cls_ = cls.find_entity_class(entity_class)
@@ -108,27 +109,27 @@ class AEntity(DomainBase):
         return AProject(self.project_id)
 
     @classmethod
-    def find_entity_class(cls, class_name: str) -> type[Self]:
+    def find_entity_class(cls, class_name: str) -> type['AEntity']:
         for cls_ in AEntity.iter_entity_classes():
             if cls_.entity_class == class_name:
                 return cls_
 
     @classmethod
-    def iter_entity_classes(cls) -> Iterator[type[Self]]:
+    def iter_entity_classes(cls) -> Iterator[type['AEntity']]:
         for _cls in cls.__subclasses__():
             yield _cls
 
     # schema and hierarchy
 
-    def set_parent(self, parent: Self) -> None:
+    def set_parent(self, parent: 'AEntity') -> None:
         ...
 
-    def add_child(self, child: Self) -> None:
+    def add_child(self, child: 'AEntity') -> None:
         ...
 
-    def _entity_can_be_parent(self, entity: type[Self]) -> bool:
+    def _entity_can_be_parent(self, entity: type['AEntity']) -> bool:
         ...
 
-    def _entity_can_be_child(self, entity: type[Self]) -> bool:
+    def _entity_can_be_child(self, entity: type['AEntity']) -> bool:
         ...
 

@@ -1,5 +1,6 @@
+from __future__ import annotations
 import logging
-from typing import Generator, Self
+from typing import Generator
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
@@ -17,7 +18,7 @@ class APackage(DomainBase):
         return api.package.get_package(object_id)
 
     @classmethod
-    def create(cls, name: str) -> Self:
+    def create(cls, name: str) -> 'APackage':
         package_id = api.package.create_package(name)
         return cls(package_id)
 
@@ -43,7 +44,7 @@ class APackage(DomainBase):
         return api.package.delete_package(self.id)
 
     @classmethod
-    def find(cls, name: str) -> Self|None:
+    def find(cls, name: str) -> 'APackage'|None:
         pkg = api.package.find_package(name)
         if pkg is not None:
             return cls(pkg)

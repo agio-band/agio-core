@@ -173,22 +173,16 @@ def iter_revisions(workspace_id: UUID|str, limit: int = None) -> Iterator[dict]:
 
 def find_revision(
         workspace_id: str = None,
-        # workspace_name: str = None,
         ready_only: bool = True,
         is_current: bool = False
 ) -> dict|None:
     entity_filter = {}
     if ready_only:
         entity_filter['status'] = {"equalTo": "ready"}
-    # if not any([workspace_id, workspace_name]):
-    #     raise ValueError('Workspace id or ws name are required')
     if workspace_id:
         entity_filter['workspace'] = {'id': {'equalTo': str(workspace_id)}}
     if is_current:
         entity_filter['isCurrent'] = {'equalTo': True}
-    # elif workspace_name:
-    #     raise NotImplementedError
-        # entity_filter['workspace'] = {'name': {'equalTo': str(workspace_name)}}
     try:
         return next(iter_query_list(
             'ws/revision/findWorkspaceRevision',
