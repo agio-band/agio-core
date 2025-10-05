@@ -12,7 +12,7 @@ fi
 
 $pyexec -m venv $venv_dir
 $venv_dir/bin/python -m pip install -U pip
-$venv_dir/bin/python -m pip install /home/paul/pw-storage/dev/work/agio/packages/agio-core
+$venv_dir/bin/python -m pip install https://github.com/agio-band/agio-core.git
 
 bin_file=~/.local/bin/agio
 if [[ -e "$bin_file" ]]; then
