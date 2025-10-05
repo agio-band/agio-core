@@ -47,8 +47,8 @@ class APackageRepository:
             raise PackageError(f"Package '{self.pkg_manager.package_name}' not registered")
         # check release version is already exists
         if self.pkg_manager.release:
-            raise ValueError(f"Release {self.pkg_manager.package_name} {self.pkg_manager.package_version} "
-                             f"already exists in agio repository")
+            raise ValueError(f"Release {self.pkg_manager.package_name} v{self.pkg_manager.package_version} "
+                             f"already registered in agio database")
         # check unsaved changes
         if not kwargs.get('no_check_branch', False):
             active_branch = git_utils.get_current_branch(self.root.as_posix())
