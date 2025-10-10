@@ -21,6 +21,7 @@ class AbstractCommandPlugin(ABC):
     subcommands = []
     help = None
     allow_extra_args = False # if True command must accept **kwargs or __extra_args__ argument
+    allow_empty_group_command = False # allow "execute()" method for command group if subcommand is not set
 
     def __init__(self, parent_group=None):
         self._init_click(parent_group)
@@ -57,13 +58,12 @@ class AbstractCommandPlugin(ABC):
 
         for decorator in reversed(self.arguments):
             _callback = decorator(_callback)
-
         if self.subcommands:
             self.command = click.group(
                 name=self.command_name,
                 context_settings=self.get_context_settings(),
                 help=self.help,
-                invoke_without_command=True,
+                invoke_without_command=self.allow_empty_group_command,
             )(_callback)
             for subcmd in self.subcommands:
                 if inspect.isclass(subcmd):
