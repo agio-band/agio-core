@@ -22,10 +22,10 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
 
     def get_token(self, access_data: dict) -> str:
         token = self.default_token
-        if access_data:
-            token = access_data.get('token', None)
+        if access_data and 'token' in access_data:
+            token = access_data.get('token') or token
         if not token:
-            raise Exception("No token provided")
+            raise Exception("No token provided or empty")
         return token
 
     def get_headers(self, access_data, extra_headers: dict = None):
