@@ -25,9 +25,26 @@ class PackageManagerBase:
 
     @property
     def python_executable(self):
+        return Path(
+            self.bin_dir_path,
+            '/python' +
+            ('.exe' if os.name == 'nt' else '')
+        ).as_posix()
+
+    @property
+    def bin_dir_path(self):
         if not self.venv_exists():
             raise FileNotFoundError(f'venv is not installed yet: {self.path}')
-        return Path(self.path, '.venv/bin/python' + ('.exe' if os.name == 'nt' else '')).as_posix()
+        bit_dir = 'Scripts' if os.name == 'nt' else 'bin'
+        return Path(
+            self.path,
+            f'.venv/{bit_dir}'
+        ).as_posix()
+
+    @property
+    def site_packages(self):
+        return self.run(['python', '-c' "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
+                        get_output=True).strip()
 
     @property
     def pyproject_file_path(self):

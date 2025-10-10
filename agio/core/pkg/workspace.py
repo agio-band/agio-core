@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 import time
-from functools import cached_property
+from functools import cached_property, cache
 from pathlib import Path
 
 from agio.core import api, env_names
@@ -108,6 +108,7 @@ class AWorkspaceManager:
     def get_package_list(self):
         return self.revision.get_package_list()
 
+
     def get_py_version(self):
         return self.revision.metadata.get('py_version', {}).get(sys.platform.lower())
 
@@ -160,6 +161,12 @@ class AWorkspaceManager:
         # TODO: check module list hash
         else:
             return True
+
+    @cache
+    def get_site_packages_path(self):
+        if not self.exists():
+            raise WorkspaceNotInstalled('Workspace revision not installed locally')
+        return self.venv_manager.site_packages
 
     def remove(self) -> bool:
         emit('core.workspace.before_remove', {'revision': self})
@@ -218,9 +225,9 @@ class AWorkspaceManager:
         return ctx
 
     def install_or_update_if_needed(self):
-        return
-        # if not self.exists():
-        #     self.install()
+        # TODO
+        if not self.exists():
+            self.install()
 
     @classmethod # TODO cache it
     def create_from_id(cls, entity_id: str) -> 'AWorkspaceManager':

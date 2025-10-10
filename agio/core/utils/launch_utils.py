@@ -38,7 +38,7 @@ class LaunchContext:
         if args is not None:
             self.add_args(*args)
         if env is not None:
-            self.set_env(**env)
+            self.append_envs(**env)
         if workdir is not None:
             self.set_workdir(workdir)
 
@@ -127,10 +127,16 @@ class LaunchContext:
         if env_name not in self._prepend_list[env_name]:
             self._prepend_list[env_name].insert(0, value)
 
-    def set_env(self, **kwargs):
-        self._envs = {str(k):
-                          (os.pathsep.join(v) if isinstance(v, (list, tuple)) else str(v))
-                      for k, v in kwargs.items()}
+    def set_environ(self, **kwargs):
+        self._envs = {
+            str(k): (os.pathsep.join(v) if isinstance(v, (list, tuple)) else str(v))
+            for k, v in kwargs.items()
+        }
+
+    def append_envs(self, **kwargs):
+        self._envs = self._envs or {}
+        for k, v in kwargs.items():
+            self._envs[k] = os.path.pathsep.join((v if isinstance(v, list) else [v]))
 
     @property
     def workdir(self) -> str|None:
@@ -188,6 +194,18 @@ def exec_agio_command(
         workdir: str = None,
         **kwargs
     ):
+    """
+    Launching agio command
+
+    Example usage:
+    >>> cmd = ['mycmd', '--arg', 1, '--key', 2]
+    >>> exec_agio_command(cmd, 'some-uuid-value')
+    Command will be converted to
+
+    `agio -w [ws.id] mycmd --arg 1 --key 2`
+
+    Commands plugin must be registered
+    """
     ws_manager = None
     if isinstance(workspace, str):
         ws_manager = pkg.AWorkspaceManager.create_from_id(workspace)
