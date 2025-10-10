@@ -35,7 +35,6 @@ class AServiceHub(metaclass=Singleton):
         return self.stop_event.is_set()
 
     def start_services(self, **kwargs):
-
         already_registered = [s for s in self.service_list if s in self._registered_services]
         if already_registered:
             raise Exception('Service already running: {}'.format(already_registered))

@@ -135,7 +135,7 @@ def start_process(
         close_fds = False
         new_env['AGIO_CUSTOM_PIPE_FILE_NO'] = str(write_fd)
         new_env['AGIO_CUSTOM_PIPE_FILE_MODE'] = pipe_open_mode
-    logger.info('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
+    logger.debug('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
     process = subprocess.Popen(
         command,
         env=new_env,
