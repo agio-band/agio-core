@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Self, Iterator
 
-from agio.core.domains import DomainBase
+from agio.core.domains import DomainBase, AWorkspace
 from agio.core import api
 from agio.core.domains import project
 
@@ -39,3 +39,7 @@ class ACompany(DomainBase):
         kwargs = {'name': name, 'state': state, 'code': code}
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
         yield from project.AProject.find(self.id, **kwargs)
+
+    def workspaces(self) -> Iterator[project.AWorkspace]:
+        for item in api.workspace.iter_workspaces(self.id):
+            yield AWorkspace(item)
