@@ -38,7 +38,7 @@ class UVPackageManager(PackageManagerBase):
         if kwargs.get('no_cache'):
             cmd.append('--no-cache')
         cmd.extend(packages)
-        self.run(cmd)
+        return self.run(cmd)
 
     def uninstall_package(self, package_name):
         cmd = ['pip', 'uninstall', package_name]
@@ -67,13 +67,15 @@ class UVPackageManager(PackageManagerBase):
     def _get_available_py_version(self, py_version: str = None) -> str | None:
         available_versions = [x['version'] for x in self.get_available_python_versions()]
         if py_version:
+            if py_version[0].isdigit():
+                py_version = f'~={py_version}'
             py_version = venv_utils.find_best_available_version(
                 None,
                 py_version,
                 available_versions
             )
         else:
-            py_version = self._get_latest_version(available_versions)
+            py_version = self._get_latest_version(available_versions)   # TODO use actual from vfx platform
         return py_version
 
     def create_venv(self, py_version: str|None = None):
@@ -85,7 +87,7 @@ class UVPackageManager(PackageManagerBase):
                 # py_version = '==' + py_version  # force match version
                 if py_version not in self.get_installed_python_versions():
                     logger.info('Installing python version: %s', py_version)
-                    cmd = ['python', 'install', '==' + py_version]
+                    cmd = ['python', 'install', '==' + py_version]  # or ~= ???
                     self.run(cmd, workdir=Path.home().as_posix())
             else:
                 raise RuntimeError('No python version available')
@@ -93,8 +95,12 @@ class UVPackageManager(PackageManagerBase):
         cmd = ['init', '--bare']
         cmd.extend(['--python', py_version])
         self.path.mkdir(parents=True, exist_ok=True)
-        self.run(cmd, workdir=self.path.as_posix())
-        self.run(['venv', '--python', py_version], workdir=self.path.as_posix())
+        resp = self.run(cmd, workdir=self.path.as_posix())
+        if resp:
+            raise RuntimeError('Process finished with exit code: %s', resp)
+        resp = self.run(['venv', '--python', py_version], workdir=self.path.as_posix())
+        if resp:
+            raise RuntimeError('Process finished with exit code: %s', resp)
         logger.info('Create venv with version %s: %s', py_version, self.path)
 
     def venv_exists(self):

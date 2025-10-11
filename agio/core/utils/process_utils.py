@@ -177,8 +177,12 @@ def start_process(
                 output, error = process.communicate()
                 logging.debug(f'Exit Code: {process.returncode}')
                 if process.returncode != 0:
-                    print(error.decode(), file=sys.stderr)
-                return output.decode()
+                    if isinstance(error, bytes):
+                        error = error.decode()
+                    print(error, file=sys.stderr)
+                if isinstance(output, bytes):
+                    output = output.decode()
+                return output
             elif open_pipe:
                 if not read_fd:
                     raise Exception("open_pipe requires read_fd object")
@@ -190,7 +194,7 @@ def start_process(
                 logging.debug(f'Exit Code: {process.returncode}')
                 if exit_on_done:
                     sys.exit(process.returncode)
-
+                return process.returncode
         except KeyboardInterrupt:
             terminate_child(process)
             if exit_on_done:

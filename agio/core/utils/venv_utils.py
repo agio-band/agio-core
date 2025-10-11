@@ -66,7 +66,7 @@ def find_best_available_version(current_version_str: str|None,
                     break
 
         if not matching_versions:
-            raise ValueError(f"No matching versions found for {requirements_str}")
+            raise ValueError(f"No matching versions found for {requirements_str}. available: {', '.join(available_versions_str)}")
 
         best_version = max(matching_versions)
         return str(best_version)

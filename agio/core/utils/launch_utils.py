@@ -31,8 +31,6 @@ class LaunchContext:
         self._envs = None
         self._workdir = None
         self._inherit_system_envs = inherit_system_envs
-        self._append_list = defaultdict(list)
-        self._prepend_list = defaultdict(list)
         if executable is not None:
             self.set_executable(executable)
         if args is not None:
@@ -88,18 +86,6 @@ class LaunchContext:
         final_envs = system_envs.copy()
         if self._envs:
             final_envs.update(self._envs)
-        if self._append_list:
-            for k, v in self._append_list.items():
-                if k in final_envs:
-                    final_envs[k] = os.path.pathsep.join((final_envs[k] + os.pathsep.join(v))).strip(os.pathsep)
-                else:
-                    final_envs[k] = os.pathsep.join(v).strip(os.pathsep)
-        if self._prepend_list:
-            for k, v in self._prepend_list.items():
-                if k in final_envs:
-                    final_envs[k] = os.pathsep.join((os.pathsep.join(v), final_envs[k])).strip(os.pathsep)
-                else:
-                    final_envs[k] = os.pathsep.join(v).strip(os.pathsep)
         return final_envs
 
     def append_env_path(self, env_name: str, value: str):
@@ -116,8 +102,10 @@ class LaunchContext:
             self.prepend_env_path('PYTHONPATH', _site_customize_dir.as_posix())
             return res
         else:
-            if value not in self._append_list[env_name]:
-                self._append_list[env_name].append(value)
+            path_list = self._envs.get(env_name, '').split(os.pathsep)
+            if value not in path_list:
+                path_list.append(value)
+                self._envs[env_name] = os.pathsep.join(path_list).strip(os.pathsep)
                 return True
             return False
 
@@ -126,10 +114,17 @@ class LaunchContext:
         Prepend path to top of sys.path
         """
         logger.debug(f"Prepending path env {env_name}={value}")
-        if env_name not in self._prepend_list[env_name]:
-            self._prepend_list[env_name].insert(0, value)
+        path_list = self._envs.get(env_name, '').split(os.pathsep)
+        if value not in path_list:
+            path_list.insert(0, value)
+            self._envs[env_name] = os.pathsep.join(path_list).strip(os.pathsep)
+            return True
+        return False
 
     def set_environ(self, **kwargs):
+        """
+        Replace all environment variables
+        """
         self._envs = {
             str(k): (os.pathsep.join(v) if isinstance(v, (list, tuple)) else str(v))
             for k, v in kwargs.items()
@@ -141,9 +136,10 @@ class LaunchContext:
         """
         self._envs = self._envs or {}
         for k, v in kwargs.items():
-            value = os.path.pathsep.join((v if isinstance(v, list) else [v]))
-            logger.debug(f"Appending env {k}={value}")
-            self._envs[k] = value
+            if isinstance(v, (list, tuple)):
+                v = os.pathsep.join(v)
+            logger.debug(f"Appending env {k}={v}")
+            self._envs[k] = v
 
     @property
     def workdir(self) -> str|None:
@@ -262,38 +258,6 @@ def start_in_workspace(
         workdir=ctx.workdir,
         **kwargs
     )
-
-# @cache_id
-# def get_ws_manager_from_args(context_id: str) -> AWorkspaceManager:
-#     # is workspace id
-#     try:
-#         revision = api.workspace.get_revision_by_workspace_id(context_id)
-#         return AWorkspaceManager(revision)
-#     except NotExistsError:
-#         pass
-#     # is workspace name
-#     # TODO api.workspace.get_revision_by_workspace_label
-#     # is revision id
-#     try:
-#         revision = api.workspace.get_revision(context_id)
-#         return AWorkspaceManager(revision)
-#     except NotExistsError:
-#         pass
-#     # is settings id
-#     try:
-#         revision = api.workspace.get_revision_by_settings_id(context_id)
-#         return AWorkspaceManager(revision, settings_revision_id=context_id)
-#     except NotExistsError:
-#         pass
-#     # is project id
-#     try:
-#         revision = api.workspace.get_revision_by_project_id(context_id)
-#         manager = AWorkspaceManager(revision)
-#         manager.add_launch_envs({'AGIO_PROJECT_ID': context_id})
-#         return manager
-#     except NotExistsError:
-#         pass
-#     raise WorkspaceNotExists
 
 
 def clear_args(args):

@@ -31,6 +31,7 @@ class AWorkspaceManager:
             else:
                 raise TypeError('Invalid revision type')
         self._kwargs = kwargs
+        self._extra_launch_envs = {}
 
     def __repr__(self):
         return f'<{self.__class__.__name__} revision={self._revision.id}>'
@@ -51,23 +52,19 @@ class AWorkspaceManager:
     def custom_py_executable(self) -> str:
         return str(self._kwargs.get('py_executable', ''))
 
-    @property
-    def python_version(self) -> str|None:
-        return self._kwargs.get('python_version')
-
     # creation
 
     @classmethod
-    def from_workspace(cls, workspace: AWorkspace|str) -> 'AWorkspaceManager':
+    def from_workspace(cls, workspace: AWorkspace|str, **kwargs) -> 'AWorkspaceManager':
         if isinstance(workspace, str):
             data = api.workspace.get_revision_by_workspace_id(workspace)
             revision = AWorkspaceRevision(data)
-            return cls(revision)
+            return cls(revision, **kwargs)
         elif isinstance(workspace, AWorkspace):
             current_revision = workspace.get_current_revision()
             if not current_revision:
                 raise Exception(f"No current revision found for workspace {workspace}")
-            return cls(current_revision)
+            return cls(current_revision, **kwargs)
 
     @property
     def settings_id(self):
@@ -126,7 +123,7 @@ class AWorkspaceManager:
         return self.revision.get_package_list()
 
     def get_py_version(self):
-        return self.revision.metadata.get('py_version', {}).get(sys.platform.lower())
+        return self._kwargs.get('python_version') or self.revision.metadata.get('py_version', {}).get(sys.platform.lower())
 
     # install and manage
 
@@ -149,7 +146,7 @@ class AWorkspaceManager:
             py_version_required = self.get_py_version()
             self.venv_manager.create_venv(py_version_required)
 
-        # debug message
+        # debug message TODO remove later
         print('-'*100)
         print('Python version:', self.venv_manager.get_python_version())
         print('-'*100)
@@ -158,7 +155,13 @@ class AWorkspaceManager:
         print('-'*100)
 
         logger.info(f'Packages to install: {[(x.get_package_name(), x.get_version()) for x in package_list]}')
-        self.venv_manager.install_packages(*install_args, no_cache=no_cache)
+        resp = self.venv_manager.install_packages(*install_args, no_cache=no_cache)
+        if resp:
+            try:
+                shutil.rmtree(self.install_root)
+            except FileNotFoundError:
+                pass
+            raise Exception(f'Installation failed for workspace {self.workspace_id}. Exit code: {resp}')
         with open(self.local_meta_file, 'w') as f:
             json.dump(self.revision._data, f, indent=4)
         emit('core.workspace.installed',
@@ -210,8 +213,7 @@ class AWorkspaceManager:
     def set_py_executable(self, py_executable: str):
         if 'venv_manager' in self.__dict__:
             self.__dict__.pop('venv_manager')
-        self._custom_py_executable = py_executable
-
+        self._kwargs['py_executable'] = py_executable
 
     def get_pyexecutable(self) -> str:
         self.install_or_update_if_needed()

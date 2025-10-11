@@ -120,19 +120,12 @@ class PackageManagerBase:
         workdir = workdir or str(self.path)
         logger.debug(f'Running command: {" ".join(cmd)}')
         logger.debug(f'In directory: {workdir}')
-        kwargs.setdefault('get_output', True)
+        kwargs.setdefault('get_output', False)
         return start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], **kwargs)
-        # env = os.environ.copy()
-        # env.pop('VIRTUAL_ENV', None)
-        # return subprocess.call(cmd, cwd=workdir, env=env, shell=False)#, **kwargs)
-
-    # @classmethod
-    # def get_venvs_installation_path(cls):
-    #     return Path('~.agio/venvs').expanduser().as_posix() # TODO from config
 
     @classmethod
     def get_package_manager_installation_path(cls):
-        return Path('~/.agio/pkg-mng').expanduser().as_posix()
+        return Path('~/.agio/pkg-mng').expanduser().as_posix()  # TODO from config
 
     @classmethod
     def install_executable(cls):
