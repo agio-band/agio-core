@@ -2,6 +2,7 @@ import os
 import re
 import sys
 from collections import defaultdict
+from pathlib import Path
 
 import click
 from pprint import pprint
@@ -11,6 +12,13 @@ from agio.core.pkg.package import APackageManager
 from agio.core.pkg.workspace import AWorkspaceManager
 from agio.core.utils import package_hub, plugin_hub
 from agio.core.api import client
+
+
+def line(caption: str = None, width=80):
+    if caption is None:
+        print('='*width)
+    else:
+        print(f"=== {caption+ ' ':=<{width}}")
 
 
 class InfoCommand(ACommandPlugin):
@@ -29,11 +37,12 @@ class InfoCommand(ACommandPlugin):
         if not client.ping():
             click.secho('Server not available!', err=True,  fg='red', bg='yellow')
             return
-        line = lambda: print('='*70)
-        line()
+        line('Workspace info')
         self._show_workspace_info()
         line()
         self._show_python_info()
+        line()
+        self._show_platform_info()
         line()
         if any([packages, plugins, settings, callbacks]):
             if packages:
@@ -48,15 +57,24 @@ class InfoCommand(ACommandPlugin):
             self._show_packages_info()
             self._show_plugins_info()
             self.show_callbacks()
+        self._show_python_path_info()
         line()
+
+    def _show_platform_info(self):
+        print('PLATFORM INFO:')
+        print('URL:', client.platform_url)
 
     def _show_workspace_info(self):
         ws_manager = AWorkspaceManager.current()
         if ws_manager:
             ws = ws_manager.get_workspace()
-            print(f'Workspace: {ws} [{ws.id}]' )
+            print(f'Name: {ws.name}')
+            print(f'ID: {ws.id}')
+            print(f'Root: {ws.get_manager().root}')
         else:
-            print('Workspace: [Not set]')
+            print('Name: default')
+            print('ID: [none]')
+            print(f'Root: {Path(sys.executable).parent.parent}')
 
     def _show_python_info(self):
         print('Python', sys.version)
@@ -65,6 +83,7 @@ class InfoCommand(ACommandPlugin):
     def _show_packages_info(self):
 
         pkg_hub = package_hub.APackageHub.instance()
+        ws_manager = AWorkspaceManager.current()
         print('PACKAGES:')
         print()
 
@@ -72,9 +91,15 @@ class InfoCommand(ACommandPlugin):
         if not sizes:
             raise Exception('No packages found')
         max_len = max(sizes)
+        def strip_path(path):
+            if ws_manager:
+                rel = Path(path).relative_to(ws_manager.install_root)
+                return f'[WORKSPACE]/{rel}'
+            else:
+                return path
         for package in pkg_hub.get_package_list():
             package: APackageManager
-            print(f"  {package.package_name:<{max_len+2}} v{package.package_version:<8} | {package.root}")
+            print(f"  {package.package_name:<{max_len+2}} v{package.package_version:<8} | {strip_path(package.root)}")
         print()
 
     def _show_plugins_info(self):
@@ -119,6 +144,11 @@ class InfoCommand(ACommandPlugin):
 
     def show_libs_disk_usage(self):
         ...
+
+    def _show_python_path_info(self):
+        line('PYTHONPATH')
+        for path in sys.path:
+            print(path)
 
 
 class EnvCommand(ACommandPlugin):
