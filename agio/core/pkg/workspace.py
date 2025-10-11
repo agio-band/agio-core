@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class AWorkspaceManager:
     """Manage workspaces on local host"""
     _meta_file_name = '__agio_ws__.json'
-    workspaces_root = Path(config.WS.CACHE_ROOT).expanduser()
+    workspaces_root = Path(config.WS.INSTALL_DIR).expanduser()
 
     def __init__(self, revision: AWorkspaceRevision|str|dict, **kwargs):
         if revision is not None:
@@ -42,11 +42,12 @@ class AWorkspaceManager:
 
     @property
     def root_suffix(self) -> str:
-        return str(self._kwargs.get('root_suffix', ''))
+        return str(self._kwargs.get('root_suffix', '')) or os.getenv('AGIO_WORKSPACE_SUFFIX') or ''
 
     def set_suffix(self, suffix: str):
         """Customize pyproject location folder name"""
         self._kwargs['root_suffix'] = suffix
+        self._extra_launch_envs['AGIO_WORKSPACE_SUFFIX'] = suffix
 
     @property
     def custom_py_executable(self) -> str:
@@ -200,7 +201,11 @@ class AWorkspaceManager:
         return False
 
     def touch(self):
+        if not self.is_installed():
+            raise WorkspaceNotInstalled('Workspace revision not installed locally')
         timestamp_file = self.install_root / 'timestamp'
+        self.install_root.mkdir(parents=True, exist_ok=True)
+        timestamp_file.touch(exist_ok=True)
         timestamp_file.write_text(str(time.time()))
 
     # packages

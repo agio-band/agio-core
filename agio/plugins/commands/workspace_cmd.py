@@ -1,6 +1,12 @@
+from collections import defaultdict
+
 import click
+
+from agio.core.pkg import AWorkspaceManager
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 from agio.core.pkg.workspace import AWorkspace
+from agio.core.utils.file_utils import get_folder_size
+from agio.core.utils.text_utils import pretty_size
 
 
 class InstallWorkspaceCommand(ASubCommand):
@@ -14,7 +20,7 @@ class InstallWorkspaceCommand(ASubCommand):
 
     def execute(self, workspace_id: str, clean: bool = False, no_cache=False):
         print('Install Workspace', workspace_id)
-        AWorkspace(workspace_id).install(clean=clean, no_cache=no_cache)
+        AWorkspace(workspace_id).get_manager().install(clean=clean, no_cache=no_cache)
 
 
 
@@ -27,7 +33,7 @@ class UninstallWorkspaceCommand(ASubCommand):
 
     def execute(self, workspace_id: str):
         print('Uninstall Workspace', workspace_id)
-        AWorkspace(workspace_id).remove()
+        AWorkspace(workspace_id).get_manager().remove()
 
 
 class ListWorkspaceCommand(ASubCommand):
@@ -35,9 +41,28 @@ class ListWorkspaceCommand(ASubCommand):
     help = 'List workspaces'
 
     def execute(self):
-        # todo: show table of workspaces
-        for ws in AWorkspace.workspaces_root.iterdir():
-            print(ws.name)
+        ws_list = defaultdict(list)
+        width = 0
+        for ws in AWorkspaceManager.workspaces_root.iterdir():
+            for rev in ws.iterdir():
+                ws_list[ws.name].append({'rev': rev.name, 'size': get_folder_size(rev)})
+                width = max(width, len(rev.name))
+        if not ws_list:
+            print('No workspaces found')
+            return
+        print('⎯' * int(width * 1.5))
+        print('ROOT:', AWorkspaceManager.workspaces_root)
+        print('⎯'*int(width*1.5))
+        for w, rev_list in ws_list.items():
+            if rev_list:
+                print('{:<{width}}    {size}'.format(w, width=width, size=pretty_size(sum([r['size'] for r in rev_list]))))
+                for rev in rev_list:
+                    print('  {:<{width}}  {size}'.format(rev['rev'], width=width, size=pretty_size(rev['size'])))
+        print('⎯' * int(width * 1.5))
+        total_size = sum(sum([r['size'] for r in rev_list]) for rev_list in ws_list.values())
+        print('Total size', pretty_size(total_size))
+        print('⎯' * int(width * 1.5))
+
 
 
 class ShowWorkspaceDetailCommand(ASubCommand):
@@ -66,14 +91,11 @@ class UpdateWorkspaceCommand(ASubCommand):
 class WorkspaceCommand(ACommandPlugin):
     name = 'workspace_cmd'
     command_name = "ws"
-    commands = [InstallWorkspaceCommand(),
-                UninstallWorkspaceCommand(),
-                ListWorkspaceCommand(),
-                UpdateWorkspaceCommand(),
-                ShowWorkspaceDetailCommand(),
+    subcommands = [InstallWorkspaceCommand,
+                UninstallWorkspaceCommand,
+                ListWorkspaceCommand,
+                UpdateWorkspaceCommand,
+                ShowWorkspaceDetailCommand,
                ]
     help = 'Manage workspaces'
-
-    def execute(self, *args, **kwargs):
-        pass
 

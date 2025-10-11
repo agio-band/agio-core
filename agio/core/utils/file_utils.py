@@ -1,4 +1,5 @@
 import hashlib
+from pathlib import Path
 
 
 def get_file_hash(file_path):
@@ -11,3 +12,7 @@ def get_file_hash(file_path):
             hasher.update(buf)
     has_sum = hasher.hexdigest()
     return has_sum
+
+
+def get_folder_size(path: Path|str) -> int:
+    return sum(f.stat().st_size for f in Path(path).rglob('*') if f.is_file())

@@ -94,6 +94,17 @@ class PackageReleaseCommand(ASubCommand):
         logger.info(f"Package release created: {release.id}")
 
 
+
+class PackageInfoCommand(ASubCommand):
+    command_name = "info"
+    arguments = [
+        click.option('-i', '--info', is_flag=True, default=False, help='Show package information'),
+    ]
+
+    def execute(self, **kwargs):
+        click.secho('Show packages info... [TODO]', fg='yellow')
+
+
 class PackageCommand(ACommandPlugin):
     name = 'package_cmd'
     command_name = "pkg"
@@ -102,15 +113,6 @@ class PackageCommand(ACommandPlugin):
         PackageBuildCommand,
         PackageReleaseCommand,
         PackageRegisterCommand,
+        PackageInfoCommand,
     ]
     help = 'Manage packages'
-    arguments = [
-        click.option('-i', '--info', is_flag=True, default=False, help='Show package information'),
-    ]
-
-    def execute(self, info, *args, **kwargs):
-        if info:
-            print('Show packages info... [TODO]')
-        # else:
-        #     click.echo("ERROR: Arguments not pass", err=True)
-        #     self.context.exit(1)

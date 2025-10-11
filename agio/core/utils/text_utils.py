@@ -73,3 +73,12 @@ def render_markdown_from_string(text: str) -> str:
     markdown = mistune.create_markdown(renderer=CustomRenderer())
     html = markdown(text)
     return html
+
+
+def shorten_text(s: str, width: int, placeholder: str = "...", from_end=False) -> str:
+    if len(s) <= width:
+        return s
+    if from_end:
+        return placeholder+s[width - len(placeholder):]
+    else:
+        return s[:width - len(placeholder)] + placeholder
