@@ -236,7 +236,7 @@ def start_in_workspace(
         **kwargs
     ):
     if ws_manager:
-        ctx = ws_manager.get_launch_context()
+        ctx: LaunchContext = ws_manager.get_launch_context()
         ws_manager.install_or_update_if_needed()
         ws_manager.touch()
     else:
@@ -245,16 +245,18 @@ def start_in_workspace(
             raise WorkspaceNotExists('Executable not set')
         ctx = LaunchContext(py_exec)
     if envs:
-        ctx.set_env(**envs)
+        ctx.append_envs(**envs)
     if workdir:
         ctx.set_workdir(workdir)
     if args:
         ctx.add_args(*args)
-    logger.info('Launching command: %s', ' '.join(ctx.command))
+    if not Path(ctx.executable).exists():
+        raise FileNotFoundError(f'Executable not found {ctx.executable}')
+    logger.debug('Launching command: %s', ' '.join(ctx.command))
     return process_utils.start_process(
         ctx.command,
         env=ctx.envs,
-        # clear_envs=['PYTHONPATH'],    # TODO turn back for full installation of workspaces
+        clear_env=['PYTHONPATH'],    # TODO turn back for full installation of workspaces
         workdir=ctx.workdir,
         **kwargs
     )
