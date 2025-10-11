@@ -50,7 +50,7 @@ class LaunchContext:
 
     @property
     def executable(self):
-        return self._executable.as_posix()
+        return Path(self._executable).as_posix()
 
     def set_executable(self, value):
         if not value:
@@ -104,14 +104,15 @@ class LaunchContext:
 
     def append_env_path(self, env_name: str, value: str):
         """
-        Append path to end
+        Append path to end of sys.path
         """
+        logger.debug(f"Appending path env {env_name}={value}")
         if env_name == 'PYTHONPATH':
             # specific append function for PYTHONPATH using sitecustomize hook
             # do not use flag -S to keep this customisation
             if not _site_customize_dir.exists():
                 raise FileNotFoundError('site customize dir not found: {}'.format(_site_customize_dir))
-            res = self.append_env_path('_AGIO_POST_APPEND_PATH', value)
+            res = self.append_env_path('__AGIO_POST_APPEND_PATH__', value)
             self.prepend_env_path('PYTHONPATH', _site_customize_dir.as_posix())
             return res
         else:
@@ -122,8 +123,9 @@ class LaunchContext:
 
     def prepend_env_path(self, env_name: str, value: str):
         """
-        Prepend path to top
+        Prepend path to top of sys.path
         """
+        logger.debug(f"Prepending path env {env_name}={value}")
         if env_name not in self._prepend_list[env_name]:
             self._prepend_list[env_name].insert(0, value)
 
@@ -134,9 +136,14 @@ class LaunchContext:
         }
 
     def append_envs(self, **kwargs):
+        """
+        You can set multipath value as list or tuple
+        """
         self._envs = self._envs or {}
         for k, v in kwargs.items():
-            self._envs[k] = os.path.pathsep.join((v if isinstance(v, list) else [v]))
+            value = os.path.pathsep.join((v if isinstance(v, list) else [v]))
+            logger.debug(f"Appending env {k}={value}")
+            self._envs[k] = value
 
     @property
     def workdir(self) -> str|None:

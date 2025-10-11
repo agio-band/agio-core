@@ -88,7 +88,10 @@ class AWorkspaceRevision(DomainBase):
     def get_layout(self):
         return self._data.get("layout")
 
-    def get_settings_data(self):
+    def get_settings_data(self) -> dict:
+        """
+        Return raw dict settings data
+        """
         if '_settings_data' not in self._data:
             self._data["_settings_data"] = api.workspace.get_settings_by_revision_id(self.id)['data']
         return self._data["_settings_data"]

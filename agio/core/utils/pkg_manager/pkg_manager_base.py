@@ -14,10 +14,12 @@ logger = logging.getLogger(__name__)
 
 class PackageManagerBase:
 
-    def __init__(self, package_root: str|Path, custom_python_executable: str|Path = None):
+    def __init__(self, package_root: str|Path, custom_python_executable: str|Path = None,
+                 custom_py_version: str|Path = None) -> None:
         self.path = Path(package_root)
         self.path.mkdir(exist_ok=True, parents=True)
         self._custom_python_executable = None
+        self._custom_py_version = custom_py_version
         if custom_python_executable:
             if not Path(custom_python_executable).exists():
                 raise FileNotFoundError(f"File {custom_python_executable} does not exist")
@@ -27,7 +29,7 @@ class PackageManagerBase:
     def python_executable(self):
         return Path(
             self.bin_dir_path,
-            '/python' +
+            'python' +
             ('.exe' if os.name == 'nt' else '')
         ).as_posix()
 
@@ -43,7 +45,9 @@ class PackageManagerBase:
 
     @property
     def site_packages(self):
-        return self.run(['python', '-c' "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
+        if not self.venv_exists():
+            raise FileNotFoundError(f'venv is not installed yet: {self.path}')
+        return self.run(['run', 'python', '-c' "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
                         get_output=True).strip()
 
     @property

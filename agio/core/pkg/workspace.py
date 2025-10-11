@@ -31,12 +31,29 @@ class AWorkspaceManager:
             else:
                 raise TypeError('Invalid revision type')
         self._kwargs = kwargs
-        self._extra_launch_envs = kwargs.get('launch_envs', {})
-        self._root_suffix = str(kwargs.get('root_suffix', ''))
-        self._custom_py_executable = str(kwargs.get('py_executable', ''))
 
     def __repr__(self):
         return f'<{self.__class__.__name__} revision={self._revision.id}>'
+
+    @property
+    def extra_launch_envs(self) -> dict:
+        return self._kwargs.get('launch_envs', {})
+
+    @property
+    def root_suffix(self) -> str:
+        return str(self._kwargs.get('root_suffix', ''))
+
+    def set_suffix(self, suffix: str):
+        """Customize pyproject location folder name"""
+        self._kwargs['root_suffix'] = suffix
+
+    @property
+    def custom_py_executable(self) -> str:
+        return str(self._kwargs.get('py_executable', ''))
+
+    @property
+    def python_version(self) -> str|None:
+        return self._kwargs.get('python_version')
 
     # creation
 
@@ -94,20 +111,19 @@ class AWorkspaceManager:
     def revision(self):
         return self._revision
 
-    @cached_property
+    @property
     def root(self):
         return Path(config.WS.INSTALL_DIR, self.workspace_id).expanduser().resolve()
 
-    @cached_property
+    @property
     def install_root(self):
-        return self.root.joinpath('-'.join([self.revision.id, self._root_suffix]).strip('-'))
+        return self.root.joinpath('-'.join([self.revision.id, self.root_suffix]).strip('-'))
 
     def exists(self) -> bool:
         return self.install_root.exists()
 
     def get_package_list(self):
         return self.revision.get_package_list()
-
 
     def get_py_version(self):
         return self.revision.metadata.get('py_version', {}).get(sys.platform.lower())
@@ -116,9 +132,10 @@ class AWorkspaceManager:
 
     @cached_property
     def venv_manager(self):
-        return pkg_manager.get_package_manager(self.install_root, self._custom_py_executable)
+        return pkg_manager.get_package_manager(self.install_root, self.custom_py_executable)
 
     def install(self, clean: bool = False, no_cache: bool = False):
+        logger.debug(f'Installing workspace {self.install_root}')
         emit('core.workspace.before_install', {'revision': self})
         package_list = list(self.get_package_list())
         if not package_list:
@@ -140,11 +157,13 @@ class AWorkspaceManager:
             print(pkg)
         print('-'*100)
 
-        logger.info(f'Packages to install: {package_list}')
+        logger.info(f'Packages to install: {[(x.get_package_name(), x.get_version()) for x in package_list]}')
         self.venv_manager.install_packages(*install_args, no_cache=no_cache)
         with open(self.local_meta_file, 'w') as f:
             json.dump(self.revision._data, f, indent=4)
-        emit('core.workspace.installed', {'revision': self, 'packages': package_list, 'meta_filename': self.local_meta_file})
+        emit('core.workspace.installed',
+             {'revision': self, 'packages': package_list, 'meta_filename': self.local_meta_file}
+             )
 
     def is_installed(self):
         return self.local_meta_file.exists()
@@ -193,9 +212,6 @@ class AWorkspaceManager:
             self.__dict__.pop('venv_manager')
         self._custom_py_executable = py_executable
 
-    def set_suffix(self, suffix: str):
-        """Customize py-project location folder name"""
-        self._root_suffix = suffix
 
     def get_pyexecutable(self) -> str:
         self.install_or_update_if_needed()

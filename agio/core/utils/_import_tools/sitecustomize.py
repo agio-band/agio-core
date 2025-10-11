@@ -4,7 +4,7 @@ Append PYTHONPATH to sys.path after site paths is appended
 import sys, os
 
 
-__extra_py_path = os.environ.pop("_AGIO_POST_APPEND_PATH", None)
+__extra_py_path = os.environ.pop("__AGIO_POST_APPEND_PATH__", None)
 if __extra_py_path:
     sys.path.append(__extra_py_path)
 # cleanup

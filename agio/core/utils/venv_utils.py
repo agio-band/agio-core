@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_site_packages_path(venv_python_path: str) -> str | None:
+def _get_site_packages_path(venv_python_path: str) -> str | None: # OLD VERSION
     try:
         result = subprocess.run(
             [venv_python_path, "-c", "import site, json; print(json.dumps(site.getsitepackages()))"],
@@ -19,6 +19,20 @@ def get_site_packages_path(venv_python_path: str) -> str | None:
         )
         site_packages_list = json.loads(result.stdout.strip())
         return site_packages_list[0]
+    except (subprocess.CalledProcessError, FileNotFoundError, json.JSONDecodeError) as e:
+        return None
+
+
+def get_site_packages_path(venv_python_path: str) -> str | None:
+    try:
+        result = subprocess.run(
+            [venv_python_path, "-c", "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        site_package = result.stdout.strip()
+        return site_package
     except (subprocess.CalledProcessError, FileNotFoundError, json.JSONDecodeError) as e:
         return None
 
