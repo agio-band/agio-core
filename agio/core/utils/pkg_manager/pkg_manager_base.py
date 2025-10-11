@@ -3,11 +3,16 @@ import os
 import logging
 import subprocess
 from pathlib import Path
+import shlex
 
 from agio.core.pkg.package import APackage
 from agio.core.utils.process_utils import start_process
 from agio.core.utils import venv_utils
-import tomllib as  toml
+
+try:
+    import tomllib as toml
+except ModuleNotFoundError:
+    import tomli as toml
 
 logger = logging.getLogger(__name__)
 
@@ -116,11 +121,14 @@ class PackageManagerBase:
             caller_name = inspect.stack()[1].function
             if caller_name != 'create_venv':
                 self.create_venv()
+        if isinstance(cmd, str):
+            cmd = shlex.split(cmd)
         cmd = list(map(str, [self.get_executable(), *cmd]))
         workdir = workdir or str(self.path)
         logger.debug(f'Running command: {" ".join(cmd)}')
         logger.debug(f'In directory: {workdir}')
         kwargs.setdefault('get_output', False)
+        print(cmd)
         return start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], **kwargs)
 
     @classmethod
