@@ -19,9 +19,7 @@ class InstallWorkspaceCommand(ASubCommand):
     help = 'Install workspace by ID'
 
     def execute(self, workspace_id: str, clean: bool = False, no_cache=False):
-        print('Install Workspace', workspace_id)
         AWorkspace(workspace_id).get_manager().install(clean=clean, no_cache=no_cache)
-
 
 
 class UninstallWorkspaceCommand(ASubCommand):
@@ -43,6 +41,9 @@ class ListWorkspaceCommand(ASubCommand):
     def execute(self):
         ws_list = defaultdict(list)
         width = 0
+        if not AWorkspaceManager.workspaces_root.exists():
+            print(f'No installed workspaces yet. \nInstall root is not exists: {AWorkspaceManager.workspaces_root.as_posix()}')
+            return
         for ws in AWorkspaceManager.workspaces_root.iterdir():
             for rev in ws.iterdir():
                 ws_list[ws.name].append({'rev': rev.name, 'size': get_folder_size(rev)})
@@ -64,7 +65,6 @@ class ListWorkspaceCommand(ASubCommand):
         print('⎯' * int(width * 1.5))
 
 
-
 class ShowWorkspaceDetailCommand(ASubCommand):
     command_name = 'show'
     arguments = [
@@ -73,7 +73,14 @@ class ShowWorkspaceDetailCommand(ASubCommand):
     help = 'Show workspace details'
 
     def execute(self, workspace_id: str):
-        print('Show workspace details:', workspace_id)
+        print('Workspace ID:', workspace_id)
+        ws_man = AWorkspaceManager.create_from_id(workspace_id)
+        print('Installed Packages:')
+        for pkg in ws_man.get_package_list():   # get from meta file
+            print(pkg.get_package_name(), pkg.get_version())
+        # TODO installation date
+        # TODO last used time
+        # TODO total size
 
 
 class UpdateWorkspaceCommand(ASubCommand):
@@ -84,8 +91,9 @@ class UpdateWorkspaceCommand(ASubCommand):
     help = 'Show workspace details'
 
     def execute(self, workspace_id: str):
-        print('Update workspace details:', workspace_id)
-        AWorkspace(workspace_id).update()
+        # TODO replace with reinstall()
+        print('Update workspace:', workspace_id)
+        AWorkspaceManager.create_from_id(workspace_id).install_or_update_if_needed()
 
 
 class WorkspaceCommand(ACommandPlugin):
