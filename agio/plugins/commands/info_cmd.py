@@ -1,8 +1,9 @@
+from __future__ import annotations
 import os
-import re
 import sys
 from collections import defaultdict
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 from pprint import pprint
@@ -12,80 +13,86 @@ from agio.core.pkg.package import APackageManager
 from agio.core.pkg.workspace import AWorkspaceManager
 from agio.core.utils import package_hub, plugin_hub
 from agio.core.api import client
+if TYPE_CHECKING:
+    from agio.core.utils.settings_hub import LocalSettingsHub
 
 
-def line(caption: str = None, width=80):
+def line(caption: str = None, width=80, color=None, padding=True):
     if caption is None:
-        print('='*width)
+        if padding:
+            print()
+        click.secho('='*width, fg=color)
+        if padding:
+            print()
     else:
-        print(f"=== {caption+ ' ':=<{width}}")
+        if padding:
+            print()
+        click.secho(f"=== {caption+ ' ':=<{width-4}}", fg=color)
+        if padding:
+            print()
 
 
 class InfoCommand(ACommandPlugin):
     name = 'info_cmd'
     command_name = 'info'
-    arguments = [
-        click.option('-g', '--packages', is_flag=True, help='Show packages info'),
-        click.option("-p", "--plugins", is_flag=True, help='Show plugins info'),
-        click.option("-s", "--settings", is_flag=True, help='Show settings'),
-        click.option("-c", "--callbacks", is_flag=True, help='Show callbacks'),
-        click.option("-d", "--diskusage", is_flag=True, help='Show callbacks'),
-    ]
+    # arguments = [
+    #     click.option('-g', '--packages', is_flag=True, help='Show packages info'),
+    #     click.option("-p", "--plugins", is_flag=True, help='Show plugins info'),
+    #     click.option("-s", "--settings", is_flag=True, help='Show settings'),
+    #     click.option("-c", "--callbacks", is_flag=True, help='Show callbacks'),
+    #     click.option("-d", "--diskusage", is_flag=True, help='Show callbacks'),
+    # ]
     help = 'Show info about current workspace'
 
-    def execute(self, packages, plugins, settings, callbacks, diskusage):
+    def execute(self):
         if not client.ping():
             click.secho('Server not available!', err=True,  fg='red', bg='yellow')
             return
-        line('Workspace info')
-        self._show_workspace_info()
-        line()
-        self._show_python_info()
-        line()
-        self._show_platform_info()
-        line()
-        if any([packages, plugins, settings, callbacks]):
-            if packages:
-                self._show_packages_info()
-            if plugins:
-                self._show_plugins_info()
-            if settings:
-                self._show_settings()
-            if callbacks:
-                self.show_callbacks()
-        else:
-            self._show_packages_info()
-            self._show_plugins_info()
-            self.show_callbacks()
-        self._show_python_path_info()
-        line()
+        self.show_platform_info()
+        self.show_workspace_info()
+        self.show_settings()
+        self.show_packages_info()
+        self.show_plugins_info()
+        self.show_callbacks()
+        self.show_python_info()
+        self.show_libs_disk_usage()
+        line(color='yellow')
 
-    def _show_platform_info(self):
-        print('PLATFORM INFO:')
-        print('URL:', client.platform_url)
+    def show_platform_info(self):
+        line('Platform', color='yellow')
+        click.echo(f'URL: {client.platform_url}')
 
-    def _show_workspace_info(self):
+    def show_workspace_info(self):
+        line('Workspace', color='yellow')
         ws_manager = AWorkspaceManager.current()
         if ws_manager:
             ws = ws_manager.get_workspace()
             print(f'Name: {ws.name}')
             print(f'ID: {ws.id}')
-            print(f'Root: {ws.get_manager().root}')
+            root = ws.get_manager().root
+            print(f'Root: {root}')
+            revisions = list(root.glob('*'))
+            if revisions:
+                print(f'Revisions: [{len(revisions)}]')
+                for rev in revisions:
+                    print('  ',rev.name)
         else:
             print('Name: default')
             print('ID: [none]')
             print(f'Root: {Path(sys.executable).parent.parent}')
 
-    def _show_python_info(self):
-        print('Python', sys.version)
-        print(sys.executable)
+    def show_python_info(self):
+        line('Python', color='yellow')
+        print('Version:', sys.version)
+        print('Executable:', sys.executable)
+        print('sys.path list')
+        for path in sys.path:
+            print(path)
 
-    def _show_packages_info(self):
-
+    def show_packages_info(self):
+        line('Packages', color='yellow')
         pkg_hub = package_hub.APackageHub.instance()
         ws_manager = AWorkspaceManager.current()
-        print('PACKAGES:')
-        print()
 
         sizes = [len(name) for name in pkg_hub.get_packages().keys()]
         if not sizes:
@@ -100,12 +107,10 @@ class InfoCommand(ACommandPlugin):
         for package in pkg_hub.get_package_list():
             package: APackageManager
             print(f"  {package.package_name:<{max_len+2}} v{package.package_version:<8} | {strip_path(package.root)}")
-        print()
 
-    def _show_plugins_info(self):
+    def show_plugins_info(self):
+        line('Plugins', color='yellow')
         plg_hub = plugin_hub.APluginHub.instance()
-        print('PLUGINS:')
-        print()
         all_plugins_by_package = defaultdict(list)
         for plugin in plg_hub.iter_plugins():
             plugin: APlugin
@@ -120,35 +125,27 @@ class InfoCommand(ACommandPlugin):
                 for plugin in _plugins:
                     print(f"    {plugin.name}")
             print()
-        print()
 
-    def _show_settings(self):
-        from agio.core.settings import get_local_settings
+    def show_settings(self):
+        from agio.core import settings
 
-        local_settings = get_local_settings()
-        print('LOCAL SETTINGS:')
-        pprint(local_settings)
-        print()
-        print('WORKSPACE SETTINGS:')
-        print('TODO...')
+        line('Local Settings', color='yellow')
+        local_settings: LocalSettingsHub = settings.get_local_settings()
+        print('Settings file: ',end='')
+        click.secho('TODO',fg='magenta')
+        pprint(local_settings.dump())
+        line('Workspace Settings', color='yellow')
+        click.secho('TODO...', fg='magenta')
 
     def show_callbacks(self):
         from agio.core.events import event_hub
 
-        print('CALLBACKS:')
-        print()
+        line('Callbacks', color='yellow')
         event_hub.print_event_list()
 
-    def show_projects_disk_usage(self):
-        ...
-
     def show_libs_disk_usage(self):
-        ...
-
-    def _show_python_path_info(self):
-        line('PYTHONPATH')
-        for path in sys.path:
-            print(path)
+        line('Libs Disk Usage', color='yellow')
+        click.secho('TODO...', fg='magenta')
 
 
 class EnvCommand(ACommandPlugin):
