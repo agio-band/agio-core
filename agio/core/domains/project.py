@@ -1,4 +1,5 @@
-from typing import Self, Iterator
+from __future__ import annotations
+from typing import Iterator
 from uuid import UUID
 
 from agio.core import api
@@ -28,12 +29,12 @@ class AProject(DomainBase):
         return resp
 
     @classmethod
-    def iter(cls, company_id: str|UUID, **kwargs) -> Iterator[Self]:
+    def iter(cls, company_id: str|UUID, **kwargs) -> Iterator['AProject']:
         for prj_data in api.track.iter_projects(company_id=company_id, **kwargs):
             yield cls(prj_data)
 
     @classmethod
-    def create(cls, **kwargs) -> Self:
+    def create(cls, **kwargs) -> 'AProject':
         raise NotImplementedError()
 
     def delete(self) -> None:

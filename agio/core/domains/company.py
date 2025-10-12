@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Self, Iterator
+from typing import Iterator
 
 from agio.core.domains import DomainBase, AWorkspace
 from agio.core import api
@@ -17,11 +17,11 @@ class ACompany(DomainBase):
         raise NotImplementedError()
 
     @classmethod
-    def iter(cls, **kwargs) -> Iterator[Self]:
+    def iter(cls, **kwargs) -> Iterator['ACompany']:
         yield from api.desk.iter_companies(**kwargs)
 
     @classmethod
-    def create(cls, **kwargs) -> Self:
+    def create(cls, **kwargs) -> ACompany:
         raise NotImplementedError()
 
     def delete(self) -> None:

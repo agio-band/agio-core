@@ -1,4 +1,5 @@
-from typing import Self, Iterator
+from __future__ import annotations
+from typing import Iterator
 from agio.core import api
 from agio.core.domains import DomainBase
 
@@ -14,11 +15,11 @@ class AProfile(DomainBase):
         raise NotImplementedError()
 
     @classmethod
-    def iter(cls, **kwargs) -> Iterator[Self]:
+    def iter(cls, **kwargs) -> Iterator['AProfile']:
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, **kwargs) -> Self:
+    def create(cls, **kwargs) -> 'AProfile':
         raise NotImplementedError()
 
     def delete(self) -> None:
@@ -29,7 +30,7 @@ class AProfile(DomainBase):
         raise NotImplementedError()
 
     @classmethod
-    def current(cls, **kwargs) -> Self:
+    def current(cls, **kwargs) -> 'AProfile':
         data = api.profile.get_current_user()
         if not data:
             raise Exception('Not found')
