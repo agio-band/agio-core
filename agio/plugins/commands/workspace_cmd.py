@@ -3,8 +3,8 @@ from collections import defaultdict
 import click
 
 from agio.core.pkg import AWorkspaceManager
-from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 from agio.core.pkg.workspace import AWorkspace
+from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 from agio.core.utils.file_utils import get_folder_size
 from agio.core.utils.text_utils import pretty_size
 
@@ -96,14 +96,31 @@ class UpdateWorkspaceCommand(ASubCommand):
         AWorkspaceManager.create_from_id(workspace_id).install_or_update_if_needed()
 
 
+class CleanupWorkspaceCommand(ASubCommand):
+    command_name = 'clean'
+    arguments = [
+        click.option('-t', '--time-delta', type=click.INT, default=14, help='Time delta in days'),
+        click.option('-q', '--quiet', default=False, is_flag=True, help='Quiet cleanup'),
+    ]
+    help = 'Cleanup not used workspaces'
+
+    def execute(self, time_delta: int, quiet: bool = False):
+        if not quiet:
+            click.confirm('Do you want to clean workspaces now?', abort=True)
+        print('Cleanup not used workspaces older than {} days'.format(time_delta))
+        click.secho('TODO', fg='yellow')
+
+
 class WorkspaceCommand(ACommandPlugin):
     name = 'workspace_cmd'
     command_name = "ws"
-    subcommands = [InstallWorkspaceCommand,
-                UninstallWorkspaceCommand,
-                ListWorkspaceCommand,
-                UpdateWorkspaceCommand,
-                ShowWorkspaceDetailCommand,
-               ]
+    subcommands = [
+        InstallWorkspaceCommand,
+        UninstallWorkspaceCommand,
+        ListWorkspaceCommand,
+        UpdateWorkspaceCommand,
+        ShowWorkspaceDetailCommand,
+        CleanupWorkspaceCommand,
+    ]
     help = 'Manage workspaces'
 
