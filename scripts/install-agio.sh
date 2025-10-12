@@ -69,6 +69,7 @@ if [[ -e "$bin_file" ]]; then
 fi
 
 ln -s "$venv_dir/.venv/bin/agio" "$bin_file"
+chmod +x $bin_file
 
 echo "Installation complete!"
 echo "Command 'agio' is available now for user ${USER} via the link in ~/.local/bin."
