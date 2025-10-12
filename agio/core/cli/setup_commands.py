@@ -61,9 +61,7 @@ def agio_group(ctx, workspace, debug, **kwargs):
             ws: AWorkspaceManager | None = AWorkspaceManager.create_from_id(workspace)
             if ws:
                 # execute in different env if not current ws is defined
-                full_command = [cmd_name] + cmd_args
-                click.echo(f"CMD: {full_command}")
-                click.echo(f"WS: {workspace}")
+                full_command = [cmd_name, *cmd_args]
                 launch_utils.exec_agio_command(full_command, ws)
                 ctx.exit(0)
             else:
