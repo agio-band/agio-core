@@ -4,7 +4,7 @@ from uuid import UUID
 from . import client
 from .utils import NOTSET
 from .utils.query_tools import iter_query_list
-from ..exceptions import RevisionNotExists, SettingsRevisionNotExists, WorkspaceNotExists
+from ..exceptions import RevisionNotExists, SettingsRevisionNotExists, WorkspaceNotExists, ProjectNotExists
 from . import track
 
 
@@ -209,6 +209,8 @@ def get_current_revision(workspace_id: UUID|str) -> dict|None:
 
 def get_revision_by_project_id(project_id: str) -> dict:
     project = track.get_project(project_id)
+    if not project:
+        raise ProjectNotExists
     return get_revision_by_workspace_id(project['workspace']['id'])
 
 
