@@ -51,18 +51,18 @@ class ListWorkspaceCommand(ASubCommand):
         if not ws_list:
             print('No workspaces found')
             return
-        print('⎯' * int(width * 1.5))
+        print('=' * int(width * 1.5))
         print('ROOT:', AWorkspaceManager.workspaces_root)
-        print('⎯'*int(width*1.5))
+        print('='*int(width*1.5))
         for w, rev_list in ws_list.items():
             if rev_list:
                 print('{:<{width}}    {size}'.format(w, width=width, size=pretty_size(sum([r['size'] for r in rev_list]))))
                 for rev in rev_list:
                     print('  {:<{width}}  {size}'.format(rev['rev'], width=width, size=pretty_size(rev['size'])))
-        print('⎯' * int(width * 1.5))
+        print('=' * int(width * 1.5))
         total_size = sum(sum([r['size'] for r in rev_list]) for rev_list in ws_list.values())
         print('Total size', pretty_size(total_size))
-        print('⎯' * int(width * 1.5))
+        print('=' * int(width * 1.5))
 
 
 class ShowWorkspaceDetailCommand(ASubCommand):
