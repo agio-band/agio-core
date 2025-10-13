@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 import os
 import re
@@ -6,14 +7,12 @@ import shlex
 import shutil
 import subprocess
 import sys
-from collections import defaultdict
 from pathlib import Path
 
-from agio.core.exceptions import WorkspaceNotExists
 from agio.core import pkg
+from agio.core.exceptions import WorkspaceNotExists
 from agio.core.utils import process_utils
 
-# from agio.core.utils import config
 logger = logging.getLogger(__name__)
 
 
@@ -182,8 +181,6 @@ class LaunchContext:
 
 
 def get_default_env_executable():
-    # TODO must by created by installer
-    # venvs_path = Path(config.WS.INSTALL_DIR)/'default/bin/python'
     default_exec = os.getenv('AGIO_DEFAULT_WORKSPACE_PY_EXECUTABLE')
     if not default_exec:
         raise WorkspaceNotExists('AGIO_DEFAULT_WORKSPACE_PY_EXECUTABLE not set')
@@ -215,13 +212,12 @@ def exec_agio_command(
     elif isinstance(workspace, pkg.AWorkspaceManager):
         ws_manager = workspace
     elif workspace is None:
-        pass # TODO use for full local installation
-        # ws_manager = AWorkspaceManager.current()
+        ws_manager = pkg.AWorkspaceManager.current()
     else:
         raise TypeError("Workspace must be either a string or AWorkspaceManager.")
     start_in_workspace(
-        args=['-m', 'agio'] + args,
         ws_manager=ws_manager,
+        args=['-m', 'agio'] + args,
         envs=envs,
         workdir=workdir,
         **kwargs
@@ -229,12 +225,14 @@ def exec_agio_command(
 
 
 def start_in_workspace(
-        ws_manager: pkg.AWorkspaceManager|None,
+        ws_manager: pkg.AWorkspaceManager|str|None,
         args: list = None,
         envs: dict = None,
         workdir: str = None,
         **kwargs
     ):
+    if isinstance(ws_manager, str):
+        ws_manager = pkg.AWorkspaceManager.create_from_id(ws_manager)
     if ws_manager:
         ctx: LaunchContext = ws_manager.get_launch_context()
         ws_manager.install_or_update_if_needed()
@@ -252,7 +250,7 @@ def start_in_workspace(
         ctx.add_args(*args)
     if not Path(ctx.executable).exists():
         raise FileNotFoundError(f'Executable not found {ctx.executable}')
-    logger.debug('Launching command: %s', ' '.join(ctx.command))
+    logger.info('Launching command: %s', ' '.join(ctx.command))
     return process_utils.start_process(
         ctx.command,
         env=ctx.envs,
