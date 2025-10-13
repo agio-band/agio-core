@@ -1,4 +1,5 @@
 import logging
+import re
 from pathlib import Path
 
 import click
@@ -81,6 +82,8 @@ class PackageNewCommand(ASubCommand):
         # docs name
         if not nice_name:
             default_nice_name = unslugify(name)
+            # agio to lowercase :)
+            default_nice_name = re.sub(r'agio', 'agio', default_nice_name, flags=re.IGNORECASE)
             nice_name = click.prompt(f"Package name for docs", default=default_nice_name)
         return name, python_name, nice_name
 
