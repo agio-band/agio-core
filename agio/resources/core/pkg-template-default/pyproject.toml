@@ -23,6 +23,7 @@ include-package-data = true
 [tool.setuptools.package-data]
 "{{py_name}}" = [
     "__agio__.yml",
+    "resources/**",
 ]
 
 [build-system]
