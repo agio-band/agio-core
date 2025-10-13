@@ -17,7 +17,6 @@ class PackageNewCommand(ASubCommand):
     command_name = "new"
     arguments = [
         click.argument("destination", type=click.Path(dir_okay=True, resolve_path=True),
-                       # help='Package root path, Default: $PWD'
                      default=Path.cwd().absolute().as_posix()),
         click.option("-n", "--name", help='Package name. Example: my-package',),
         click.option("-p", "--python-name", help='Python package name. Example: my_package. Default: slug from name',),
