@@ -214,7 +214,7 @@ class ProcessHub(metaclass=Singleton):
 
     def shutdown(self, *args, **kwargs):
         if self._running:
-            logging.info("Shutting down all processes...")
+            logging.debug("Shutting down all processes...")
             self._running = False
             self.stop_all()
 

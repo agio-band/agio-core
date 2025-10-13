@@ -18,16 +18,20 @@ _subscribe('core.app.exit', _process_hub.shutdown)
 _emit('core.app.logger_created', logger)
 
 
-def _before_exit_event(*args):
+def _before_exit_event(signum, frame):
     print()
     logger.debug('Receive exit signal')
     _emit('core.app.exit')
+    signal.signal(signum, signal.SIG_DFL)
+    signal.raise_signal(signum)
+
 
 if threading.current_thread() is threading.main_thread():
     signal.signal(signal.SIGINT, _before_exit_event)
     signal.signal(signal.SIGTERM, _before_exit_event)
 else:
     atexit.register(_before_exit_event)
+
 
 _emit('core.app.on_startup')
 logger.debug('Core init done')
