@@ -92,12 +92,7 @@ class UVPackageManager(PackageManagerBase):
             else:
                 raise RuntimeError('No python version available')
         logger.info('Create venv with python: %s', py_version)
-        cmd = ['init', '--bare']
-        cmd.extend(['--python', py_version])
         self.path.mkdir(parents=True, exist_ok=True)
-        resp = self.run(cmd, workdir=self.path.as_posix())
-        if resp:
-            raise RuntimeError('Process finished with exit code: %s', resp)
         resp = self.run(['venv', '--python', py_version], workdir=self.path.as_posix())
         if resp:
             raise RuntimeError('Process finished with exit code: %s', resp)
