@@ -1,4 +1,4 @@
-from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
+from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, InvalidClientError, InvalidTokenError
 from agio.core import exceptions
 from . import client
 
@@ -19,6 +19,6 @@ def is_logged_in():
     try:
         get_current_user()
         return True
-    except (exceptions.RequestError, InvalidGrantError):
+    except (exceptions.RequestError, InvalidGrantError, InvalidClientError, InvalidTokenError):
         # message must be UNAUTHORIZED
         return False
