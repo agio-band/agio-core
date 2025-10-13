@@ -1,0 +1,32 @@
+name: {{py_name}}
+version: 0.0.0
+label: {{nice_name}}
+description: |
+  {{nice_name}} package
+icon: ""
+
+tags:
+
+urls:
+  source_url: ""
+  home_page: ""
+  documentation: ""
+  bug_tracker: ""
+
+required_packages: []
+
+#plugins:
+#  - label: Plugin Name
+#    implementations:
+#      - module: plugins/commands/my_plugin.py
+
+#settings:
+#  local:
+#    layout: package_settings/local_layout.yml
+#    model: package_settings.local_settings.PluginLocalSettings
+#  workspace:
+#    layout: package_settings/workspace_layout.yml
+#    model: package_settings.workspace_settings.PluginWorkspaceSettings
+
+#callbacks:
+#  - callbacks/my_callbacks.py

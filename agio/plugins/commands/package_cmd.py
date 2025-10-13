@@ -1,12 +1,13 @@
+import logging
 from pathlib import Path
 
 import click
-import logging
 
-from agio.core.domains import APackage, APackageRelease
-from agio.core.pkg import APackageManager
+from agio.core.domains import APackageRelease
 from agio.core.pkg.package_repostory import APackageRepository
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
+from agio.core.utils import package_template
+from agio.core.utils.text_utils import unslugify
 
 logger = logging.getLogger(__name__)
 
@@ -14,17 +15,74 @@ logger = logging.getLogger(__name__)
 class PackageNewCommand(ASubCommand):
     command_name = "new"
     arguments = [
-        click.option("-p", "--path", help='Package root path, Default: $PWD',
-                     type=click.Path(exists=True, dir_okay=True, resolve_path=True),
+        click.argument("destination", type=click.Path(dir_okay=True, resolve_path=True),
+                       # help='Package root path, Default: $PWD'
                      default=Path.cwd().absolute().as_posix()),
+        click.option("-n", "--name", help='Package name. Example: my-package',),
+        click.option("-p", "--python-name", help='Python package name. Example: my_package. Default: slug from name',),
+        click.option("-c", "--nice-name", help='Package name for docs. Example: My Package. Default: unslugify from name', required=False),
+        click.option("-t", "--template", help='Use custom template', required=False, default=None),
+        click.option("-q", "--quiet", help='Quiet creation', required=False, default=False, is_flag=True),
+
     ]
 
-    def execute(self, path: str):
-        print(f"Create new package from {path}")
-        pkg = APackageRepository(path).pkg_manager
-        print('Package name:', pkg.package_name)
-        new_pkg = APackage.create(pkg.package_name)
-        print(f"New package created: {new_pkg.id}")
+    def execute(self, destination: str, name: str = None, python_name: str = None,
+                nice_name: str = None, template: str = None, quiet: bool = False):
+        destination = Path(destination).expanduser().absolute()
+        click.secho('Create new package', fg='green')
+        try:
+            name, python_name, nice_name = self.collect_data(name, python_name, nice_name)
+        except KeyboardInterrupt:
+            return
+        click.secho('=== New Package Parameters: ===', fg='green')
+        print('Name: ', end='')
+        click.secho(name, fg='yellow')
+        print('Py Package Name: ', end='')
+        click.secho(python_name, fg='yellow')
+        print('Nice Name: ', end='')
+        click.secho(nice_name, fg='yellow')
+        print('Destination path: ', end='')
+        click.secho(destination, fg='yellow')
+        click.secho('===============================', fg='green')
+        if not quiet and not click.confirm('Do you want to continue?', default=True):
+            print('Canceled')
+        result = package_template.create_new_package(destination, name, python_name, nice_name)
+        click.secho(f'Package Created: {result}', fg='green')
+
+    def collect_data(self, name: str = None, python_name: str = None, nice_name: str = None):
+        # project name
+        while True:
+            if not name:
+                name = click.prompt("Package name")
+            try:
+                name = package_template.validate_package_name(name)
+            except NameError as e:
+                click.secho(f'Error: {e}', fg='red')
+                name = ''
+                continue
+            break
+
+        # python name
+        if not python_name:
+            try:
+                default_py_name = package_template.validate_python_name(name)
+            except NameError:
+                default_py_name = None
+            while True:
+                python_name = click.prompt(f"Python package name", default=default_py_name)
+                try:
+                    python_name = package_template.validate_python_name(python_name)
+                except NameError as e:
+                    click.secho(f"Error: {e} ", fg='red')
+                    continue
+                break
+        else:
+            python_name = package_template.validate_python_name(name)
+        # docs name
+        if not nice_name:
+            default_nice_name = unslugify(name)
+            nice_name = click.prompt(f"Package name for docs", default=default_nice_name)
+        return name, python_name, nice_name
 
 
 class PackageBuildCommand(ASubCommand):

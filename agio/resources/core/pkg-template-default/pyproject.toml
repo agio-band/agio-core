@@ -1,0 +1,33 @@
+[project]
+name = "{{name}}"
+version = "0.0.0"
+description = "{{description}}"
+authors = [
+    { name = "{{username}}", email = "{{email}}" }
+]
+readme = "README.md"
+requires-python = ">=3.11"
+
+# use "uv add package-name" to add python dependencies
+dependencies = []
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"{{py_name}}" = [
+    "__agio__.yml",
+]
+
+[build-system]
+requires = ["uv", "wheel", "setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
