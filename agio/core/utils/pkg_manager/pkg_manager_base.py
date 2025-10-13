@@ -128,7 +128,6 @@ class PackageManagerBase:
         logger.debug(f'Running command: {" ".join(cmd)}')
         logger.debug(f'In directory: {workdir}')
         kwargs.setdefault('get_output', False)
-        print(cmd)
         return start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], **kwargs)
 
     @classmethod

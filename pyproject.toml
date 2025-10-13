@@ -6,7 +6,6 @@ authors = [
     { name = "paulwinex", email = "paulwinex@gmail.com" }
 ]
 license = { text = "MIT" }
-#license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -49,6 +48,11 @@ include-package-data = true
     "core/api/templates/*",
     "resources/**"
 ]
+
+#[tool.uv.workspace]
+#members = [
+#    "agio/resources/pkg-template-default",
+#]
 
 [dependency-groups]
 dev = [

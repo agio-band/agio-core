@@ -155,7 +155,7 @@ class AWorkspaceManager:
             print(pkg)
         print('-'*100)
 
-        logger.info(f'Packages to install: {[(x.get_package_name(), x.get_version()) for x in package_list]}')
+        logger.info(f'Packages to install: {len(package_list)}')
         resp = self.venv_manager.install_packages(*install_args, no_cache=no_cache)
         if resp:
             try:
