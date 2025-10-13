@@ -67,7 +67,7 @@ class AProject(DomainBase):
 
     @property
     def workspace_id(self):
-        return self._data['workspace']['id']
+        return self._data['workspace']['id'] if self._data['workspace'] else None
 
     def set_workspace(self, ws: AWorkspace|str|None) -> bool:
         if ws is None:
