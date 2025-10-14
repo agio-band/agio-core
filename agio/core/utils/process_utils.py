@@ -261,7 +261,7 @@ def process_exists(pid) -> bool:
     """
     try:
         os.kill(pid, 0)
-    except (ProcessLookupError, OSError):
+    except (ProcessLookupError, OSError, SystemError):
         return False
     except PermissionError:
         return True

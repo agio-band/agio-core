@@ -187,7 +187,7 @@ def get_default_env_executable():
         return default_exec
     default_venv = app_dirs.get_default_env_dir()
     manager  = get_package_manager_class()
-    default_exec = manager.find_py_executable(default_venv)
+    default_exec = manager(default_venv).python_executable
     if not default_exec:
         raise WorkspaceNotExists('AGIO_DEFAULT_WORKSPACE_PY_EXECUTABLE not set')
     return default_exec
