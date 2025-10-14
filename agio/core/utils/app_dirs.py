@@ -35,7 +35,7 @@ def get_default_env_dir():
     if os.name == 'nt':
         return Path(os.getenv('APPDATA'), 'agio\default-env').as_posix()
     elif os.name == "posix":
-        return Path('~/.config/agio/default-env').as_posix()
+        return Path('~/.config/agio/default-env').expanduser().absolute().as_posix()
     else:
         raise OSError("Unsupported operating system")
 
