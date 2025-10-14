@@ -6,6 +6,7 @@ import signal
 import subprocess
 import argparse
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Iterable
 
 logger = logging.getLogger(__name__)
@@ -113,6 +114,10 @@ def start_process(
         if new_console:
             creationflags |= subprocess.CREATE_NEW_CONSOLE
         else:
+            executable = Path(command[0])
+            if executable.stem == 'python':
+                if executable.with_name('pythonw.exe').exists():
+                    command[0] = str(executable.with_name('pythonw.exe'))
             creationflags |= subprocess.CREATE_NO_WINDOW # TODO make optional
         stdin = subprocess.DEVNULL if detached else None
     else:

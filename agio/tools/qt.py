@@ -1,14 +1,62 @@
 import inspect
 import logging
 import sys
+from contextlib import contextmanager
 
 from PySide6.QtCore import *
 from PySide6.QtGui import *
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import *
 
+from agio.core.events import on_exit
 from agio.core.pkg import resources
 
 logger = logging.getLogger(__name__)
+
+
+class QApp(QApplication):
+    levels = {
+        'info': QMessageBox.Icon.Information,
+        'warning': QMessageBox.Icon.Warning,
+        'error': QMessageBox.Icon.Critical
+    }
+    show_message_dialog_signal = Signal(dict)
+
+    def __init__(self, app_name='agio', exit_on_widget_close: bool = True, argv=None):
+        super().__init__(argv or [])
+        self.show_message_dialog_signal.connect(self.show_message_dialog)
+        self.setQuitOnLastWindowClosed(exit_on_widget_close)
+        self.setApplicationName(app_name)
+        self.installEventFilter(self)
+        self.app_icon = QIcon(resources.get_res('core/agio-icon.png'))
+
+        # break qt event loop every N time to catch python core events
+        self._event_timer = QTimer()
+        self._event_timer.start(100)
+        self._event_timer.timeout.connect(lambda: None)
+
+    def eventFilter(self, object, event):
+        if event.type() == QEvent.ChildPolished:
+            if isinstance(object, QWidget) and not isinstance(object, QMenu) and not object.parent():
+                try:
+                    self.update_widget(object)
+                except Exception as e:
+                    logger.error(str(e))
+        return False
+
+    def update_widget(self, widget):
+        widget.setWindowIcon(self.app_icon)
+
+    def show_message_dialog(self, data: dict):
+        message = data.get('message', 'No message')
+        title = data.get('title') or 'agio'
+        level= data.get('level') or 'info'
+
+        msg = QMessageBox()
+        msg.setWindowTitle(title)
+        msg.setText(message)
+        msg.setIcon(self.levels.get(level))
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg.exec_()
 
 
 def get_main_parent():
@@ -33,21 +81,13 @@ def center_on_screen(widget, app = None):
     widget.move(widget_geometry.topLeft())
 
 
-def message_dialog(title, message, level='info'):
-    levels = {
-        'info': QMessageBox.Icon.Information,
-        'warning': QMessageBox.Icon.Warning,
-        'error': QMessageBox.Icon.Critical
-    }
-    icon = resources.get_res('core/agio-icon.png')
-    app = QApplication.instance() or QApplication([])
-    msg = QMessageBox()
-    msg.setWindowIcon(QIcon(icon))
-    msg.setWindowTitle(title)
-    msg.setText(message)
-    msg.setIcon(levels.get(level))
-    msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-    msg.exec_()
+def show_message_dialog(message: str, title: str = None, level: str = None):
+    data = {'message': message, 'title': title, 'level': level}
+    try:
+        app = QApp.instance() or QApp()
+        app.show_message_dialog_signal.emit(data)
+    except Exception as e:
+        logger.exception(f'Message dialog failed: {data}')
 
 
 def open_widget(widget, on_center: bool = True, qapp: QApplication = None, *args, **kwargs):
@@ -58,7 +98,7 @@ def open_widget(widget, on_center: bool = True, qapp: QApplication = None, *args
     - apply app name
     - apply app icon
     """
-    qapp = qapp or  QApplication.instance() or QApplication(sys.argv)
+    qapp = qapp or QApp.instance() or QApp()
     qapp.setQuitOnLastWindowClosed(True)
     qapp.setApplicationName(kwargs.pop('app_name', 'agio'))
 
@@ -79,3 +119,21 @@ def open_widget(widget, on_center: bool = True, qapp: QApplication = None, *args
     except Exception:
         logging.exception(f"Application startup error")
 
+
+@contextmanager
+def main_app(app_name: str = 'agio', dialog_mode: bool = True):
+    """
+    Open main app
+    dialog_mode: close app on dialog closed
+    """
+    if QApplication.instance():
+        QMessageBox.critical(None, "Error", f"Main Qt App already started")
+        return
+    qapp = QApp(app_name, exit_on_widget_close=dialog_mode)
+    on_exit(lambda *args: qapp.quit())
+    try:
+        yield qapp
+        qapp.exec()
+    except Exception as e:
+        logging.exception("Application startup error")
+        QMessageBox.critical(None, "Error", f"{type(e).__name__}: {e}")
