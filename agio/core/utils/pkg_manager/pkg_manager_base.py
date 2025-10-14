@@ -42,7 +42,7 @@ class PackageManagerBase:
     def find_py_executable(cls, path: str) -> str:
         man = cls(path)
         search_command = 'where' if os.name == 'nt' else 'which'
-        resp = man.run(['run', search_command, 'python'], output=True)
+        resp = man.run(['run', search_command, 'python'], get_output=True)
         return resp.split()[-1].strip()
 
     @property
