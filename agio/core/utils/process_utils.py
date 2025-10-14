@@ -64,6 +64,7 @@ def start_process(
     if env:
         new_env.update(env)
     if workdir:
+        workdir = os.path.abspath(os.path.expanduser(workdir))
         if not os.path.isdir(workdir):
             print(f"Error: Working directory '{workdir}' does not exist.")
             sys.exit(1)
