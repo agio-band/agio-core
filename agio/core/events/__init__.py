@@ -5,6 +5,7 @@ from typing import Callable, Any
 
 from agio.core.utils.event_hub import EventHub
 from agio.core.utils.modules_utils import import_module_by_path
+from .event import AEvent
 
 logger = logging.getLogger(__name__)
 event_hub = EventHub()

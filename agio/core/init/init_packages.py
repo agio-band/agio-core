@@ -14,7 +14,7 @@ def init_packages():
     register_callbacks(callback_paths)
     # now we can execute callbacks
     for pkg in package_hub.iter_packages():
-        emit('core.app.package_loaded', pkg)
-    emit('core.app.all_packages_loaded', package_hub)
+        emit('core.app.package_loaded', {'package': pkg})
+    emit('core.app.all_packages_loaded', {'package_hub': package_hub})
     logger.debug('Loaded packages: %s', package_hub.packages_count)
     return package_hub

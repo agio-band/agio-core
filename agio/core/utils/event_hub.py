@@ -69,7 +69,7 @@ class EventHub(metaclass=Singleton):
         callbacks_to_remove = []
 
         sender = None
-        event_obj = AEvent(event_name, sender)
+        event_obj = AEvent(event_name, sender, payload=payload)
         for event_pattern, callbacks_dict in list(self._callbacks.items()):
             if not fnmatch(event_name, event_pattern):
                 continue
@@ -77,7 +77,7 @@ class EventHub(metaclass=Singleton):
             for callback_func, metadata in list(callbacks_dict.items()):
                 try:
                     ##### EXECUTE CALLBACK #####
-                    callback_func(event_obj, payload)
+                    callback_func(event_obj)
                     ############################
                 except StopEventPropagate:
                     logger.debug(f"Event propagation stopped by {metadata['name']} for event {event_name}")

@@ -38,6 +38,13 @@ class PackageManagerBase:
             ('.exe' if os.name == 'nt' else '')
         ).as_posix()
 
+    @classmethod
+    def find_py_executable(cls, path: str) -> str:
+        man = cls(path)
+        search_command = 'where' if os.name == 'nt' else 'which'
+        resp = man.run(['run', search_command, 'python'], output=True)
+        return resp.split()[-1].strip()
+
     @property
     def bin_dir_path(self):
         if not self.venv_exists():

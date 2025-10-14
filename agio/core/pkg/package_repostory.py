@@ -45,10 +45,6 @@ class APackageRepository:
         # check package registered
         if not self.pkg_manager.package:
             raise PackageError(f"Package '{self.pkg_manager.package_name}' not registered")
-        # check release version is already exists
-        if self.pkg_manager.release:
-            raise ValueError(f"Release {self.pkg_manager.package_name} v{self.pkg_manager.package_version} "
-                             f"already registered in agio database")
         # check unsaved changes
         if not kwargs.get('no_check_branch', False):
             active_branch = git_utils.get_current_branch(self.root.as_posix())
@@ -68,6 +64,14 @@ class APackageRepository:
                 raise ValueError(f"Has unpushed commits")
         else:
             logger.debug('Skip unpushed commits check')
+        # check release version is already exists in agio database
+        replace = kwargs.pop('replace', False)
+        if self.pkg_manager.release:
+            if not replace:
+                raise ValueError(f"Release {self.pkg_manager.package_name} v{self.pkg_manager.package_version} "
+                                 f"already registered in agio database")
+            else:
+                pass
         # check version is not exists in remote
         access_data = kwargs.get('access_data', {})
         if 'token' in kwargs:

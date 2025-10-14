@@ -113,11 +113,6 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
         assets_url = release_data['assets_url']
         resp = requests.get(assets_url, headers=headers)
         resp.raise_for_status()
-        # assets = []
-        # for ast in resp.json():
-        #     assets.append({
-        #         'url': ast['browser_download_url'],
-        #     })
         return release_data
 
     def upload_github_file(self, upload_url: str, filepath: str, access_data: dict = None):

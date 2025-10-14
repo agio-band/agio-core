@@ -11,7 +11,8 @@ from pathlib import Path
 
 from agio.core import pkg
 from agio.core.exceptions import WorkspaceNotExists
-from agio.core.utils import process_utils
+from agio.core.utils import process_utils, app_dirs
+from agio.core.utils.pkg_manager import get_package_manager_class
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +183,11 @@ class LaunchContext:
 
 def get_default_env_executable():
     default_exec = os.getenv('AGIO_DEFAULT_WORKSPACE_PY_EXECUTABLE')
+    if default_exec:
+        return default_exec
+    default_venv = app_dirs.get_default_env_dir()
+    manager  = get_package_manager_class()
+    default_exec = manager.find_py_executable(default_venv)
     if not default_exec:
         raise WorkspaceNotExists('AGIO_DEFAULT_WORKSPACE_PY_EXECUTABLE not set')
     return default_exec

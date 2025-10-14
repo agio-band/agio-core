@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 from requests_oauthlib import OAuth2Session
 
-from agio.core.utils.network import get_free_port
+from agio.tools.network import get_free_port
 
 logger = logging.getLogger(__name__)
 

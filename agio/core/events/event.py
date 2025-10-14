@@ -12,6 +12,7 @@ NAME_PATTERN = re.compile(r"^[A-Za-z][\w-]+\.[\w-]+\.[\w-]+$")
 class AEvent:
     name: str
     sender: str|None
+    payload: dict|None = None
     emit_time: datetime = field(default_factory=datetime.now)
 
     def __post_init__(self):

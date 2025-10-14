@@ -77,15 +77,15 @@ class InfoCommand(ACommandPlugin):
                 for rev in revisions:
                     print('  ',rev.name)
         else:
-            print('Name: default')
+            print('Name: [default]')
             print('ID: [none]')
-            print(f'Root: {Path(sys.executable).parent.parent}')
+            print(f'Root: {Path(sys.executable).parent.parent.parent}')
 
     def show_python_info(self):
         line('Python', color='yellow')
         print('Version:', sys.version)
         print('Executable:', sys.executable)
-        print('sys.path list')
+        line('sys.path', color='yellow')
         for path in sys.path:
             print(path)
 

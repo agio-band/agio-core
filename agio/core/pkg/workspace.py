@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 import os
@@ -164,7 +165,9 @@ class AWorkspaceManager:
                 pass
             raise Exception(f'Installation failed for workspace {self.workspace_id}. Exit code: {resp}')
         with open(self.local_meta_file, 'w') as f:
-            json.dump(self.revision._data, f, indent=4)
+            data = copy.deepcopy(self.revision.to_dict())
+            data['workspace_suffix'] = self.root_suffix
+            json.dump(data, f, indent=4)
         emit('core.workspace.installed',
              {'revision': self, 'packages': package_list, 'meta_filename': self.local_meta_file}
              )

@@ -7,7 +7,7 @@ import click
 from agio.core.domains import APackageRelease
 from agio.core.pkg.package_repostory import APackageRepository
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
-from agio.core.utils import package_template
+from agio.tools import package_template
 from agio.core.utils.text_utils import unslugify
 
 logger = logging.getLogger(__name__)
@@ -140,6 +140,7 @@ class PackageReleaseCommand(ASubCommand):
         click.option('-c', '--no-check-commits', is_flag=True, default=False, help='Skip commits check'),
         click.option('-p', '--no-check-pushed', is_flag=True, default=False, help='Skip push check'),
         click.option('-l', '--no-cleanup', is_flag=True, default=False, help='Skip cleanup build files'),
+        click.option('-r', '--replace', is_flag=True, default=False, help='Replace existing release'),
         click.argument("path",
                      type=click.Path(exists=True, dir_okay=True, resolve_path=True),
                      default=Path.cwd().absolute().as_posix()),

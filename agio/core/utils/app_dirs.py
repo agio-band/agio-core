@@ -31,6 +31,15 @@ def _get_user_temp_dir():
     return Path(tempfile.gettempdir())
 
 
+def get_default_env_dir():
+    if os.name == 'nt':
+        return Path(os.getenv('APPDATA'), 'agio\default-env').as_posix()
+    elif os.name == "posix":
+        return Path('~/.config/agio/default-env').as_posix()
+    else:
+        raise OSError("Unsupported operating system")
+
+
 def temp_dir() -> Path:
     return _get_user_temp_dir().joinpath('agio')
 
