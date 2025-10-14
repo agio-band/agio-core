@@ -2,5 +2,5 @@
 
 
 apt update
-apt install curl git -y
+apt install curl -y
 source install-agio.sh

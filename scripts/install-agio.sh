@@ -25,14 +25,6 @@ if ! command -v uv >/dev/null 2>&1; then
     echo "UV installed successfully."
 fi
 
-# Check Git installed
-if ! command -v git >/dev/null 2>&1; then
-    echo "Error: Git not installed!"
-    echo "Use the following command to install it:"
-    echo "  sudo apt-get install git -y"
-    exit 1
-fi
-
 # create default venv
 venv_dir=~/.config/agio/default-env
 python_version="3.11" # minimal required version
@@ -52,7 +44,7 @@ fi
 
 # install core
 echo "Installing agio.core..."
-if ! uv pip install --quiet git+https://github.com/agio-band/agio-core.git; then
+if ! uv pip install --quiet https://github.com/agio-band/agio-core/releases/download/0.0.1/agio_core-0.0.1-py3-none-any.whl; then
     echo "Error: Failed to install agio.core." >&2
     exit 1
 fi
@@ -70,6 +62,34 @@ fi
 
 ln -s "$venv_dir/.venv/bin/agio" "$bin_file"
 chmod +x $bin_file
+
+# temporary install main packages for first version of pipeline
+# install core
+echo "Installing additional libs..."
+# pipe
+echo "agio.pipe"
+if ! uv pip install --quiet https://github.com/agio-band/agio-pipe/releases/download/0.0.1/agio_pipe-0.0.1-py3-none-any.whl; then
+    echo "Error: Failed to install agio.pipe." >&2
+    exit 1
+fi
+# broker
+echo "agio.broker"
+if ! uv pip install --quiet https://github.com/agio-band/agio-broker/releases/download/0.0.1/agio_broker-0.1.0-py3-none-any.whl; then
+    echo "Error: Failed to install agio.broker." >&2
+    exit 1
+fi
+# desk
+echo "agio.desk"
+if ! uv pip install --quiet https://github.com/agio-band/agio-desk/releases/download/0.0.1/agio_desk-0.0.1-py3-none-any.whl; then
+    echo "Error: Failed to install agio.desk." >&2
+    exit 1
+fi
+## publish simple
+echo "agio.publish"
+if ! uv pip install --quiet https://github.com/agio-band/agio-publish-simple/releases/download/0.0.3/agio_publish_simple-0.0.3-py3-none-any.whl; then
+    echo "Error: Failed to install agio.publish." >&2
+    exit 1
+fi
 
 echo "Installation complete!"
 echo "Command 'agio' is available now for user ${USER} via the link in ~/.local/bin."

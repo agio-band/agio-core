@@ -3,11 +3,10 @@
 Installs and configures the agio.core environment using uv.
 .DESCRIPTION
 This script performs the following steps:
-1. Checks for and installs UV package manager if missing.
-2. Checks for Git installation.
-3. Creates a default virtual environment (.venv) using Python 3.11.
-4. Installs agio.core from a Git repository into the virtual environment.
-5. Creates an 'agio.cmd' wrapper in a user's local application path for easy execution.
+- Checks for and installs UV package manager if missing.
+- Creates a default virtual environment (.venv) using Python 3.11.
+- Installs agio.core from a Git repository into the virtual environment.
+- Creates an 'agio.cmd' wrapper in a user's local application path for easy execution.
 .PARAMETER QuietMode
 If present, enables quiet mode (not fully implemented in this version, but passed as argument to uv).
 #>
@@ -54,18 +53,6 @@ catch {
     }
 }
 
-## Git Check
-Write-Host "Checking for Git..."
-try {
-    $git_path = (Get-Command git -ErrorAction Stop).Path
-    Write-Host "Git found at: $git_path"
-}
-catch {
-    Write-Host "Error: Git not installed!"
-    Write-Host "Please install Git from https://git-scm.com/download/win and ensure it's in your PATH."
-    Exit 1
-}
-
 ## Constants and Directories
 $AGIO_CONFIG_DIR = Join-Path -Path $env:APPDATA -ChildPath "agio\default-env"
 $PYTHON_VERSION = "3.11"
@@ -102,14 +89,41 @@ if ($LASTEXITCODE -ne 0) {
 
 ## Install agio.core
 Write-Host "Installing agio.core..."
-uv pip install $QUIET_MODE_ARG git+https://github.com/agio-band/agio-core.git
+uv pip install $QUIET_MODE_ARG https://github.com/agio-band/agio-core/releases/download/0.0.1/agio_core-0.0.1-py3-none-any.whl
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Failed to install agio.core. Exit code: $LASTEXITCODE"
     Exit 1
 }
 Write-Host "agio.core installed."
 
-## 6. Create agio shortcut
+## temporary install base libs
+Write-Host "Installing additional libs..."
+Write-Host "agio.pipe"
+uv pip install $QUIET_MODE_ARG https://github.com/agio-band/agio-pipe/releases/download/0.0.1/agio_pipe-0.0.1-py3-none-any.whl
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Failed to install agio.pipe. Exit code: $LASTEXITCODE"
+    Exit 1
+}
+Write-Host "agio.broker"
+uv pip install $QUIET_MODE_ARG https://github.com/agio-band/agio-broker/releases/download/0.0.1/agio_broker-0.1.0-py3-none-any.whl
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Failed to install agio.broker. Exit code: $LASTEXITCODE"
+    Exit 1
+}
+Write-Host "agio.desk"
+uv pip install $QUIET_MODE_ARG https://github.com/agio-band/agio-desk/releases/download/0.0.1/agio_desk-0.0.1-py3-none-any.whl
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Failed to install agio.desk. Exit code: $LASTEXITCODE"
+    Exit 1
+}
+Write-Host "agio.publish"
+uv pip install $QUIET_MODE_ARG https://github.com/agio-band/agio-publish-simple/releases/download/0.0.3/agio_publish_simple-0.0.3-py3-none-any.whl
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Failed to install agio.publish. Exit code: $LASTEXITCODE"
+    Exit 1
+}
+
+## Create agio shortcut
 
 $BIN_DIR = Join-Path -Path $env:USERPROFILE -ChildPath "AppData\Local\Microsoft\WindowsApps"
 $AGIO_CMD_WRAPPER = Join-Path -Path $BIN_DIR -ChildPath "agio.cmd"
@@ -122,7 +136,7 @@ if (Test-Path -Path $AGIO_CMD_WRAPPER) {
     Remove-Item -Path $AGIO_CMD_WRAPPER
 }
 
-# 2. Create shortcut agio.cmd
+# Create shortcut agio.cmd
 $WrapperContent = @"
 @echo off
 CHCP 1251 > nul
