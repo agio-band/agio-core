@@ -36,7 +36,7 @@ def get_default_env_dir():
     if from_env:
         return Path(from_env)
     if os.name == 'nt':
-        return Path(os.getenv('APPDATA'), 'agio\default-env').as_posix()
+        return Path(os.getenv('APPDATA'), r'agio\default-env').as_posix()
     elif os.name == "posix":
         return Path('~/.config/agio/default-env').expanduser().absolute().as_posix()
     else:
