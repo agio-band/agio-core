@@ -1,5 +1,6 @@
 from typing import Any
 
+from agio.core.api.utils import NOTSET
 from agio.core.events import emit
 from agio.core.settings import package_settings as package_settings_class
 from agio.core.settings import collector
@@ -49,13 +50,20 @@ class ASettingsHub:
         if param_name.count('.') != 1:
             raise NameError(f"Invalid parameter name: {param_name}")
 
-    def get(self, param_name: str) -> Any:
+    def get(self, param_name: str, default: Any = NOTSET) -> Any:
         self._check_patm_name(param_name)
         package_name, param_name = param_name.split(".")
         package_settings: package_settings_class.APackageSettings = self._package_settings.get(package_name)
         if not package_settings:
-            raise KeyError(f"Package {package_name} not found in workspace settings")
-        return package_settings.get(param_name)
+            if isinstance(default, NOTSET):
+                raise KeyError(f"Package {package_name} not found in workspace settings")
+            return default
+        try:
+            return package_settings.get(param_name)
+        except ValueError as e:
+            if default is not NOTSET:
+                return default
+            raise e
 
     def set(self, param_name: str, value: Any):
         self._check_patm_name(param_name)
