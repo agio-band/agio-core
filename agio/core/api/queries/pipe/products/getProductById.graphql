@@ -2,7 +2,10 @@ query GetProductById($id: ID!) {
     publish(id: $id) {
         id
         name
-        type
+        type {
+            id
+            name
+        }
         fields
         entityId
         variant

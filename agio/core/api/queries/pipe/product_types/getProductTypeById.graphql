@@ -1,0 +1,11 @@
+query GetProductType($id: ID!) {
+    publishType(
+      id: $id
+    ) {
+        id
+        name
+        config
+        description
+        dataType
+}
+}

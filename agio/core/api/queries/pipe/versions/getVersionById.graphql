@@ -6,7 +6,10 @@ query GetPublishVersionsById($id: ID!) {
         publish {
             id
             name
-            type
+            type {
+                id
+                name
+            }
         }
         entity {
             id

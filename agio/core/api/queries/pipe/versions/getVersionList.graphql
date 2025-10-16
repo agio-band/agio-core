@@ -12,7 +12,10 @@ query GetVersionList($first: Int!, $filter: PublishVersionFilter, $afterCursor: 
                 publish {
                     id
                     name
-                    type
+                    type {
+                        id
+                        name
+                    }
                 }
                 fields
             }

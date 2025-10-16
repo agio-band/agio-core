@@ -1,0 +1,20 @@
+query GetPublishTypeByName($name: String!){
+  publishTypes(
+    first: 1,
+    filter: {
+      where:{
+        name: {equalTo: $name}
+      }
+    }
+  ){
+    edges{
+    	node {
+            id
+            name
+            config
+            dataType
+            description
+      }
+  	}
+  }
+}

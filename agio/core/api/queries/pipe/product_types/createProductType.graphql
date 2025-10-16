@@ -1,0 +1,5 @@
+mutation CreateProductType($input: PublishTypeCreateInput!){
+  createPublishType(input: $input){
+    publishTypeId
+  }
+}

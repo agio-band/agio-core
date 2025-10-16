@@ -1,20 +1,16 @@
-query GetProductList($first: Int!, $filter: PublishFilter, $afterCursor: String) {
-    publishes(
+query GetPublishTypeList($first: Int!, $filter: PublishTypeFilter, $afterCursor: String){
+    publishTypes(
         first: $first,
         filter: $filter,
         after: $afterCursor
-    ) {
-        edges {
+    ){
+        edges{
             node {
                 id
                 name
-                type {
-                    id
-                    name
-                }
-                fields
-                variant
-                entityId
+                config
+                description
+                dataType
             }
         }
         pageInfo {

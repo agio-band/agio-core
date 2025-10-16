@@ -16,7 +16,7 @@ def iter_products(
     filters = deep_dict()
     filters['where']['entity']['id']['equalTo'] = entity_id
     if product_type:
-        filters['type'] = product_type
+        filters['where']['type']['name']['equalTo'] = product_type
     yield from iter_query_list(
         'pipe/products/getProductList',
         'publishes',
@@ -41,13 +41,20 @@ def create_product(
         variant: str,
         fields: dict|None = NOTSET,
     ):
+    # get_product_type
+    product_type_entity = get_product_type_by_name(product_type)
+    if not product_type_entity:
+        raise ValueError(f'Unknown product type "{product_type}"')
+
     return client.make_query(
         'pipe/products/createProduct',
-        name=name,
-        entityId=entity_id,
-        type=product_type,
-        variant=variant,
-        fields=fields,
+        input=dict(
+            name=name,
+            entity=entity_id,
+            type=product_type_entity['id'],
+            variant=variant,
+            fields=fields,
+        )
     )['data']['createPublish']['publishId']
 
 
@@ -55,16 +62,65 @@ def find_product(entity_id: str|UUID, product_type: str, variant: str):
     filters = deep_dict()
     filters['where']['entity']['id']['equalTo'] = entity_id
     if product_type:
-        filters['where']['type']['equalTo'] = product_type
+        filters['where']['type']['name']['equalTo'] = product_type
     if variant:
         filters['where']['variant']['equalTo'] = variant
     resp = client.make_query(
         'pipe/products/getProductList',
         filter=filters,
-        limit=1
+        first=1
     )
     if resp['data']['publishes']['edges']:
         return resp['data']['publishes']['edges'][0]['node']
+
+# product type
+
+def iter_product_types(items_per_page: int = 50):
+    yield from iter_query_list(
+        'pipe/product_types/getProductTypeList',
+        'publishTypes',
+        items_per_page=items_per_page,
+    )
+
+def get_product_type(product_type_id: str):
+    return client.make_query(
+        'pipe/product_types/getProductTypeById',
+        id=product_type_id,
+    )['data']['publishType']
+
+
+def get_product_type_by_name(name: str):
+    resp = client.make_query(
+        'pipe/product_types/getProductTypeByName',
+        name=name,
+    )
+    if resp['data']['publishTypes']['edges']:
+        return resp['data']['publishTypes']['edges'][0]['node']
+
+
+def create_product_type(name, description, config: dict = None, data_type: str = None):
+    return client.make_query(
+        'pipe/product_types/createProductType',
+        input=dict(
+            name=name,
+            description=description,
+            config=config or {},
+            dataType=data_type or "",
+        )
+    )['data']['createPublishType']['publishTypeId']
+
+
+def update_product_type(publish_type_id: str, config: dict = None, data_type: str = None):
+    input_data = deep_dict()
+    if config:
+        input_data['config'] = config
+    if data_type:
+        input_data['dataType'] = data_type
+    return client.make_query(
+        'pipe/product_types/updatePublishType',
+        id=publish_type_id,
+        input=input_data,
+    )['data']['updatePublishType']['ok']
 
 
 # Published Version
