@@ -4,6 +4,7 @@ import sys
 from contextlib import contextmanager
 
 from PySide6.QtCore import *
+from PySide6.QtCore import QTimer, QEvent
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
@@ -52,6 +53,8 @@ class QApp(QApplication):
         level= data.get('level') or 'info'
 
         msg = QMessageBox()
+        if data.get('on_top'):
+            msg.setWindowFlags(Qt.WindowStaysOnTopHint)
         msg.setWindowTitle(title)
         msg.setText(message)
         msg.setIcon(self.levels.get(level))
