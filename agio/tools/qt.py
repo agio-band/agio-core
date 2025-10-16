@@ -84,8 +84,8 @@ def center_on_screen(widget, app = None):
     widget.move(widget_geometry.topLeft())
 
 
-def show_message_dialog(message: str, title: str = None, level: str = None):
-    data = {'message': message, 'title': title, 'level': level}
+def show_message_dialog(message: str, title: str = None, level: str = None, on_top: bool = True):
+    data = {'message': message, 'title': title, 'level': level, 'on_top': on_top}
     try:
         app = QApp.instance() or QApp()
         app.show_message_dialog_signal.emit(data)
