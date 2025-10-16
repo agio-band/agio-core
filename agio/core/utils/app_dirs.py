@@ -32,6 +32,9 @@ def _get_user_temp_dir():
 
 
 def get_default_env_dir():
+    from_env = os.getenv("AGIO_DEFAULT_ENV_PATH")
+    if from_env:
+        return Path(from_env)
     if os.name == 'nt':
         return Path(os.getenv('APPDATA'), 'agio\default-env').as_posix()
     elif os.name == "posix":
