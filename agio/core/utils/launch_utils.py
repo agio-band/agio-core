@@ -213,14 +213,15 @@ def exec_agio_command(
     Commands plugin must be registered
     """
     ws_manager = None
-    if isinstance(workspace, str):
-        ws_manager = pkg.AWorkspaceManager.create_from_id(workspace)
-    elif isinstance(workspace, pkg.AWorkspaceManager):
-        ws_manager = workspace
-    elif workspace is None:
-        ws_manager = pkg.AWorkspaceManager.current()
-    else:
-        raise TypeError("Workspace must be either a string or AWorkspaceManager.")
+    if not os.getenv('AGIO_FORCE_DEFAULT_WORKSPACE'):  # start in default env always (for beta version)
+        if isinstance(workspace, str):
+            ws_manager = pkg.AWorkspaceManager.create_from_id(workspace)
+        elif isinstance(workspace, pkg.AWorkspaceManager):
+            ws_manager = workspace
+        elif workspace is None:
+            ws_manager = pkg.AWorkspaceManager.current()
+        else:
+            raise TypeError("Workspace must be either a string or AWorkspaceManager.")
     start_in_workspace(
         ws_manager=ws_manager,
         args=['-m', 'agio'] + args,
@@ -237,6 +238,8 @@ def start_in_workspace(
         workdir: str = None,
         **kwargs
     ):
+    if os.getenv('AGIO_FORCE_DEFAULT_WORKSPACE'):   # start in default env always (for beta version)
+        ws_manager = None
     if isinstance(ws_manager, str):
         ws_manager = pkg.AWorkspaceManager.create_from_id(ws_manager)
     if ws_manager:
