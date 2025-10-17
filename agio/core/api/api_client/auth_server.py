@@ -14,7 +14,7 @@ def _get_template_content(name):
     page_file_path = Path(__file__).parent.parent / f'templates/{name}.html'
     if not page_file_path.exists():
         raise FileNotFoundError(f"File {page_file_path} not found")
-    return page_file_path.read_text()
+    return page_file_path.read_text(encoding='utf-8')
 
 def _success_page_text():
     return _get_template_content('success_page')

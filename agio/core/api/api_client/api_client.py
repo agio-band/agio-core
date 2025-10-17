@@ -75,7 +75,7 @@ class ApiClient(base._ApiClientAuth):
         query_file_path = self.queries_root.joinpath(query_path).with_suffix('.graphql')
         if not query_file_path.exists():
             raise FileNotFoundError(f'Query file not found: {query_path}')
-        return query_file_path.read_text()
+        return query_file_path.read_text(encoding='utf-8')
 
     def _pprint_request(self, data):
         print('< QUERY >'.center(50, '='))

@@ -79,7 +79,7 @@ def create_from_template(src_pat: str|Path, target_path: str|Path, context: dict
         if item.is_dir():
             trg_item.mkdir(parents=True, exist_ok=True)
         else:
-            data = item.read_text()
+            data = item.read_text(encoding='utf-8')
             new_data = format_with_context(data, context)
             trg_item.write_text(new_data)
     return target_path.as_posix()

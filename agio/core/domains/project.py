@@ -88,3 +88,12 @@ class AProject(DomainBase):
 
         project_settings = get_local_settings(project=self)
         return {k.name: k.path for k in project_settings.get('agio_pipe.local_roots')}
+
+    @property
+    def mount_root(self):
+        roots = self.get_roots()
+        if 'projects' not in roots:
+            raise ValueError('Local settings has no "projects" root parameter')
+        local_storage_root = roots['projects']
+        company_root = f'{local_storage_root}/{self.get_company().code}'
+        return company_root

@@ -29,7 +29,7 @@ def load_local_settings(project: str|project_domain.AProject = None) -> settings
         project = project.id
     settings_file = Path(get_settings_dir(project or 'default'), _settings_file_name)
     if settings_file.exists():
-        settings_data.update(json.loads(settings_file.read_text()))
+        settings_data.update(json.loads(settings_file.read_text(encoding='utf-8')))
     settings = settings_hub.LocalSettingsHub(settings_data)
     logger.debug(f'Loaded settings from {settings_file}')
     return settings
