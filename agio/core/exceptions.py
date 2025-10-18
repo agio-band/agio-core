@@ -149,3 +149,7 @@ class RequestError(AException):
 # services
 class ServiceStartupError(AException):
     detail = "Service startup error"
+
+
+class NotFoundError(AException):
+    detail = "Entity not found"

@@ -5,6 +5,7 @@ from . import client
 from .schemas.desk import UserProfileResponseSchema, CurrentCompanyResponseSchema, CompanyResponseSchema
 from .utils.query_tools import iter_query_list
 from .utils.response_typing import response_schema
+from ..exceptions import NotFoundError
 
 
 # User and profile
@@ -32,6 +33,16 @@ def get_company(company_id: str|UUID) -> dict:
         id=company_id
     )['data']['company']
 
+
+def get_company_by_code(code: str) -> dict|None:
+    resp = client.make_query(
+        'desk/company/getCompanyByCode',
+        code=code
+    )
+    if resp['data']['companies']['edges']:
+        return resp['data']['companies']['edges'][0]
+    else:
+        raise NotFoundError(detail='Company not found')
 
 
 def iter_companies(limit: int = None) -> Iterator[dict]:

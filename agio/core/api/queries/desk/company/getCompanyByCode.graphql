@@ -1,6 +1,11 @@
-query getCompabyById ($first: Int!) {
+query getCompanyByCode($code: String!) {
   companies(
-    first: $first
+    first: 1,
+    filter: {
+      where: {
+        code: {equalTo: $code}
+      }
+    }
   )
   {
     edges{
@@ -10,12 +15,6 @@ query getCompabyById ($first: Int!) {
         code
         logo(params: {type: "fit", width: 480, height: 480})
       }
-    }
-    pageInfo {
-        hasNextPage
-        hasPreviousPage
-        startCursor
-        endCursor
     }
   }
 }

@@ -4,6 +4,7 @@ from typing import Iterator
 from agio.core.domains import DomainBase, AWorkspace
 from agio.core import api
 from agio.core.domains import project
+from agio.core.exceptions import NotFoundError
 
 
 class ACompany(DomainBase):
@@ -30,6 +31,14 @@ class ACompany(DomainBase):
     @classmethod
     def find(cls, **kwargs):
         raise NotImplementedError()
+
+    @classmethod
+    def get_by_name(cls, name: str) -> ACompany|None:
+        try:
+            data = api.desk.get_company_by_code(name)
+            return ACompany(data)
+        except NotFoundError:
+            return None
 
     @classmethod
     def current(cls):
