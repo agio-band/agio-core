@@ -92,7 +92,7 @@ class AProject(DomainBase):
     @property
     def mount_root(self):
         roots = self.get_roots()
-        if 'projects' not in roots:
+        if 'projects' not in roots: # todo: is static root name?
             raise ValueError('Local settings has no "projects" root parameter')
         local_storage_root = roots['projects']
         company_root = f'{local_storage_root}/{self.get_company().code}'
