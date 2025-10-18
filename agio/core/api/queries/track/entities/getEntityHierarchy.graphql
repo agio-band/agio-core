@@ -18,15 +18,7 @@ query GetEntityById($id: ID!) {
           toId
           roleId
         }
-        parent {
-          name
-          id
-          parentId
-          fields
-          class {
-            name
-          }
-        }
+        #{{PARENT-QUERY}}#
       }
     }
   }

@@ -37,20 +37,20 @@ class ApiClient(base._ApiClientAuth):
 
     def make_query(self, query_file: str, **variables) -> dict:
         """Read query from file and execute query"""
-        query_text = self._load_query(query_file)
-        variables = self._remove_notset_values(variables)
-        serialized = self._serialize_values(variables)
-        return self.make_query_raw(query_text, **serialized)
+        query_text = self.load_query(query_file)
+        return self.make_query_raw(query_text, **variables)
 
     def make_query_raw(self, query: str, **variables) -> dict:
         """Execute query from string"""
+        variables = self._remove_notset_values(variables)
+        serialized = self._serialize_values(variables)
         self.check_is_expire()
         data = {
             "query": query,
         }
-        if variables:
+        if serialized:
             data.update({
-                "variables": variables,
+                "variables": serialized,
             })
         if self._debug_query:
             self._pprint_request(data)
@@ -68,7 +68,7 @@ class ApiClient(base._ApiClientAuth):
             raise RequestError('\n'.join(x['message'] for x in result['errors']))
         return result
 
-    def _load_query(self, query_path: str) -> str:
+    def load_query(self, query_path: str) -> str:
         """
         Load GraphQL query from file
         """

@@ -100,6 +100,41 @@ def get_entity(entity_id: str|UUID) -> dict:
     raise EntityNotExists(detail='Entity not found: {}'.format(entity_id))
 
 
+def get_entity_hierarchy(entity_id: str|UUID, depth: int = 10, include_source: bool = False) -> tuple[dict]:
+    query_text = client.load_query('track/entities/getEntityHierarchy.graphql')
+    part = client.load_query('track/entities/getEntityHierarchyPart.graphql')
+    replace_pattern = '#{{PARENT-QUERY}}#'
+
+    def format_query(text, depth):
+        if depth > 0:
+            plevel = '\n'.join([('  ' * depth) + x for x in part.split('\n')])
+            text = text.replace(replace_pattern, format_query(plevel, depth=depth - 1))
+        else:
+            text = text.replace(replace_pattern, '')
+        return text
+
+    query = format_query(query_text, depth)
+    data = client.make_query_raw(
+        query,
+        id=entity_id,
+    )
+
+    def iter_parents(entity: dict):
+        parent = entity.pop('parent', None)
+        yield entity
+        if parent is not None:
+            yield from iter_parents(parent)
+
+    if data['data']['entities']['edges']:
+        item = data['data']['entities']['edges'][0]['node']
+        parents = tuple(iter_parents(item))
+        if not include_source:
+            parents = parents[1:]
+        return tuple(reversed(parents))
+    return tuple()
+
+
+
 def get_entity_by_name(project_id: str|UUID, entity_class: str, name: str) -> dict:
     data = client.make_query(
         'track/entities/getEntityByName',
