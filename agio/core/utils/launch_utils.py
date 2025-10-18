@@ -138,7 +138,6 @@ class LaunchContext:
         for k, v in kwargs.items():
             if isinstance(v, (list, tuple)):
                 v = os.pathsep.join(v)
-            logger.debug(f"Appending env {k}={v}")
             self._envs[k] = v
 
     @property
