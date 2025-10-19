@@ -1,4 +1,4 @@
-from agio.core.settings import StringField
+from agio.core.settings.fields.generic_fields import StringField
 
 
 class JSONField(StringField):

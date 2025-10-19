@@ -1,7 +1,7 @@
 query FindWorkspaceRevisionList(
     $first: Int!,
     $afterCursor: String,
-    $where: WorkspaceRevisionWhere
+    $filters: WorkspaceRevisionFilter
 ) {
   workspaceRevisions(
     first: $first
@@ -12,9 +12,7 @@ query FindWorkspaceRevisionList(
         direction: DESC
       }
     ]
-    filter: {
-      where: $where
-    }
+    filter: $filters
   ) {
     edges {
       node {

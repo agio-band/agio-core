@@ -4,11 +4,13 @@ from uuid import UUID
 
 from agio.core import api
 from agio.core import settings
-from agio.core.entities import DomainBase, AWorkspace
+from agio.core.entities import domain
+from agio.core.entities import workspace as ws
 from agio.core.entities import company as company_entity
+from agio.core.utils import settings_hub
 
 
-class AProject(DomainBase):
+class AProject(domain.DomainBase):
     domain_name = "project"
 
     @property
@@ -66,31 +68,25 @@ class AProject(DomainBase):
     def company(self):
         return self.get_company()
 
-    def get_settings(self):
-        ws = self.get_workspace()
-        if not ws:
-            raise Exception('Project has no workspace')
-        return settings.get_workspace_settings(ws)
-
     @property
     def workspace(self):
         return self.get_workspace()
 
-    def get_workspace(self) -> AWorkspace|None:
-        ws = self._data['workspace']
-        if ws is None:
+    def get_workspace(self) -> ws.AWorkspace|None:
+        workspace_dict = self._data['workspace']
+        if workspace_dict is None:
             return None
         else:
-            return AWorkspace(ws['id'])
+            return ws.AWorkspace(workspace_dict['id'])
 
     @property
     def workspace_id(self):
         return self._data['workspace']['id'] if self._data['workspace'] else None
 
-    def set_workspace(self, ws: AWorkspace|str|None) -> bool:
-        if ws is None:
+    def set_workspace(self, sorkspace: ws.AWorkspace|str|None) -> bool:
+        if sorkspace is None:
             return self.unset_workspace()
-        ws_id = ws.id if isinstance(ws, AWorkspace) else ws
+        ws_id = sorkspace.id if isinstance(sorkspace, ws.AWorkspace) else sorkspace
         resp = api.track.update_project(self.id, workspace_id=ws_id)
         self.reload()
         return resp
@@ -115,3 +111,11 @@ class AProject(DomainBase):
         local_storage_root = roots['projects']
         company_root = f'{local_storage_root}/{self.get_company().code}'
         return company_root
+
+    def get_local_settings(self):
+        return settings.get_local_settings(self)
+
+    def set_local_settings(self, settings_data: settings_hub.LocalSettingsHub|dict):
+        if isinstance(settings_data, dict):
+            settings_data = settings_hub.LocalSettingsHub(settings_data)
+        return settings.save_local_settings(settings_data, self)

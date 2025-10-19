@@ -1,9 +1,10 @@
+from __future__ import annotations
 import glob
 import os
 import sys
 from typing import Generator
 
-from agio.core.pkg.package import APackage, APackageManager
+from agio.core.pkg import package
 from agio.core.utils.singleton import Singleton
 
 
@@ -12,7 +13,7 @@ class APackageHub(metaclass=Singleton):
         self._packages = {}
         self.collect_packages()
 
-    def add_package(self, package_manager: APackageManager):
+    def add_package(self, package_manager: package.APackageManager):
         if package_manager.package_name in self._packages:
             raise ValueError(f"Package {package_manager.package_name} already registered: {self._packages[package_manager.package_name].root}")
         self._packages[package_manager.package_name] = package_manager
@@ -21,19 +22,19 @@ class APackageHub(metaclass=Singleton):
     def packages_count(self):
         return len(self._packages)
 
-    def get_package(self, name: str) -> APackage:
+    def get_package(self, name: str) -> package.APackage:
         return self._packages.get(name)
 
-    def get_packages(self) -> dict[str, APackage]:
+    def get_packages(self) -> dict[str, package.APackage]:
         return self._packages
 
     def get_package_names(self) -> list[str]:
         return list(self._packages.keys())
 
-    def get_package_by_name(self, name: str) -> APackage:
+    def get_package_by_name(self, name: str) -> package.APackage:
         return self._packages.get(name)
 
-    def get_package_list(self) -> list[APackage]:
+    def get_package_list(self) -> list[package.APackage]:
         return list(self._packages.values())
 
     def package_exists(self, name: str) -> bool:
@@ -45,7 +46,7 @@ class APackageHub(metaclass=Singleton):
             self.add_package(package)
 
     @classmethod
-    def iter_packages(cls) -> Generator[APackageManager, None, None]:
+    def iter_packages(cls) -> Generator[package.APackageManager, None, None]:
         # TODO support zip packages
 
         def iter_importable_packages():
@@ -63,8 +64,8 @@ class APackageHub(metaclass=Singleton):
 
         loaded = set()
         for pkg_path in iter_importable_packages():
-            if APackageManager.is_package_root(pkg_path) and pkg_path not in loaded:
-                yield APackageManager(pkg_path)
+            if package.APackageManager.is_package_root(pkg_path) and pkg_path not in loaded:
+                yield package.APackageManager(pkg_path)
                 loaded.add(pkg_path)
 
     def collect_callbacks(self):

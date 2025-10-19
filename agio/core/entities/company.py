@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import Iterator
 
-from agio.core.entities import DomainBase, AWorkspace
+from agio.core.entities import workspace as ws, domain as dm
 from agio.core import api
 from agio.core.entities import project
 from agio.core.exceptions import NotFoundError
 
 
-class ACompany(DomainBase):
+class ACompany(dm.DomainBase):
     domain_name = "company"
 
     @classmethod
@@ -50,6 +50,6 @@ class ACompany(DomainBase):
     def iter_projects(self, **kwargs) -> Iterator[project.AProject]:
         raise NotImplementedError()
 
-    def workspaces(self) -> Iterator[project.AWorkspace]:
+    def workspaces(self) -> Iterator[ws.AWorkspace]:
         for item in api.workspace.iter_workspaces(self.id):
-            yield AWorkspace(item)
+            yield ws.AWorkspace(item)

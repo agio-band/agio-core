@@ -4,7 +4,8 @@ from uuid import UUID
 from . import client
 from .utils import NOTSET
 from .utils.query_tools import iter_query_list, deep_dict
-from ..exceptions import RevisionNotExists, SettingsRevisionNotExists, WorkspaceNotExists, ProjectNotExists
+from ..exceptions import RevisionNotExists, SettingsRevisionNotExists, WorkspaceNotExists, ProjectNotExists, \
+    ProjectWorkspaceNotSet
 from . import track
 
 
@@ -173,22 +174,25 @@ def iter_revisions(workspace_id: UUID|str, limit: int = None) -> Iterator[dict]:
 
 def find_revision(
         workspace_id: str = None,
-        ready_only: bool = True,
-        is_current: bool = False
+        is_ready: bool = True,
+        is_current: bool = False,
+        revision_id: UUID|str = None,
 ) -> dict|None:
-    entity_filter = {}
-    if ready_only:
-        entity_filter['status'] = {"equalTo": "ready"}
+    revision_filter = deep_dict()
+    if is_ready:
+        revision_filter['where']['status']["equalTo"] = "ready"
     if workspace_id:
-        entity_filter['workspace'] = {'id': {'equalTo': str(workspace_id)}}
+        revision_filter['where']['workspace']['id']['equalTo'] = str(workspace_id)
     if is_current:
-        entity_filter['isCurrent'] = {'equalTo': True}
+        revision_filter['where']['isCurrent']['equalTo'] = True
+    if revision_id:
+        revision_filter['where']['id']['equalTo'] = str(revision_id)
     try:
         return next(iter_query_list(
             'ws/revision/findWorkspaceRevision',
             entities_data_key='workspaceRevisions',
             variables=dict(
-                where=entity_filter,
+                filter=revision_filter,
             ),
             limit=1,
         ))
@@ -196,7 +200,14 @@ def find_revision(
         raise RevisionNotExists
 
 
-def get_current_revision(workspace_id: UUID|str) -> dict|None:
+def find_workspace_revision(workspace_id: UUID|str, revision_id: str) -> dict:
+    resp = find_revision(workspace_id=workspace_id, revision_id=revision_id)
+    if not resp:
+        raise RevisionNotExists
+    return resp
+
+
+def get_current_revision(workspace_id: UUID|str) -> dict:
     revision = find_revision(
         workspace_id,
         is_current=True
@@ -211,6 +222,8 @@ def get_revision_by_project_id(project_id: str) -> dict:
     project = track.get_project(project_id)
     if not project:
         raise ProjectNotExists
+    if not project['workspace']:
+        raise ProjectWorkspaceNotSet
     return get_revision_by_workspace_id(project['workspace']['id'])
 
 

@@ -8,7 +8,9 @@ from agio.core.api.utils import NOTSET
 from . import APackageRelease, APackage
 from .entity import DomainBase
 from .workspace_revision import AWorkspaceRevision
-from ..exceptions import RequestError
+from ..events import emit
+from ..exceptions import RequestError, SettingsRevisionNotExists
+from ..utils import settings_hub
 
 
 class AWorkspace(DomainBase):
@@ -107,6 +109,11 @@ class AWorkspace(DomainBase):
         else:
             raise Exception(f'Unknown input type {type(input_data)}')
 
+    def _find_revision(self, revision_id: str) -> AWorkspaceRevision|None:
+        data = api.workspace.find_workspace_revision(workspace_id=self.id, revision_id=revision_id)
+        if data:
+            return AWorkspaceRevision(data)
+
     def set_package_list(
             self,
             packages: list[dict|str],
@@ -140,3 +147,28 @@ class AWorkspace(DomainBase):
         )
         return AWorkspaceRevision(result)
 
+    def get_settings(self, revision_id: str = None) -> settings_hub.WorkspaceSettingsHub:
+        try:
+            if revision_id:
+                revision = self._find_revision(revision_id)
+            else:
+                revision = self.get_current_revision()
+            settings_data = revision.get_settings_data()
+        except SettingsRevisionNotExists:
+            settings_data = {}
+            revision = None
+        # create workspace settings instance with applied values
+        settings = settings_hub.WorkspaceSettingsHub(settings_data)
+        emit('core.settings.workspace_settings_loaded',
+             {'settings': settings, 'workspace': self, 'revision': revision})
+        return settings
+
+    def set_settings(self, settings: dict|settings_hub.WorkspaceSettingsHub, set_current: bool = True):
+        rev = self.get_current_revision()
+        if not isinstance(settings, dict):
+            settings = settings.dump()
+        emit('core.settings.before_workspace_settings_save',
+             {'settings': settings, 'workspace': self, 'revision': rev})
+        rev.set_settings_data(settings, set_current=set_current)
+        emit('core.settings.workspace_settings_saved',
+             {'settings': settings, 'workspace': self, 'revision': rev})

@@ -7,7 +7,7 @@ from typing import Any, Generator, Type
 
 import yaml
 
-from agio.core.entities import APackage
+from agio.core.entities import package
 from agio.core.exceptions import PackageMetadataError, PackageError
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils.modules_utils import import_object_by_dotted_path
@@ -146,7 +146,7 @@ class APackageManager:
     @cached_property
     def package(self):
         if self._package is None:
-            pkg = APackage.find(self.package_name)
+            pkg = package.APackage.find(self.package_name)
             if not pkg:
                 raise PackageError(f'Pacakge not registered: {self.package_name}')
             self._package = pkg

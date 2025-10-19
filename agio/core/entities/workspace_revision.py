@@ -68,7 +68,7 @@ class AWorkspaceRevision(DomainBase):
              ) -> 'AWorkspaceRevision':
         data = api.workspace.find_revision(
             workspace_id=workspace_id,
-            ready_only=ready_only,
+            is_ready=ready_only,
             is_current=is_current,
         )
         if data:

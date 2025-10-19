@@ -63,6 +63,10 @@ class MakeReleaseError(AException):
 class ProjectNotExists(NotExistsError):
     detail: str = "Project does not exist"
 
+class ProjectWorkspaceNotSet(NotExistsError):
+    detail: str = "Project workspace not set"
+
+
 
 class EntityNotExists(NotExistsError):
     detail: str = "Entity does not exist"
