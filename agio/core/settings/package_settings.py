@@ -3,7 +3,7 @@ import inspect
 import json
 import re
 import types
-from typing import Any, Iterator, get_origin, get_args, Union, Type
+from typing import Any, Iterator, get_origin, get_args, Union, Type, Mapping, Sequence
 
 from pydantic import BaseModel
 
@@ -367,8 +367,20 @@ class APackageSettings(metaclass=_SettingsMeta):
                 continue
             field_settings = field.get_settings()
             if field_settings:
-                result[name] = field_settings
+                result[name] = self.__to_plain_data__(field_settings)
         return result
+
+    @classmethod
+    def __to_plain_data__(cls, obj):
+        """Convert any Pydantic data to dict/list/primitives recursively"""
+        if isinstance(obj, BaseModel):
+            return cls.__to_plain_data__(obj.model_dump())
+        elif isinstance(obj, Mapping):
+            return {k: cls.__to_plain_data__(v) for k, v in obj.items()}
+        elif isinstance(obj, Sequence) and not isinstance(obj, (str, bytes, bytearray)):
+            return [cls.__to_plain_data__(v) for v in obj]
+        else:
+            return obj
 
     def __to_json__(self, serialize_hook=None, **kwargs) -> str:
         self._check_missing_values()
