@@ -4,7 +4,7 @@ from pathlib import Path
 
 import click
 
-from agio.core.domains import APackageRelease
+from agio.core.entities import APackageRelease
 from agio.core.pkg.package_repostory import APackageRepository
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 from agio.tools import package_template

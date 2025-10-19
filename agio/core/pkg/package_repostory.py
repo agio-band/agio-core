@@ -2,7 +2,7 @@ import logging
 from functools import cached_property
 from pathlib import Path
 
-from agio.core.domains import APackageRelease, APackage
+from agio.core.entities import APackageRelease, APackage
 from agio.core.exceptions import PackageRepositoryError, PackageError, PackageLoadingError
 from agio.core.pkg.package import APackageManager
 from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin

@@ -4,7 +4,7 @@ import logging
 import os
 from pathlib import Path
 
-from agio.core.domains import project as project_domain
+from agio.core.entities import project as project_domain
 from agio.core.utils import app_dirs
 from agio.core.utils.json_serializer import JsonSerializer
 from agio.core.utils import settings_hub

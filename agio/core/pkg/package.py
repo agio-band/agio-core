@@ -7,7 +7,7 @@ from typing import Any, Generator, Type
 
 import yaml
 
-from agio.core.domains import APackage
+from agio.core.entities import APackage
 from agio.core.exceptions import PackageMetadataError, PackageError
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils.modules_utils import import_object_by_dotted_path

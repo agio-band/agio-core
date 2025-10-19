@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ..domains import project as project_domain
+from ..entities import project as project_domain
 from ..events import emit
 from .fields.base_field import BaseField
 from .fields.generic_fields import StringField, IntField, BaseField, FloatField
@@ -18,7 +18,7 @@ from agio.core.settings.fields.special_fields import PluginSelectField
 from agio.core.settings.package_settings import APackageSettings
 from agio.core.settings import local_settings_manager
 from agio.core.utils.settings_hub import LocalSettingsHub, WorkspaceSettingsHub
-from agio.core.domains.workspace import AWorkspace
+from agio.core.entities.workspace import AWorkspace
 from ..exceptions import SettingsRevisionNotExists
 
 

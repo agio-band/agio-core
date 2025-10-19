@@ -9,7 +9,7 @@ from functools import cached_property, cache
 from pathlib import Path
 
 from agio.core import api, env_names
-from agio.core.domains import AWorkspaceRevision, AWorkspace
+from agio.core.entities import AWorkspaceRevision, AWorkspace
 from agio.core.events import emit
 from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotExistsError
 from agio.core.utils import config, pkg_manager, venv_utils
