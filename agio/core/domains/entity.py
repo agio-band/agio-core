@@ -146,11 +146,18 @@ class AEntity(DomainBase):
     def add_child(self, child: T_Entity) -> None:
         ...
 
+    def _load_parents_data(self, depth: int = 10):
+        return api.track.get_entity_hierarchy(self.id, depth, False)
+
     @property
     def parents(self) -> Generator[T_Entity|None]:
-        items = api.track.get_entity_hierarchy(self.id, 3, False)
+        items = self._load_parents_data(10)
         for item in items:
             yield self.from_data(item)
+
+    @cached_property
+    def hierarchy(self) -> str:
+        return '/'.join([x['name'] for x in self._load_parents_data()])
 
     @property
     def parent(self):
