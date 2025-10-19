@@ -52,11 +52,19 @@ class AProject(DomainBase):
     def get_company(self):
         return company.ACompany(self._data['company']['id'])
 
+    @property
+    def company(self):
+        return self.get_company()
+
     def get_settings(self):
         ws = self.get_workspace()
         if not ws:
             raise Exception('Project has no workspace')
         return settings.get_workspace_settings(ws)
+
+    @property
+    def workspace(self):
+        return self.get_workspace()
 
     def get_workspace(self) -> AWorkspace|None:
         ws = self._data['workspace']
