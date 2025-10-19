@@ -40,7 +40,7 @@ def get_company_by_code(code: str) -> dict|None:
         code=code
     )
     if resp['data']['companies']['edges']:
-        return resp['data']['companies']['edges'][0]
+        return resp['data']['companies']['edges'][0]['node']
     else:
         raise NotFoundError(detail='Company not found')
 
