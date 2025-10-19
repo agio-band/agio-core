@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Iterator
 from agio.core import api
-from agio.core.domains import DomainBase
+from agio.core.entities import DomainBase
 
 
 class AProfile(DomainBase):

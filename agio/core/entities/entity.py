@@ -5,7 +5,7 @@ from typing import Iterator, Generator
 from uuid import UUID
 
 from agio.core import api
-from agio.core.domains.domain import DomainBase
+from agio.core.entities.domain import DomainBase
 from typing import TypeVar
 
 

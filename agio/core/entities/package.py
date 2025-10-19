@@ -36,7 +36,7 @@ class APackage(DomainBase):
         self._data.update(resp)
 
     @classmethod
-    def iter(cls, limit: int = None) -> Generator[dict, None, None]:
+    def iter(cls, limit: int = None) -> Generator['APackage', None, None]:
         for pkg in api.package.iter_packages():
             yield cls(pkg)
 

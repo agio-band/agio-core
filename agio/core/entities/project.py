@@ -4,8 +4,8 @@ from uuid import UUID
 
 from agio.core import api
 from agio.core import settings
-from agio.core.domains import DomainBase, AWorkspace
-from agio.core.domains import company
+from agio.core.entities import DomainBase, AWorkspace
+from agio.core.entities import company as company_entity
 
 
 class AProject(DomainBase):
@@ -41,16 +41,26 @@ class AProject(DomainBase):
         raise NotImplementedError()
 
     @classmethod
-    def find(cls, company_id: str, **kwargs):
-        data = api.track.find_project(company_id, **kwargs)
-        try:
-            for prj_data in data:
-                yield cls(prj_data)
-        except StopIteration:
-            return
+    def find(cls, name: str = None, code: str = None, state: str = None,
+        company: company_entity.ACompany|str = None) -> 'AProject':
+        if isinstance(company, company_entity.ACompany):
+            company_id = company.id
+        elif isinstance(company, (str, UUID)):
+            company_id = str(company)
+        elif company is None:
+            comp = company_entity.ACompany.current()
+            if not comp:
+                raise Exception(f"Company not provided or not found")
+            company_id = comp.id
+        else:
+            raise TypeError("Invalid type for project_company")
+        data = api.track.find_project(company_id, name=name, code=code, state=state)
+        if data is not None:
+            return cls(data)
+
 
     def get_company(self):
-        return company.ACompany(self._data['company']['id'])
+        return company_entity.ACompany(self._data['company']['id'])
 
     @property
     def company(self):

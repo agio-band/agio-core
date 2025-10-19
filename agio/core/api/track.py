@@ -65,7 +65,7 @@ def find_project(
         company_id: str|UUID = NOTSET,
         company_name: str|None = NOTSET,
         name: str = NOTSET,
-        code: str|None = NOTSET,
+        code: str = NOTSET,
         state: str = NOTSET,
 ) -> dict:
     filters = deep_dict()
@@ -84,8 +84,7 @@ def find_project(
         filters=filters
     )
     if data['data']['projects']['edges']:
-        for item in data['data']['projects']['edges']:
-            yield item['node']
+        return data['data']['projects']['edges'][0]['node']
 
 
 # entities

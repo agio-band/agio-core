@@ -1,7 +1,7 @@
 query FindWorkspace(
     $first: Int!,
     $afterCursor: String,
-    $where: WorkspaceWhere
+    $filters: WorkspaceFilter
 ) {
     workspaces(
         first: $first
@@ -12,9 +12,7 @@ query FindWorkspace(
                 direction: DESC
             }
         ]
-        filter: {
-            where: $where
-        }
+        filter: $filters
     ) {
         edges {
             node {

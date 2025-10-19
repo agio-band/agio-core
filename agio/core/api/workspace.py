@@ -3,7 +3,7 @@ from uuid import UUID
 
 from . import client
 from .utils import NOTSET
-from .utils.query_tools import iter_query_list
+from .utils.query_tools import iter_query_list, deep_dict
 from ..exceptions import RevisionNotExists, SettingsRevisionNotExists, WorkspaceNotExists, ProjectNotExists
 from . import track
 
@@ -51,17 +51,17 @@ def update_workspace(workspace_id: UUID|str, name: str = NOTSET, description: st
     return response['data']['updateWorkspace']['ok']
 
 
-def find_workspace(company_id: UUID|str, name: str = NOTSET) -> dict:
+def find_workspace(company_id: UUID|str, name: str) -> dict:
+    filters = deep_dict()
+    filters['where']['company']['id']['equalTo'] = str(company_id)
+    filters['where']['name']['equalTo'] = name
     resp = client.make_query(
         'ws/workspace/findWorkspace',
         first=1,
-        where=dict(
-            companyId=company_id,
-            name=name,
-        )
+        filters=filters,
     )
-    if resp:
-        return resp['data']['workspace']
+    if resp['data']['workspaces']['edges']:
+        return resp['data']['workspaces']['edges'][0]['node']
     else:
         raise WorkspaceNotExists
 

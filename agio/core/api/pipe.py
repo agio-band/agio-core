@@ -10,13 +10,16 @@ from agio.core.api.utils.query_tools import iter_query_list, deep_dict
 
 def iter_products(
         entity_id: str|UUID,
-        product_type: str = None,
+        product_type_id: str = None,
+        product_type_name: str = None,
         items_per_page: int = 50
     ) -> list:
     filters = deep_dict()
     filters['where']['entity']['id']['equalTo'] = entity_id
-    if product_type:
-        filters['where']['type']['name']['equalTo'] = product_type
+    if product_type_id:
+        filters['where']['type']['id']['equalTo'] = product_type_id
+    if product_type_name:
+        filters['where']['type']['name']['equalTo'] = product_type_name
     yield from iter_query_list(
         'pipe/products/getProductList',
         'publishes',
@@ -37,32 +40,36 @@ def get_product(product_id: UUID):
 def create_product(
         name: str,
         entity_id: str|UUID,
-        product_type: str,
         variant: str,
+        product_type_id: str = None,
+        product_type_name: str = None,
         fields: dict|None = NOTSET,
     ):
     # get_product_type
-    product_type_entity = get_product_type_by_name(product_type)
-    if not product_type_entity:
-        raise ValueError(f'Unknown product type "{product_type}"')
-
+    if product_type_name:
+        product_type_entity = get_product_type_by_name(product_type_name)
+        product_type_id = product_type_entity['id']
+    elif product_type_id:
+        pass
+    else:
+        raise ValueError('product_type_name or product_type_id are required')
     return client.make_query(
         'pipe/products/createProduct',
         input=dict(
             name=name,
             entity=entity_id,
-            type=product_type_entity['id'],
+            type=product_type_id,
             variant=variant,
             fields=fields,
         )
     )['data']['createPublish']['publishId']
 
 
-def find_product(entity_id: str|UUID, product_type: str, variant: str):
+def find_product(entity_id: str|UUID, name: str, variant: str):
     filters = deep_dict()
     filters['where']['entity']['id']['equalTo'] = entity_id
-    if product_type:
-        filters['where']['type']['name']['equalTo'] = product_type
+    if name:
+        filters['where']['name']['equalTo'] = name
     if variant:
         filters['where']['variant']['equalTo'] = variant
     resp = client.make_query(
