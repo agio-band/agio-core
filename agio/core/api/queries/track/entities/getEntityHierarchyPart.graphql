@@ -5,6 +5,7 @@ parent {
   fields
   class {
     name
+    id
   }
   #{{PARENT-QUERY}}#
 }

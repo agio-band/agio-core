@@ -17,6 +17,7 @@ query GetEntityById($projectId: ID!, $className: String!, $name: String!) {
         fields
         class {
           name
+          id
         }
         links {
           toId
@@ -26,6 +27,10 @@ query GetEntityById($projectId: ID!, $className: String!, $name: String!) {
           name
           id
           parentId
+          class {
+            name
+            id
+          }
         }
       }
     }

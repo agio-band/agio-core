@@ -13,6 +13,7 @@ query GetEntityById($id: ID!) {
         fields
         class {
           name
+          id
         }
         links {
           toId
@@ -25,6 +26,7 @@ query GetEntityById($id: ID!) {
           fields
           class {
             name
+            id
           }
         }
       }

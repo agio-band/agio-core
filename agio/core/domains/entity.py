@@ -119,6 +119,14 @@ class AEntity(DomainBase):
         return self._data['id']
 
     @property
+    def class_name(self):
+        return self._data['class']['name']
+
+    @property
+    def class_id(self):
+        return self._data['class']['id']
+
+    @property
     def project_id(self):
         return self._data['projectId']
 
@@ -149,9 +157,10 @@ class AEntity(DomainBase):
     def _load_parents_data(self, depth: int = 10):
         return api.track.get_entity_hierarchy(self.id, depth, False)
 
-    @property
-    def parents(self) -> Generator[T_Entity|None]:
+    def get_parents(self) -> Generator[T_Entity|None]:
         items = self._load_parents_data(10)
+        if not items:
+            return
         for item in items:
             yield self.from_data(item)
 
@@ -159,9 +168,10 @@ class AEntity(DomainBase):
     def hierarchy(self) -> str:
         return '/'.join([x['name'] for x in self._load_parents_data()])
 
-    @property
-    def parent(self):
-        return next(iter(self.parents))
+    @cached_property
+    def parent(self) -> AEntity|None:
+        if self._data.get('parent'):
+            return AEntity.from_id(self._data['parent']['id'])
 
     @property
     def parent_id(self) -> str|None:
@@ -173,8 +183,6 @@ class AEntity(DomainBase):
     def _entity_can_be_child(self, entity: T_Entity) -> bool:
         ...
 
-    def get_parents(self, depth: int = 10) -> Iterator[T_Entity]:
-        ...
 
 
 T_Entity = TypeVar("T_Entity", bound=AEntity)

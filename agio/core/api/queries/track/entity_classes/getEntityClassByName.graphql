@@ -11,6 +11,7 @@ query GetEntityClassByName($projectId: ID!, $name: String!){
         edges {
             node {
                 id
+                name
             }
         }
     }

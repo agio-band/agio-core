@@ -19,6 +19,8 @@ query FindEntity(
               projectId
               class{
                 name
+                id
+                fields
               }
               # fields
               links{
@@ -30,6 +32,10 @@ query FindEntity(
                 name
                 id
                 parentId
+                class{
+                  name
+                  id
+                }
               }
             }
         }
