@@ -1,4 +1,6 @@
 import os
+import webbrowser
+from pathlib import Path
 
 
 def expand_windows_path(path):
@@ -19,3 +21,13 @@ def expand_windows_path(path):
         return buf.value
     else:
         return path
+
+
+def open_path(path):
+    path = Path(path)
+    if path.is_dir():
+        webbrowser.open(path.as_posix())
+    elif path.is_file():
+        webbrowser.open(path.as_posix())
+    else:
+        raise FileNotFoundError(path)
