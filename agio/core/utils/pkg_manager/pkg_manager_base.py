@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 import shlex
 
-from agio.core.pkg.package import APackage
+from agio.core.pkg import APackageManager
 from agio.core.utils.process_utils import start_process
 from agio.core.utils import venv_utils
 
@@ -98,8 +98,8 @@ class PackageManagerBase:
         if not site_packages_path:
             return
         site_packages_path = Path(site_packages_path)
-        for package in site_packages_path.glob(f'*/{APackage.info_file_name}'):
-            yield APackage(package.parent.as_posix())
+        for package in site_packages_path.glob(f'*/{APackageManager.info_file_name}'):
+            yield APackageManager(package.parent.as_posix())
 
     def create_venv(self):
         raise NotImplementedError
