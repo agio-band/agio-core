@@ -16,5 +16,5 @@ from .fields.extended_fields import (
     RGBColorField
 )
 from .fields.generic_fields import StringField, IntField, BaseField, FloatField
-from .local_settings import load as get_local_settings, save as save_local_settings
+from .local_settings import load as get_local_settings, save as save_local_settings, load_default_settings
 

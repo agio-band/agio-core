@@ -27,8 +27,21 @@ def get_project_dir_name(project: str | pd.AProject = None):
         return 'default'
 
 
+def load_default_settings():
+    settings_file = Path(get_settings_dir(get_project_dir_name(None)), _settings_file_name)
+    if not settings_file.is_file():
+        emit('core.settings.default_not_exists')
+        return {}
+    default_settings = json.loads(settings_file.read_text(encoding='utf-8'))
+    emit('core.settings.default_settings_loaded', {'settings': default_settings})
+    return default_settings
+
+
 def load(project: str | pd.AProject = None) -> settings_hub.LocalSettingsHub:
-    settings_data = {}
+    if project:
+        settings_data = load_default_settings()
+    else:
+        settings_data = {}
     settings_file = Path(get_settings_dir(get_project_dir_name(project)), _settings_file_name)
     if settings_file.exists():
         settings_data.update(json.loads(settings_file.read_text(encoding='utf-8')))
