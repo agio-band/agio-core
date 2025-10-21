@@ -16,7 +16,5 @@ query GetPublishVersionsById($id: ID!) {
             name
         }
         fields
-#        upstreams
-#        downstreams
     }
 }

@@ -42,17 +42,8 @@ def create_product(
         entity_id: str|UUID,
         variant: str,
         product_type_id: str = None,
-        product_type_name: str = None,
         fields: dict|None = NOTSET,
     ):
-    # get_product_type
-    if product_type_name:
-        product_type_entity = get_product_type_by_name(product_type_name)
-        product_type_id = product_type_entity['id']
-    elif product_type_id:
-        pass
-    else:
-        raise ValueError('product_type_name or product_type_id are required')
     return client.make_query(
         'pipe/products/createProduct',
         input=dict(
@@ -88,6 +79,7 @@ def iter_product_types(items_per_page: int = 50):
         'publishTypes',
         items_per_page=items_per_page,
     )
+
 
 def get_product_type(product_type_id: str):
     return client.make_query(
@@ -133,17 +125,18 @@ def update_product_type(publish_type_id: str, config: dict = None, data_type: st
 # Published Version
 
 def iter_prodict_versions(
-        entity_id: UUID,
-        product_type: str = None,
-        variant: UUID = None,
+        # entity_id: UUID,
+        # product_type: str = None,
+        product_id: str = None,
+        # variant: UUID = None,
         items_per_page: int = 50
 ):
     filters = deep_dict()
-    filters['where']['entity']['id']['equalTo'] = entity_id
-    if variant:
-        filters['where']['publish']['variant']['equalTo'] = variant
-    if product_type:
-        filters['where']['publish']['type']['equalTo'] = product_type
+    filters['where']['publish']['id']['equalTo'] = product_id
+    # if variant:
+    #     filters['where']['publish']['variant']['equalTo'] = variant
+    # if product_type:
+    #     filters['where']['publish']['type']['equalTo'] = product_type
     yield from iter_query_list(
         'pipe/versions/getVersionList',
         'publishVersions',
@@ -154,27 +147,6 @@ def iter_prodict_versions(
     )
 
 
-def get_product_version(version_id: UUID):
-    return client.make_query(
-        'pipe/versions/getVersionById',
-        id=version_id,
-    )
-
-
-def create_product_version(
-        version: str,
-        product_id: UUID,
-        task_id: UUID,
-        fields: dict,
-):
-    return client.make_query(
-        'pipe/versions/createVersion',
-        name=version,
-        publish=product_id,
-        entity=task_id,
-        fields=fields
-    )
-
 # versions
 
 def get_version(version_id: str|UUID):
@@ -184,42 +156,53 @@ def get_version(version_id: str|UUID):
     )['data']['publishVersion']
 
 
-def update_version(version_id: str|UUID, fields: dict):
+def create_version(
+        product_id: UUID,
+        version: str,
+        task_id: UUID,
+        fields: dict = None,
+        dependencies: list[str] = None
+        ):
+    input_data = dict(
+            name=version,
+            publish=product_id,
+            entity=task_id,
+            fields=fields
+        )
+    if dependencies:
+        input_data['upstreams'] = dependencies
+    return client.make_query(
+        'pipe/versions/createVersion',
+        input=input_data
+    )['data']['createPublishVersion']['publishVersionId']
+
+
+def update_version(version_id: str|UUID, fields: dict, dependencies: list[str]):
+    update_data = {}
+    if fields:
+        update_data['fields'] = fields
+    if dependencies:
+        update_data['upstreams'] = dependencies
+    if not update_data:
+        raise ValueError('Nothing to update')
     return client.make_query(
         'pipe/versions/updateVersion',
         id=version_id,
-        fields=fields
+        input=update_data
     )
 
 
 def get_next_version_number(product_id: str|UUID) -> int:
-    filters = deep_dict()
-    # filters['where']['entity']['id']['equalTo'] = task_id
-    filters['where']['publish']['id']['equalTo'] = product_id
     response =  client.make_query(
         'pipe/versions/getLatestVersion',
-        filter=filters
+        publishId=product_id,
     )
     versions = response['data']['publishVersions']['edges']
     if versions:
-        return int(versions[0]['node']['name'])+1
+        return int(versions[0]['node']['name'].lower().strip('v'))+1
     else:
         return 1
 
-
-def create_version(
-        version: str,
-        product_id: UUID,
-        task_id: UUID,
-        fields: dict,
-        ):
-    return client.make_query(
-        'pipe/versions/createVersion',
-        name=version,
-        publish=product_id,
-        entity=task_id,
-        fields=fields
-    )['data']['createPublishVersion']['publishVersionId']
 
 
 # publish file

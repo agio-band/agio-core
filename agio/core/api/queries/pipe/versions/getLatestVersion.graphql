@@ -1,7 +1,13 @@
-query GetLatestVersionList( $filter: PublishVersionFilter) {
+query GetLatestVersionList( $publishId: ID!) {
     publishVersions(
       first: 1,
-      filter: $filter,
+      filter: {
+          where: {
+              publish: {
+                  id: {equalTo: $publishId}
+              }
+          }
+      },
       ordering: {
         sort: NAME,
         direction: DESC

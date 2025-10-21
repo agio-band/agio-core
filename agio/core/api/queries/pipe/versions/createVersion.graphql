@@ -1,16 +1,8 @@
 mutation CreateVersion(
-    $name: String!,
-    $publish: ID!,
-    $entity: ID!,
-    $fields: Map
+    $input: PublishVersionCreateInput!
 ) {
     createPublishVersion(
-        input: {
-            name: $name,
-            publish: $publish,
-            entity: $entity,
-            fields: $fields
-        }
+        input: $input
     )
     {
         publishVersionId

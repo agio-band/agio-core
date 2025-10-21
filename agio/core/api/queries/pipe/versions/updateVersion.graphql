@@ -1,13 +1,12 @@
 mutation UpdateVersion(
     $id: ID!,
-    $fields: Map!
+    $input: PublishVersionUpdateInput!
 ) {
     updatePublishVersion(
       id: $id,
-      input: {
-       fields: $fields
-      }
-    ) {
+      input: $input
+    )
+    {
         ok
     }
 }
