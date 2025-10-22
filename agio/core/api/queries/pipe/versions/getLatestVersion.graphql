@@ -1,4 +1,4 @@
-query GetLatestVersionList( $publishId: ID!) {
+query GetLatestVersion( $publishId: ID!) {
     publishVersions(
       first: 1,
       filter: {
