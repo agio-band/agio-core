@@ -2,12 +2,16 @@ import inspect
 import os
 import logging
 import subprocess
+from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 import shlex
 
+from agio.core.entities import APackage, APackageRelease
 from agio.core.pkg import APackageManager
+from agio.core.utils.app_dirs import get_default_env_dir
 from agio.core.utils.process_utils import start_process
 from agio.core.utils import venv_utils
+from agio_pipe.plugins.callbacks import package_loaded
 
 try:
     import tomllib as toml
@@ -75,7 +79,17 @@ class PackageManagerBase:
             return version
         return '.'.join(version.split('.')[:2])
 
-    def install_package(self, package_name):
+    def install_package_by_name(self, package_name: str, version: str = None, **kwargs):
+        package = APackage.find(package_name)
+        if not package:
+            raise NameError(f"Package '{package_name}' not found")
+        release: APackageRelease = package.get_release(version=version) if version else package.latest_release()
+        if not release:
+            raise PackageNotFoundError(f'Package "{package_name}" has not releases')
+        cmd = release.get_installation_command()
+        return self.install_packages(cmd, **kwargs)
+
+    def install_packages(self, *packages, **kwargs):
         raise NotImplementedError
 
     def uninstall_package(self, package_name):
