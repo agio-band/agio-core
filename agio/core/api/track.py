@@ -33,7 +33,7 @@ def create_project(payload: dict) -> dict:
 
 
 def update_project(
-        project_id: UUID,
+        project_id: str|UUID,
         state: str = NOTSET,
         facility_ids: list[str] = NOTSET,
         fields: dict[str, Any] = NOTSET,

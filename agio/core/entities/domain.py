@@ -47,11 +47,11 @@ class DomainBase(ABC):
 
     @property
     def name(self):
-        return self.data["name"]
+        return self.data.get("name")
 
     @property
     def code(self):
-        return self.data["code"]
+        return self.data.get("code")
 
     @property
     def fields(self):
@@ -61,7 +61,8 @@ class DomainBase(ABC):
         return str(self.id)
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}('{self.id}')>"
+        name = self.code or self.name or ''
+        return f"<{self.__class__.__name__} {name} ('{self.id}')>"
 
     def __eq__(self, other):
         return self.id == other.id
