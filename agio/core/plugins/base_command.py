@@ -20,8 +20,12 @@ class AbstractCommandPlugin(ABC):
     context_settings = None
     subcommands = []
     help = None
-    allow_extra_args = False # if True command must accept **kwargs or __extra_args__ argument
-    allow_empty_group_command = False # allow "execute()" method for command group if subcommand is not set
+    # if True command must accept **kwargs or __extra_args__ argument
+    allow_extra_args = False
+    # allow "execute()" method for command group if subcommand is not set
+    allow_empty_root_command = False
+    # execute root command before sub command
+    execute_root_command_before_subcommand = False
 
     def __init__(self, parent_group=None):
         self._init_click(parent_group)
@@ -49,6 +53,9 @@ class AbstractCommandPlugin(ABC):
         def _callback(ctx, **kwargs):
             self.context = ctx
             self.on_before_start(**kwargs)
+            if self.subcommands and self.allow_empty_root_command:
+                if self.context.obj.get('cmd_args'):
+                    return
             result = self.execute(**kwargs) # TODO catch Ctrl+C to forced exit
             self.on_executed(result)
             return result
@@ -63,7 +70,7 @@ class AbstractCommandPlugin(ABC):
                 name=self.command_name,
                 context_settings=self.get_context_settings(),
                 help=self.help,
-                invoke_without_command=self.allow_empty_group_command,
+                invoke_without_command=self.allow_empty_root_command,
             )(_callback)
             for subcmd in self.subcommands:
                 if inspect.isclass(subcmd):
