@@ -1,4 +1,5 @@
 import logging
+import os
 from functools import cached_property
 from pathlib import Path
 
@@ -43,10 +44,13 @@ class APackageRepository:
         Make and register a new release from current version.
         """
         # check package registered
+        logger.debug(f"Creating new release...")
+        logger.debug(f"Check package is registered")
         if not self.pkg_manager.package:
             raise PackageError(f"Package '{self.pkg_manager.package_name}' not registered")
         # check unsaved changes
         if not kwargs.get('no_check_branch', False):
+            logger.debug(f"Checking git branch...")
             active_branch = git_utils.get_current_branch(self.root.as_posix())
             if active_branch not in ('main', 'master'):
                 raise ValueError(f"Branch is not main or master ({active_branch})")
@@ -54,28 +58,29 @@ class APackageRepository:
             logger.debug('Skip branch check')
         # check uncommited changes
         if not kwargs.get('no_check_commits', False):
+            logger.debug(f"Checking uncommited changes...")
             if git_utils.has_uncommited_changes(self.root.as_posix()):
                 raise ValueError(f"Has uncommited changes")
         else:
             logger.debug('Skip uncommited changes check')
         # check unpushed commits
         if not kwargs.get('no_check_pushed', False):
+            logger.debug(f"Checking unpushed changes...")
             if git_utils.has_unpushed_commits(self.root.as_posix()):
                 raise ValueError(f"Has unpushed commits")
         else:
-            logger.debug('Skip unpushed commits check')
+            logger.debug('Skip unpushed changes check')
         # check release version is already exists in agio database
         replace = kwargs.pop('replace', False)
         if self.pkg_manager.release:
             if not replace:
                 raise ValueError(f"Release {self.pkg_manager.package_name} v{self.pkg_manager.package_version} "
                                  f"already registered in agio database")
-            else:
-                pass
-        # check version is not exists in remote
         access_data = kwargs.get('access_data', {})
         if 'token' in kwargs:
             access_data['token'] = kwargs.pop('token')
+            logger.debug(f"Use token: {access_data['token'][:5]}...")
+        # check version is not exists in remote
         local_tags, remote_tags = git_utils.get_tags(self.root.as_posix(), self.origin)
         release = None
         if self.pkg_manager.package_version in remote_tags:
@@ -84,14 +89,21 @@ class APackageRepository:
                     self.pkg_manager.package_version, access_data):
                 raise ValueError(f"Version {self.pkg_manager.package_name} already exists in remote repository")
         # build
+        logger.debug(f'Build release...')
         build_path = self.build(**kwargs)
+        # create local tag
+        if self.pkg_manager.package_version in local_tags:
+            git_utils.delete_tag(self.root.as_posix(), self.pkg_manager.package_version)
+        git_utils.create_tag(self.root.as_posix(), self.pkg_manager.package_version)
         # create release on remote repository
+        logger.debug(f"Upload release...")
         self.remote_repository.create_and_upload_release(
             self.pkg_manager.source_url,
             self.pkg_manager.package_version,
             build_path,
             access_data=access_data,
         )
+        # try to get new release
         release = release or self.remote_repository.get_release_with_tag(
             self.pkg_manager.source_url,
             self.pkg_manager.package_version,
@@ -100,6 +112,7 @@ class APackageRepository:
             raise Exception(
                 f"Release {self.pkg_manager.package_name} {self.pkg_manager.package_version} not found in repository"
             )
+        logger.debug(f"Release created!")
         if not release.get('assets'):
             raise Exception(f"Release {self.pkg_manager.package_version} has no assets")
         assets = []

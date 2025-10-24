@@ -60,6 +60,14 @@ def create_tag(repository_root: str, tag_name: str, message: str = None, push: b
         subprocess.call(shlex.split(cmd), cwd=repository_root)
 
 
+def delete_tag(repository_root: str, tag_name: str, push: bool = True):
+    cmd = f'git tag -d {tag_name}'
+    subprocess.call(shlex.split(cmd), cwd=repository_root)
+    if push:
+        cmd = f'git push origin {tag_name}'
+        subprocess.call(shlex.split(cmd), cwd=repository_root)
+
+
 def get_remote_url(repository_root: str, remote: str = 'origin'):
     cmd = 'git remote get-url ' + remote
     return process_utils.start_process(shlex.split(cmd), workdir=repository_root, get_output=True).strip() or None
