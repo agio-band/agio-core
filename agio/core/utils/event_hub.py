@@ -1,3 +1,4 @@
+import inspect
 import logging
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -6,6 +7,7 @@ from typing import Callable
 from agio.core.events.event import AEvent
 from agio.core.exceptions import StopEventPropagate, EventRuntimeError, CallbackInitError
 from agio.core.utils.singleton import Singleton
+import click
 
 logger = logging.getLogger(__name__)
 
@@ -108,17 +110,3 @@ class EventHub(metaclass=Singleton):
                 return True
         return False
 
-    def print_event_list(self):
-        if not self._callbacks:
-            print("No events registered.")
-            return
-
-        for event_name in self._callbacks:
-            print(f"[{event_name}]")
-            if not self._callbacks[event_name]:
-                print("  (No callbacks)")
-                continue
-            for callback_func, metadata in self._callbacks[event_name].items():
-                print(f"  {metadata['name']}(){' [once]' if metadata['once'] else ''}") # {inspect.getfile(callback_func)}")
-                # print(f"  {metadata['name']}() [once={metadata['once']}, raise_error={metadata['raise_error']}]")
-            print()
