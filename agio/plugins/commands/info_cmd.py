@@ -50,12 +50,12 @@ class InfoCommand(ACommandPlugin):
             return
         self.show_platform_info()
         self.show_workspace_info()
-        self.show_settings()
         self.show_packages_info()
-        self.show_plugins_info()
-        self.show_callbacks()
-        self.show_python_info()
-        self.show_libs_disk_usage()
+        # self.show_settings()
+        # self.show_plugins_info()
+        # self.show_callbacks()
+        # self.show_python_info()
+        # self.show_libs_disk_usage()
         line(color='yellow')
 
     def show_platform_info(self):
