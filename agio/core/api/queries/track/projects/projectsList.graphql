@@ -1,5 +1,8 @@
-query projectsList($limit: Int!, $filter: ProjectFilter) {
-  projects(first: $limit, filter: $filter) {
+query projectsList($first: Int!, $filter: ProjectFilter) {
+  projects(
+    first: $first,
+    filter: $filter)
+  {
     edges {
       node {
         id

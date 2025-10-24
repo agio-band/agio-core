@@ -1,9 +1,7 @@
-query FindProject($filters: ProjectWhere){
+query FindProject($filter: ProjectFilter){
   projects (
-    filter: {
-            where: $filters
-        },
-        first: 1,
+    filter: $filter,
+    first: 1,
   ){
     edges{
       node {
