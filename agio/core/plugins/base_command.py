@@ -1,13 +1,16 @@
 import inspect
+import json
 import logging
+import os
 from abc import ABC
 import click
 
 from agio.core.entities import APackage
+from agio.core.events import emit
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.utils import context, args_helper
-from agio.core.utils.process_utils import restart_with_env
+from agio.core.utils.process_utils import restart_with_env, pipe_is_allowed, write_to_pipe
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +29,8 @@ class AbstractCommandPlugin(ABC):
     allow_empty_root_command = False
     # execute root command before sub command
     execute_root_command_before_subcommand = False
+    # allow to write output to custom pipe
+    allow_write_output_to_custom_pipe = bool(os.getenv('AGIO_ALLOW_COMMAND_OUTPUT_TO_CUSTOM_PIPE'))
 
     def __init__(self, parent_group=None):
         self._init_click(parent_group)
@@ -37,13 +42,25 @@ class AbstractCommandPlugin(ABC):
             ctx['ignore_unknown_options'] = True
         return ctx or None
 
-    def on_before_start(self, *args, **kwargs):
-        # todo: emit event
-        pass
+    def on_before_execute(self, kwargs):
+        emit('core.command.before_execute',{
+            'command_name': self.command_name,
+            'kwargs': kwargs,
+            'context': self.context,
+        })
 
-    def on_executed(self, result):
-        # todo: emit event
-        pass
+    def on_executed(self, result, kwargs):
+        emit('core.command.executed', {
+            'command_name': self.command_name,
+            'result': result,
+            'context': self.context,
+            'kwargs': kwargs,
+        })
+        if self.allow_write_output_to_custom_pipe and pipe_is_allowed():
+            try:
+                write_to_pipe(json.dumps(result))
+            except json.decoder.JSONDecodeError:
+                write_to_pipe(str(result))
 
     def _init_click(self, parent_group=None):
         if not self.command_name:
@@ -52,12 +69,12 @@ class AbstractCommandPlugin(ABC):
         @click.pass_context
         def _callback(ctx, **kwargs):
             self.context = ctx
-            self.on_before_start(**kwargs)
+            self.on_before_execute(kwargs)
             if self.subcommands and self.allow_empty_root_command:
                 if self.context.obj.get('cmd_args'):
                     return
             result = self.execute(**kwargs) # TODO catch Ctrl+C to forced exit
-            self.on_executed(result)
+            self.on_executed(result, kwargs)
             return result
 
         if self.allow_extra_args:
