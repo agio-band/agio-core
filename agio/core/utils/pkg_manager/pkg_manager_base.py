@@ -140,8 +140,7 @@ class PackageManagerBase:
             cmd = shlex.split(cmd)
         cmd = list(map(str, [self.get_executable(), *cmd]))
         workdir = workdir or str(self.path)
-        logger.info(f'Running command: {" ".join(cmd)}')
-        logger.info(f'In directory: {workdir}')
+        logger.debug(f'Running command: {" ".join(cmd)}')
         kwargs.setdefault('get_output', False)
         envs = self.run_envs() or {}
         envs.update(kwargs.pop('envs', {}))
