@@ -13,6 +13,7 @@ query GetWorkspaceAndSpecificRevision(
       name
       code
     }
+    deletedAt
   }
   workspaceRevision(id: $revisionId) {
     id

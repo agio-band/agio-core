@@ -90,7 +90,7 @@ def find_project(
         filters['where']['state']['equalTo'] = state
     data = client.make_query(
         'track/projects/findProject',
-        filters=filters
+        filter=filters
     )
     if data['data']['projects']['edges']:
         return data['data']['projects']['edges'][0]['node']

@@ -44,6 +44,7 @@ query GetWorkspaceAndCurrentRevision($workspaceId: ID!) {
         }
         layout
         comment
+        deletedAt
       }
     }
   }
