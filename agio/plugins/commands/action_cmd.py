@@ -1,10 +1,7 @@
-import json
-
-from agio.core.plugins.base_command import ACommandPlugin
 import click
 
-from agio.core.utils.args_helper import parse_args_to_dict
-from agio.core.utils import actions, process_utils
+from agio.core.plugins.base_command import ACommandPlugin
+from agio.core.utils import actions
 from agio.core.utils import get_actions
 
 
@@ -19,11 +16,9 @@ class ActionCommand(ACommandPlugin):
     help = 'Execute any action'
 
     def execute(self, action, **kwargs):
-        args, kwargs = self.parse_extra_args(kwargs)
-        # find action
+        action_args, action_kwargs = self.parse_extra_args(kwargs)
         action_func = actions.get_action_func(action)
-        # execute and get result
-        result = action_func(*args, **kwargs)
+        result = action_func(*action_args, **action_kwargs)
         return result
 
 
