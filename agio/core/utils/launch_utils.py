@@ -258,7 +258,7 @@ def start_in_workspace(
         ctx.add_args(*args)
     if not Path(ctx.executable).exists():
         raise FileNotFoundError(f'Executable not found {ctx.executable}')
-    logger.info('Launching command: %s', ' '.join(ctx.command))
+    logger.debug('Launching command: %s', ' '.join(ctx.command))
     return process_utils.start_process(
         ctx.command,
         env=ctx.envs,
