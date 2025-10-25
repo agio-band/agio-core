@@ -9,7 +9,7 @@ from . import APackageRelease, APackage
 from .entity import DomainBase
 from .workspace_revision import AWorkspaceRevision
 from ..events import emit
-from ..exceptions import RequestError, SettingsRevisionNotExists
+from ..exceptions import RequestError, SettingsRevisionNotExists, RevisionNotExists
 from ..utils import settings_hub
 
 
@@ -43,6 +43,11 @@ class AWorkspace(DomainBase):
         )
         return cls(ws_id)
 
+    @classmethod
+    def from_revision_id(cls, revision_id: str) -> 'AWorkspace':
+        rev = AWorkspaceRevision(revision_id)
+        return rev.get_workspace()
+
     def delete(self) -> bool:
         return api.workspace.delete_workspace(self.id)
 
@@ -61,7 +66,10 @@ class AWorkspace(DomainBase):
         return cls(ws_id)
 
     def get_current_revision(self):
-        revision = api.workspace.get_revision_by_workspace_id(self.id)
+        try:
+            revision = api.workspace.get_revision_by_workspace_id(self.id)
+        except RevisionNotExists:
+            return
         if revision:
             return AWorkspaceRevision(revision)
 

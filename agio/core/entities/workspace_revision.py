@@ -82,6 +82,11 @@ class AWorkspaceRevision(DomainBase):
     def workspace_id(self):
         return self._data['workspaceId']
 
+    def get_workspace(self):
+        from agio.core.entities import AWorkspace
+
+        return AWorkspace(self.workspace_id)
+
     def get_comment(self):
         return self._data.get("comment")
 
