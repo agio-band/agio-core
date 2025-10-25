@@ -173,7 +173,7 @@ class PackageInstallCommand(ASubCommand):
     ]
 
     def execute(self, name: str, version: str):
-        click.secho(f'Install package "{name}" v{version}', fg='green')
+        click.secho(f'Install package "{name}"' + f' v{version}' if version else '', fg='green')
         try:
             ws_manager = AWorkspace.current()
             manager = ws_manager.get_manager().venv_manager
