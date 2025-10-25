@@ -153,6 +153,33 @@ class CallbacksInfoCommand(ASubCommand):
             print()
 
 
+class ActionsInfoCommand(ASubCommand):
+    command_name = 'actions'
+
+    def execute(self, *args, **kwargs):
+        from agio.core.utils import get_all_actions
+        for act in get_all_actions():
+            click.secho(f"{act.label}", bold=True, fg='green')
+            click.secho(f"  name: ", nl=False, fg='yellow')
+            click.secho(act.name)
+            click.secho( '  menu: ', nl=False, fg='yellow')
+            if isinstance(act.menu_name, str):
+                menu = act.menu_name
+            elif isinstance(act.menu_name, list):
+                menu = ', '.join(act.menu_name)
+            else:
+                menu = '*'
+            click.secho(menu)
+            click.secho( '  app:  ', nl=False, fg='yellow')
+            if isinstance(act.app_name, str):
+                app = act.app_name
+            elif isinstance(act.app_name, list):
+                app = ', '.join(act.app_name)
+            else:
+                app = '*'
+            click.secho(app)
+
+
 class PythonInfoCommand(ASubCommand):
     command_name = 'python'
 
@@ -182,6 +209,7 @@ class InfoCommand(ACommandPlugin):
         SettingsInfoCommand,
         PluginsInfoCommand,
         CallbacksInfoCommand,
+        ActionsInfoCommand,
         PythonInfoCommand,
         DiskInfoCommand,
     )
