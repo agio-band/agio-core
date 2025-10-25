@@ -41,7 +41,7 @@ class NotExistsError(ApiError):
 
 
 class WorkspaceNotExists(NotExistsError):
-    detail: str = "Workspace does not exist"
+    detail: str = "Workspace does not exist or deleted"
 
 
 class RevisionNotExists(NotExistsError):
