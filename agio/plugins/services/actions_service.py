@@ -37,7 +37,7 @@ class ActionsService(ServicePlugin):
                 except json.decoder.JSONDecodeError:
                     raise Exception(f'Failed to decode actions output from {output}')
             else:
-                return {'error': 'No actions found'}
+                return {'error': 'No output'}
 
 
 
