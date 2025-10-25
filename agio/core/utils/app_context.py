@@ -11,6 +11,8 @@ class AppContext:
 
     @property
     def app_group(self):
-        return os.getenv('AGIO_APP_GROUP', None)
+        return os.getenv('AGIO_APP_GROUPS', None)
 
 
+def show_context():
+    print('TODO: print agio context')

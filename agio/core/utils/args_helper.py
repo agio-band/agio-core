@@ -2,7 +2,7 @@ import shlex
 from collections import defaultdict
 
 
-def parse_args_to_dict_and_list(src_args: str|list|tuple) -> (list, dict):
+def parse_args_to_dict_and_list(src_args: str|list|tuple, fix_keys_py_names: bool = True) -> (list, dict):
     if isinstance(src_args, str):
         tokens = list(shlex.split(src_args))
     else:
@@ -27,6 +27,9 @@ def parse_args_to_dict_and_list(src_args: str|list|tuple) -> (list, dict):
         else:
             args.append(token)
     final_kwargs = {k: v if len(v) > 1 else v[0] for k, v in kwargs.items()}
+    if fix_keys_py_names:
+        # replace key-name to key_name
+        final_kwargs = {k.replace('-', '_'): v for k, v in final_kwargs.items()}
     return args, final_kwargs
 
 
@@ -71,9 +74,11 @@ def parse_args_to_dict(src_args: list|tuple|str) -> dict:
     return kwargs
 
 
-def dict_to_args(src_dict: dict) -> list:
+def dict_to_args(src_dict: dict, fix_py_names: bool = True) -> list:
     args = []
     for key, value in src_dict.items():
+        if fix_py_names:
+            key = key.replace('_', '-')
         args.extend((f'--{key}', str(value)))
     return args
 

@@ -25,6 +25,11 @@ class UVPackageManager(PackageManagerBase):
     uv python install '>=3.8,<3.10'
     """
 
+    def run_envs(self) -> dict|None:
+        return {
+            'UV_LINK_MODE': 'hardlink'
+        }
+
     @property
     def venv_path(self):
         return Path(self.path, '.venv')
@@ -93,6 +98,7 @@ class UVPackageManager(PackageManagerBase):
                 raise RuntimeError('No python version available')
         logger.info('Create venv with python: %s', py_version)
         self.path.mkdir(parents=True, exist_ok=True)
+        self.run(['init', '--bare', '--python', py_version], workdir=self.path.as_posix())
         resp = self.run(['venv', '--python', py_version], workdir=self.path.as_posix())
         if resp:
             raise RuntimeError('Process finished with exit code: %s', resp)

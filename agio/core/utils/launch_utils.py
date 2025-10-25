@@ -221,7 +221,7 @@ def exec_agio_command(
             ws_manager = pkg.AWorkspaceManager.current()
         else:
             raise TypeError("Workspace must be either a string or AWorkspaceManager.")
-    start_in_workspace(
+    return start_in_workspace(
         ws_manager=ws_manager,
         args=['-m', 'agio'] + args,
         envs=envs,

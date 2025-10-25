@@ -29,7 +29,7 @@ def start_process(
         output_file=None,
         workdir: str = None,
         get_output: bool = False,
-        open_pipe: bool = False,
+        use_custom_pipe: bool = False,
         pipe_open_mode='text',  # text|binary
         exit_on_done=False,
         **kwargs
@@ -40,17 +40,18 @@ def start_process(
     Automatically terminates child process if parent is killed (when not detached).
     Propagates exit code from child to parent if the child crashes.
     """
-    if get_output and open_pipe:
+    if get_output and use_custom_pipe:
         raise Exception("open_pipe and get_output are mutually exclusive")
-    if detached and open_pipe:
+    if detached and use_custom_pipe:
         raise Exception('Argument open_pipe cannot be used with detached=True')
-    if open_pipe and replace:
+    if use_custom_pipe and replace:
         raise Exception('Argument open_pipe cannot be used with replace=True')
     if detached and replace:
         raise Exception('Argument replace cannot be used with detached=True')
     if replace and get_output:
         raise Exception('Argument replace cannot be used with get_output=True')
-    if open_pipe:
+    pipe_mode = None
+    if use_custom_pipe:
         if pipe_open_mode == "text":
             pipe_mode = 'r'
         elif pipe_open_mode == "binary":
@@ -135,12 +136,12 @@ def start_process(
     close_fds = True if sys.platform != "win32" else False,
 
     write_fd = read_fd = None
-    if open_pipe:
+    if use_custom_pipe:
         read_fd, write_fd = os.pipe()
         os.set_inheritable(write_fd, True)
         close_fds = False
         new_env['AGIO_CUSTOM_PIPE_FILE_NO'] = str(write_fd)
-        new_env['AGIO_CUSTOM_PIPE_FILE_MODE'] = pipe_open_mode
+        new_env['AGIO_CUSTOM_PIPE_FILE_MODE'] = pipe_mode
     logger.debug('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
     process = subprocess.Popen(
         command,
@@ -189,7 +190,7 @@ def start_process(
                 if isinstance(output, bytes):
                     output = output.decode()
                 return output
-            elif open_pipe:
+            elif use_custom_pipe:
                 if not read_fd:
                     raise Exception("open_pipe requires read_fd object")
                 with os.fdopen(read_fd, pipe_mode) as data_pipe_handler:
@@ -225,6 +226,13 @@ def write_to_pipe(data: str):
             mode = 'w'
         else:
             raise TypeError('data must be str or bytes')
+    else:
+        if mode == 'r':
+            mode = 'w'
+        elif mode == 'rb':
+            mode = 'rb'
+        else:
+            raise TypeError('mode must be "rb" or "r"')
     pipe_num = os.getenv('AGIO_CUSTOM_PIPE_FILE_NO')
     if not pipe_num:
         raise ValueError('Custom pipe file not set')
@@ -238,7 +246,7 @@ def data_pipe():
     """
     Use open_pipe=True with function start_process to create custom pipe and write to him in child process
     Context manager allow you to write multiple times.
-    Use write_to_pipe(data) to write and close in single step/
+    Use write_to_pipe(data) to write and close in single step
 
     Usage:
     >>> with data_pipe() as pipe:
