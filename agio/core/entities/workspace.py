@@ -51,6 +51,11 @@ class AWorkspace(DomainBase):
     def delete(self) -> bool:
         return api.workspace.delete_workspace(self.id)
 
+    def is_deleted(self):
+        if 'deletedAt' not in self._data:
+            raise ValueError('Data is missing "deletedAt"')
+        return bool(self._data['deletedAt'])
+
     @classmethod
     def find(cls, company_id: str = None, name: str = NOTSET) -> 'AWorkspace':
         company_id = company_id or api.desk.get_current_company()['id']
