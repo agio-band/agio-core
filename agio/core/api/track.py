@@ -79,15 +79,15 @@ def find_project(
 ) -> dict:
     filters = deep_dict()
     if company_id:
-        filters['company']['id']['equalTo'] = company_id
+        filters['where']['company']['id']['equalTo'] = company_id
     if company_name:
-        filters['company']['name']['equalTo'] = company_name
+        filters['where']['company']['name']['equalTo'] = company_name
     if name:
-        filters['name']['equalTo'] = name
-    if state:
-        filters['state']['equalTo'] = state
+        filters['where']['name']['equalTo'] = name
     if code:
-        filters['code']['equalTo'] = code
+        filters['where']['code']['equalTo'] = code
+    if state:
+        filters['where']['state']['equalTo'] = state
     data = client.make_query(
         'track/projects/findProject',
         filters=filters
