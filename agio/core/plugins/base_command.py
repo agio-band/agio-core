@@ -71,7 +71,9 @@ class AbstractCommandPlugin(ABC):
             self.context = ctx
             self.on_before_execute(kwargs)
             if self.subcommands and self.allow_empty_root_command:
-                if self.context.obj.get('cmd_args'):
+                if not self.execute_root_command_before_subcommand and self.context.invoked_subcommand:
+                    return
+                if self.context.obj and self.context.obj.get('cmd_args'):
                     return
             result = self.execute(**kwargs) # TODO catch Ctrl+C to forced exit
             self.on_executed(result, kwargs)
