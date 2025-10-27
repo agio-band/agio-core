@@ -58,9 +58,9 @@ class AbstractCommandPlugin(ABC):
         })
         if self.allow_write_output_to_custom_pipe and pipe_is_allowed():
             try:
-                write_to_pipe(json.dumps(result))
+                write_to_pipe(json.dumps(result).encode('utf-8'))
             except json.decoder.JSONDecodeError:
-                write_to_pipe(str(result))
+                write_to_pipe(str(result).encode('utf-8'))
 
     def _init_click(self, parent_group=None):
         if not self.command_name:
