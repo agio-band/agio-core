@@ -71,12 +71,8 @@ class AWorkspace(DomainBase):
         return cls(ws_id)
 
     def get_current_revision(self):
-        try:
-            revision = api.workspace.get_revision_by_workspace_id(self.id)
-        except RevisionNotExists:
-            return
-        if revision:
-            return AWorkspaceRevision(revision)
+        revision = api.workspace.get_revision_by_workspace_id(self.id)
+        return AWorkspaceRevision(revision)
 
     def get_manager(self):
         from agio.core.pkg import AWorkspaceManager
