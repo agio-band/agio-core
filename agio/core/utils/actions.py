@@ -176,3 +176,8 @@ def get_action_func(action_full_name: str) -> Callable:
     if not action_func:
         raise Exception(f'Action {action_full_name} not found')
     return action_func
+
+
+def execute_action(action_name, *args, **kwargs):
+    action_func = get_action_func(action_name)
+    return action_func(*args, **kwargs)
