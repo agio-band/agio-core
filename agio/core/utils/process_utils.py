@@ -5,9 +5,10 @@ import sys
 import signal
 import subprocess
 import argparse
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Callable
+from agio.core.utils import custom_pipe
+from agio.core.utils.custom_pipe import data_pipe
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,8 @@ def terminate_child(proc):
         subprocess.call(["taskkill", "/F", "/T", "/PID", str(proc.pid)])
     else:
         os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+
+IS_WIN32 = sys.platform == "win32"
 
 
 def start_process(
@@ -30,7 +33,6 @@ def start_process(
         workdir: str = None,
         get_output: bool = False,
         use_custom_pipe: bool = False,
-        pipe_open_mode='text',  # text|binary
         exit_on_done=False,
         **kwargs
 ):
@@ -50,15 +52,6 @@ def start_process(
         raise Exception('Argument replace cannot be used with detached=True')
     if replace and get_output:
         raise Exception('Argument replace cannot be used with get_output=True')
-    pipe_mode = None
-    if use_custom_pipe:
-        if pipe_open_mode == "text":
-            pipe_mode = 'r'
-        elif pipe_open_mode == "binary":
-            pipe_mode = 'rb'
-        else:
-            raise ValueError("pipe_open_mode must be 'text' or 'binary'")
-
     new_env = os.environ.copy()
     if clear_env:
         for env_name in clear_env:
@@ -97,7 +90,7 @@ def start_process(
     stdout = None
     stderr = None
 
-    if get_output:
+    if get_output or use_custom_pipe:
         if detached or non_blocking:
             raise ValueError("get_output can only be used when detached=False and non_blocking=False")
         stdout = subprocess.PIPE
@@ -133,15 +126,15 @@ def start_process(
                 command = f'{terminal} -e "{subprocess.list2cmdline(command)}"'
                 use_shell = True
 
-    close_fds = True if sys.platform != "win32" else False,
-
-    write_fd = read_fd = None
+    after_start_callback: Callable|None = None
+    _read_pipe = _write_pipe = None
     if use_custom_pipe:
-        read_fd, write_fd = os.pipe()
-        os.set_inheritable(write_fd, True)
-        close_fds = False
-        new_env['AGIO_CUSTOM_PIPE_FILE_NO'] = str(write_fd)
-        new_env['AGIO_CUSTOM_PIPE_FILE_MODE'] = pipe_mode
+        extra_envs, after_start_callback, popen_kw, _read_pipe, _write_pipe = custom_pipe.create_pipe()
+        if extra_envs:
+            new_env.update(extra_envs)
+        if popen_kw:
+            kwargs.update(popen_kw)
+
     logger.debug('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
     process = subprocess.Popen(
         command,
@@ -149,34 +142,33 @@ def start_process(
         stdout=stdout,
         stderr=stderr,
         stdin=stdin,
-        close_fds=close_fds,
         start_new_session=start_new_session,
         creationflags=creationflags,
         shell=use_shell,
         cwd=workdir,
         **kwargs
     )
-    if write_fd:
-        os.close(write_fd)
+    if after_start_callback:
+        after_start_callback()
 
     if detached and output_file and not get_output:
         stdout.close()
 
-    if not detached:
-        if sys.platform == "win32":
-            pass # TODO close child process on parent exited
-            # job = ctypes.windll.kernel32.CreateJobObjectW(None, None)
-            # info = ctypes.wintypes.JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
-            # info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-            # ctypes.windll.kernel32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info))
-            # ctypes.windll.kernel32.AssignProcessToJobObject(job, process._handle)
-        else:
-            pass # TODO error if called from non main thread
-            # def handle_parent_exit(*_):
-            #     terminate_child(process)
-            #     sys.exit(1)
-            # signal.signal(signal.SIGTERM, handle_parent_exit)
-            # signal.signal(signal.SIGINT, handle_parent_exit)
+    # if not detached:
+    #     if sys.platform == "win32":
+    #         pass # TODO close child process on parent exited
+    #         # job = ctypes.windll.kernel32.CreateJobObjectW(None, None)
+    #         # info = ctypes.wintypes.JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
+    #         # info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+    #         # ctypes.windll.kernel32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info))
+    #         # ctypes.windll.kernel32.AssignProcessToJobObject(job, process._handle)
+    #     else:
+    #         pass # TODO error if called from non main thread
+    #         # def handle_parent_exit(*_):
+    #         #     terminate_child(process)
+    #         #     sys.exit(1)
+    #         # signal.signal(signal.SIGTERM, handle_parent_exit)
+    #         # signal.signal(signal.SIGINT, handle_parent_exit)
 
     if wait_for_process:
         try:
@@ -191,11 +183,18 @@ def start_process(
                     output = output.decode()
                 return output
             elif use_custom_pipe:
-                if not read_fd:
-                    raise Exception("open_pipe requires read_fd object")
-                with os.fdopen(read_fd, pipe_mode) as data_pipe_handler:
-                    data = data_pipe_handler.read()
-                return data
+                output, error = process.communicate()
+                if error:
+                    if isinstance(error, bytes):
+                        error = error.decode()
+                    msg = error.strip().split('\n')[-1]
+                    print(error, file=sys.stderr, flush=True)
+                    raise RuntimeError(msg)
+                if isinstance(_read_pipe, int):
+                    num = _read_pipe
+                else:
+                    num = _read_pipe.value
+                return custom_pipe.read_pipe(num)
             else:
                 process.wait()
                 logging.debug(f'Exit Code: {process.returncode}')
@@ -212,60 +211,15 @@ def start_process(
     return None
 
 
-def write_to_pipe(data: str):
+def write_to_pipe(data: str|bytes):
     """
     Use open_pipe=True with function start_process to create custom pipe and write to him in child process
     """
-    if not pipe_is_allowed():
-        raise Exception("Data Pipe is not allowed")
-    mode = os.getenv('AGIO_CUSTOM_PIPE_FILE_MODE')
-    if not mode:
-        if isinstance(data, bytes):
-            mode = 'wb'
-        elif isinstance(data, str):
-            mode = 'w'
-        else:
-            raise TypeError('data must be str or bytes')
-    else:
-        if mode == 'r':
-            mode = 'w'
-        elif mode == 'rb':
-            mode = 'rb'
-        else:
-            raise TypeError('mode must be "rb" or "r"')
-    pipe_num = os.getenv('AGIO_CUSTOM_PIPE_FILE_NO')
-    if not pipe_num:
-        raise ValueError('Custom pipe file not set')
-    with os.fdopen(int(pipe_num), mode) as data_pipe_handler:
-        data_pipe_handler.write(data)
-        data_pipe_handler.flush()
-
-
-@contextmanager
-def data_pipe():
-    """
-    Use open_pipe=True with function start_process to create custom pipe and write to him in child process
-    Context manager allow you to write multiple times.
-    Use write_to_pipe(data) to write and close in single step
-
-    Usage:
-    >>> with data_pipe() as pipe:
-    >>>     ...
-    >>>     pipe.write('text1')
-    >>>     ...
-    >>>     pipe.write('text2')
-    """
-    pipe_num = os.getenv('AGIO_CUSTOM_PIPE_FILE_NO')
-    if not pipe_num:
-        raise ValueError('Custom pipe file not set')
-    mode = os.getenv('AGIO_CUSTOM_PIPE_FILE_MODE')
-    with os.fdopen(int(pipe_num), mode) as data_pipe_handler:
-        yield data_pipe_handler
-        data_pipe_handler.flush()
+    return custom_pipe.write_pipe(data)
 
 
 def pipe_is_allowed():
-    return bool(os.getenv('AGIO_CUSTOM_PIPE_FILE_NO'))
+    return custom_pipe.pipe_defined()
 
 
 def process_exists(pid) -> bool:
