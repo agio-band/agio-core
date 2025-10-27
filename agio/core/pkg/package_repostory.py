@@ -79,6 +79,8 @@ class APackageRepository:
         access_data = kwargs.get('access_data', {})
         if 'token' in kwargs:
             access_data['token'] = kwargs.pop('token')
+            if not access_data['token']:
+                raise ValueError(f"Access token is required")
             logger.debug(f"Use token: {access_data['token'][:5]}...")
         # check version is not exists in remote
         local_tags, remote_tags = git_utils.get_tags(self.root.as_posix(), self.origin)
