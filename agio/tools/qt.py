@@ -76,7 +76,7 @@ def center_on_screen(widget, app = None):
     if current_screen is None:
         current_screen = app.primaryScreen()
         if current_screen is None:
-            print("Ошибка: Не удалось найти ни один экран.")
+            print("Screens not found")
             return
     screen_geometry = current_screen.availableGeometry()
     widget_geometry = widget.frameGeometry()
