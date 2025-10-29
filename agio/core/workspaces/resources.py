@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 from functools import lru_cache
 
-from agio.core.utils import config, package_hub
+from agio.core.config import config
+from agio.core.utils import package_hub
 
 
 @lru_cache

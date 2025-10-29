@@ -13,7 +13,7 @@ from agio.core.settings.fields.base_field import BaseField
 from agio.core.settings.fields.compaund_fields import CollectionField
 from agio.core.settings.fields.model_fields import ModelField
 from agio.core.settings.generic_types import REQUIRED
-from agio.core.utils.json_serializer import JsonSerializer
+from agio.tools.json_serializer import JsonSerializer
 
 
 def _get_field_class_for_type(python_type: type, args: tuple = None) -> Type[BaseField] | None:

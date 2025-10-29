@@ -10,7 +10,7 @@ class AppContext:
         return os.getenv('AGIO_APP_NAME', 'standalone')
 
     @property
-    def app_group(self):
+    def app_groups(self):
         return os.getenv('AGIO_APP_GROUPS', None)
 
 

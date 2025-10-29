@@ -2,13 +2,13 @@ import os
 import json
 from pathlib import Path
 
-from agio.core.utils import config_dir
+from agio.tools import app_dirs
 
 _session_file = 'session.json'
 
 
 def _get_session_file() -> Path:
-    return config_dir() / _session_file
+    return app_dirs.config_dir() / _session_file
 
 
 def save_session(session):

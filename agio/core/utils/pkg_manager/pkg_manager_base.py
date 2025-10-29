@@ -7,9 +7,9 @@ from pathlib import Path
 import shlex
 
 from agio.core.entities import APackage, APackageRelease
-from agio.core.pkg import APackageManager
-from agio.core.utils.process_utils import start_process
-from agio.core.utils import venv_utils
+from agio.core.workspaces import APackageManager
+from agio.tools.process_utils import start_process
+from agio.tools import venv_helpers
 
 try:
     import tomllib as toml

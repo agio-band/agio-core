@@ -17,7 +17,8 @@ agio -w [UUID] action [action.name] [args]
 ### Из Python
 
 ```python
-from agio.core.utils.actions import execute_action
+
+from agio.core.actions import execute_action
 
 result = execute_action('action.name', 1, 2, key='value')
 ```
@@ -26,7 +27,7 @@ result = execute_action('action.name', 1, 2, key='value')
 Если команда должна возвращать результат в виде JSON, то удобно использовать отдельный пайп.
 
 ```python
-from agio.core.utils.launch_utils import exec_agio_command
+from agio.tools.launching import exec_agio_command
 
 workspace_id = ''
 cmd = [

@@ -3,7 +3,7 @@ from threading import Event
 from typing import Iterable
 
 from agio.core.events import subscribe, unsubscribe
-from agio.core.utils.singleton import Singleton
+from agio.tools.singleton import Singleton
 from agio.core.utils import plugin_hub
 
 

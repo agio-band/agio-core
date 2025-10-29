@@ -9,7 +9,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 from agio.core.events import on_exit
-from agio.core.pkg import resources
+from agio.core.workspaces import resources
 
 logger = logging.getLogger(__name__)
 

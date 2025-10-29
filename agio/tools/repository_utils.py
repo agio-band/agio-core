@@ -117,7 +117,7 @@ class GitUrl:
                     'port': None
                 }
 
-        # Иначе — полноценный URL с схемой
+        # url with schema
         parsed = urlparse(url)
         return {
             'scheme': parsed.scheme,

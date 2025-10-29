@@ -2,8 +2,8 @@ import json
 
 from agio.core.entities.project import AProject
 from agio.core.plugins.base_service import ServicePlugin, make_action
-from agio.core.utils import get_actions
-from agio.core.utils.launch_utils import exec_agio_command
+from agio.core.actions import get_actions
+from agio.tools.launching import exec_agio_command
 
 
 class ActionsService(ServicePlugin):

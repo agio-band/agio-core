@@ -7,8 +7,7 @@ import subprocess
 import argparse
 from pathlib import Path
 from typing import Iterable, Callable
-from agio.core.utils import custom_pipe
-from agio.core.utils.custom_pipe import data_pipe
+from agio.tools import custom_pipe
 
 logger = logging.getLogger(__name__)
 

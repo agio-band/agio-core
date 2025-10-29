@@ -5,8 +5,8 @@ import sys
 from pathlib import Path
 from typing import Callable
 
-from agio.core.utils.text_utils import slugify, unslugify
-from agio.core.pkg.resources import get_res
+from agio.tools.text_helpers import slugify, unslugify
+from agio.core.workspaces.resources import get_res
 
 
 def create_new_package(destination_path: str|Path,
@@ -16,7 +16,7 @@ def create_new_package(destination_path: str|Path,
                        **kwargs):
     py_name = python_package_name or validate_python_name(name)
 
-    template_path = template_path or get_res('core/pkg-template-default')
+    template_path = template_path or get_res('core/workspaces-template-default')
     if not template_path:
         raise RuntimeError('Template path is required')
 

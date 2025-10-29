@@ -3,46 +3,47 @@ import logging
 from pathlib import Path
 
 from agio.core.settings.generic_types import SettingsType
-from agio.core.utils import pipeline_config_dir, text_utils
-from agio.core.utils.modules_utils import import_object_by_dotted_path
+from agio.tools import app_dirs
+from agio.tools import text_helpers
+from agio.tools.modules import import_object_by_dotted_path
 from agio.core.settings.package_settings import APackageSettings
 from agio.core.utils import package_hub
 
 logger = logging.getLogger(__name__)
 
 
-def _get_settings_dir() -> Path:
-    return Path(pipeline_config_dir()) / 'settings'
-
-
-def _get_settings_file(file_name: str) -> Path:
-    return _get_settings_dir().joinpath(file_name).with_suffix('.json')
-
-
-
-def read_local_settings_values(company = None, project = None):
-    # TODO: add company overrides
-    path_list = [
-        _get_settings_file('common_settings')
-    ]
-    # TODO: add project overrides
-    # read data
-    settings_data = {}
-    for path in path_list:
-        if path.exists():
-            with path.open(encoding='utf-8') as f:
-                data = json.load(f)
-            settings_data.update(data)
-    return settings_data
-
-
-def write_local_settings(settings_dict: dict = None, scope: str = None):
-    save_path = _get_settings_file('common_settings')
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-    with save_path.open('w', encoding='utf-8') as f:
-        json.dump(settings_dict, f, ensure_ascii=False, indent=4)
-    logger.info(f'Saved settings to {save_path}')
-    # todo: apply for scopes: project, company
+# def _get_settings_dir() -> Path:
+#     return Path(pipeline_config_dir()) / 'settings'
+#
+#
+# def _get_settings_file(file_name: str) -> Path:
+#     return _get_settings_dir().joinpath(file_name).with_suffix('.json')
+#
+#
+#
+# def read_local_settings_values(company = None, project = None):
+#     # TODO: add company overrides
+#     path_list = [
+#         _get_settings_file('common_settings')
+#     ]
+#     # TODO: add project overrides
+#     # read data
+#     settings_data = {}
+#     for path in path_list:
+#         if path.exists():
+#             with path.open(encoding='utf-8') as f:
+#                 data = json.load(f)
+#             settings_data.update(data)
+#     return settings_data
+#
+#
+# def write_local_settings(settings_dict: dict = None, scope: str = None):
+#     save_path = _get_settings_file('common_settings')
+#     save_path.parent.mkdir(parents=True, exist_ok=True)
+#     with save_path.open('w', encoding='utf-8') as f:
+#         json.dump(settings_dict, f, ensure_ascii=False, indent=4)
+#     logger.info(f'Saved settings to {save_path}')
+#     # todo: apply for scopes: project, company
 
 # layout
 

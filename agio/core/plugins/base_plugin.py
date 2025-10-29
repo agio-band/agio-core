@@ -7,11 +7,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Generator
 
 from agio.core.exceptions import PluginLoadingError
-from agio.core.utils import context
-from agio.core.utils.modules_utils import import_module_by_path
-from agio.core.utils.text_utils import unslugify
+from agio.tools import context
+from agio.tools.modules import import_module_by_path
+from agio.tools.text_helpers import unslugify
 if TYPE_CHECKING:
-    from agio.core.pkg.package import APackageManager
+    from agio.core.workspaces.package import APackageManager
 
 logger = logging.getLogger(__name__)
 

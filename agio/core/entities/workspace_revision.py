@@ -110,7 +110,7 @@ class AWorkspaceRevision(DomainBase):
             yield APackageRelease(pkg_data)
 
     def get_manager(self):
-        from agio.core.pkg import AWorkspaceManager
+        from agio.core.workspaces import AWorkspaceManager
 
         return AWorkspaceManager(self)
 

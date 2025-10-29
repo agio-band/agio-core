@@ -11,8 +11,8 @@ import click
 from pprint import pprint
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 from agio.core.plugins.base_plugin import APlugin
-from agio.core.pkg.package import APackageManager
-from agio.core.pkg.workspace import AWorkspaceManager
+from agio.core.workspaces.package import APackageManager
+from agio.core.workspaces.workspace import AWorkspaceManager
 from agio.core.utils import package_hub, plugin_hub
 from agio.core.api import client, profile
 if TYPE_CHECKING:
@@ -56,7 +56,7 @@ class EnvInfoCommand(ASubCommand):
 
 
 class PackagesInfoCommand(ASubCommand):
-    command_name = 'pkg'
+    command_name = 'packages'
 
     def execute(self, *args, **kwargs):
         pkg_hub = package_hub.APackageHub.instance()
@@ -66,12 +66,14 @@ class PackagesInfoCommand(ASubCommand):
         if not sizes:
             raise Exception('No packages found')
         max_len = max(sizes)
+
         def strip_path(path):
             if ws_manager:
                 rel = Path(path).relative_to(ws_manager.install_root)
                 return f'[WORKSPACE]/{rel}'
             else:
                 return path
+
         for package in pkg_hub.get_package_list():
             package: APackageManager
             print(f"  {package.package_name:<{max_len+2}} {package.package_version:<8}")# | {strip_path(package.root)}")
@@ -157,7 +159,8 @@ class ActionsInfoCommand(ASubCommand):
     command_name = 'actions'
 
     def execute(self, *args, **kwargs):
-        from agio.core.utils import get_all_actions
+        from agio.core.actions import get_all_actions
+
         for act in get_all_actions():
             click.secho(f"{act.label}", bold=True, fg='green')
             click.secho(f"  name: ", nl=False, fg='yellow')

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TypeVar
 
-from agio.core.utils.singleton import Singleton
+from agio.tools.singleton import Singleton
 
 
 class __Constant(metaclass=Singleton):

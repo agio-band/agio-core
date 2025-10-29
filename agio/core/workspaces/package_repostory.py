@@ -1,13 +1,12 @@
 import logging
-import os
 from functools import cached_property
 from pathlib import Path
 
 from agio.core.entities import APackageRelease, APackage
 from agio.core.exceptions import PackageRepositoryError, PackageError, PackageLoadingError
-from agio.core.pkg.package import APackageManager
+from agio.core.workspaces.package import APackageManager
 from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
-from agio.core.utils import git_utils
+from agio.tools import git_utils
 from agio.core.utils.pkg_manager import get_package_manager
 from agio.core import api
 from agio.core.utils import plugin_hub

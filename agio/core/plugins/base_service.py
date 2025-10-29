@@ -7,11 +7,11 @@ from threading import Thread, Event
 from typing import Iterable, Any, Callable
 
 from agio.core.events import emit
-from agio.core.plugins.mixins import BasePluginClass
+from agio.core.actions import action_item
 from agio.core.plugins.base_plugin import APlugin
-# from agio.core.utils.actions import ActionItem
-# from agio.core.utils.text_utils import unslugify
-from agio.core.utils import text_utils, package_hub, plugin_hub, process_hub, actions
+from agio.core.plugins.mixins import BasePluginClass
+from agio.core.utils import package_hub, plugin_hub, process_hub
+from agio.tools import text_helpers
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def make_action(
             'app_name': app_name,
             # action properties
             'name': func.__name__,
-            'label': label or text_utils.unslugify(func.__name__),
+            'label': label or text_helpers.unslugify(func.__name__),
             'icon': icon,
             'order': order,
             'group': group,
@@ -140,7 +140,7 @@ class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
             action_menu_name = acton_data.get('menu_name') or self.menu_name
             if not action_menu_name:
                 continue
-            item_data = {k: v for k, v in acton_data.items() if k in actions.ActionItem.get_fields()}
+            item_data = {k: v for k, v in acton_data.items() if k in action_item.ActionItem.get_fields()}
             emit('core.services.action_item_created', item_data)
             items.append(item_data)
         return items

@@ -2,7 +2,7 @@ import re
 import subprocess
 import shlex
 import logging
-from . import process_utils
+from agio.tools import process_utils
 
 logger = logging.getLogger(__name__)
 

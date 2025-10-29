@@ -7,7 +7,7 @@ from typing import Iterator
 from agio.core import api
 from agio.core.api.utils import NOTSET
 from agio.core.exceptions import PackageError
-from agio.core.utils.repository_utils import filter_compatible_package
+from agio.tools.repository_utils import filter_compatible_package
 from .entity import DomainBase
 
 logger = logging.getLogger(__name__)

@@ -28,6 +28,10 @@ def config_dir(*inner_parts: str) -> Path:
         return Path('~/Library/Preferences/agio', *inner_parts)
 
 
+def projects_settings_dir(*inner_parts: str) -> Path:
+    return config_dir('projects', *inner_parts)
+
+
 def cache_dir(*inner_parts) -> Path:
     """Path for cache data"""
     # install_dir('cache') ???

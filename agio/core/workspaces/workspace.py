@@ -12,8 +12,9 @@ from agio.core import api, env_names
 from agio.core.entities import AWorkspaceRevision, AWorkspace
 from agio.core.events import emit
 from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotExistsError
-from agio.core.utils import config, pkg_manager, venv_utils
-from agio.core.utils.launch_utils import LaunchContext
+from agio.core.config import config
+from agio.core.utils import pkg_manager
+from agio.tools.launching import LaunchContext
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +138,6 @@ class AWorkspaceManager:
         package_list = list(self.get_package_list())
         if not package_list:
             raise Exception('No packages to install')
-        # package list must be resolved with all dependencies and saved to revision
         install_args = [pkg.get_installation_command() for pkg in package_list]
         reinstall = clean or self.need_to_reinstall()
         if reinstall:

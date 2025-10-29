@@ -10,7 +10,7 @@ import yaml
 from agio.core.entities import package
 from agio.core.exceptions import PackageMetadataError, PackageError
 from agio.core.plugins.base_plugin import APlugin
-from agio.core.utils.modules_utils import import_object_by_dotted_path
+from agio.tools.modules import import_object_by_dotted_path
 
 logger = logging.getLogger(__name__)
 

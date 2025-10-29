@@ -12,7 +12,7 @@ from agio.core.exceptions import ValueTypeError, ParameterError
 from agio.core.settings.fields.js_types import to_js_type
 from agio.core.settings.generic_types import REQUIRED, NOT_SET
 from agio.core.settings.validators import ValidatorBase
-from agio.core.utils.text_utils import unslugify
+from agio.tools.text_helpers import unslugify
 
 ValidatorInstance = ValidatorBase
 ValidatorFactory = Callable[..., ValidatorBase]

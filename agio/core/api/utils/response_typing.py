@@ -1,6 +1,6 @@
 from typing import Callable, Type
 from pydantic import BaseModel
-from agio.core.utils import config
+from agio.core.config import config
 
 Schema = Type[BaseModel]
 

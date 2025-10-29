@@ -2,11 +2,11 @@ from collections import defaultdict
 
 import click
 
-from agio.core.pkg import AWorkspaceManager
-from agio.core.pkg.workspace import AWorkspace
+from agio.core.workspaces import AWorkspaceManager
+from agio.core.workspaces.workspace import AWorkspace
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
-from agio.core.utils.file_utils import get_folder_size
-from agio.core.utils.text_utils import pretty_size
+from agio.tools.file_utils import get_folder_size
+from agio.tools.text_helpers import pretty_size
 
 
 class InstallWorkspaceCommand(ASubCommand):

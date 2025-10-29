@@ -75,7 +75,7 @@ class AWorkspace(DomainBase):
         return AWorkspaceRevision(revision)
 
     def get_manager(self):
-        from agio.core.pkg import AWorkspaceManager
+        from agio.core.workspaces import AWorkspaceManager
 
         return AWorkspaceManager(self.get_current_revision())
 

@@ -50,7 +50,7 @@ include-package-data = true
 
 #[tool.uv.workspace]
 #members = [
-#    "agio/resources/pkg-template-default",
+#    "agio/resources/workspaces-template-default",
 #]
 
 [dependency-groups]

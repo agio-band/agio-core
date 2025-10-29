@@ -5,11 +5,11 @@ from pathlib import Path
 import click
 
 from agio.core.entities import APackageRelease, AWorkspace
-from agio.core.pkg.package_repostory import APackageRepository
+from agio.core.workspaces.package_repostory import APackageRepository
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
-from agio.core.utils.app_dirs import get_default_env_dir
+from agio.tools.app_dirs import default_env_dir
 from agio.core.utils.pkg_manager import get_package_manager
-from agio.core.utils.text_utils import unslugify
+from agio.tools.text_helpers import unslugify
 from agio.tools import package_template
 
 logger = logging.getLogger(__name__)
@@ -178,7 +178,7 @@ class PackageInstallCommand(ASubCommand):
             ws_manager = AWorkspace.current()
             manager = ws_manager.get_manager().venv_manager
         except RuntimeError:
-            manager = get_package_manager(get_default_env_dir())
+            manager = get_package_manager(default_env_dir())
         try:
             resp = manager.install_package_by_name(name, version)
             print(resp)
@@ -198,7 +198,7 @@ class PackageUninstallCommand(ASubCommand):
             ws_manager = AWorkspace.current()
             manager = ws_manager.get_manager().venv_manager
         except RuntimeError:
-            manager = get_package_manager(get_default_env_dir())
+            manager = get_package_manager(default_env_dir())
         try:
             resp = manager.uninstall_package(name)
             print(resp)
@@ -209,7 +209,7 @@ class PackageUninstallCommand(ASubCommand):
 
 class PackageCommand(ACommandPlugin):
     name = 'package_cmd'
-    command_name = "pkg"
+    command_name = "workspaces"
     subcommands = [
         PackageNewCommand,
         PackageBuildCommand,

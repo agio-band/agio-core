@@ -1,4 +1,3 @@
-import inspect
 import logging
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -6,8 +5,7 @@ from typing import Callable
 
 from agio.core.events.event import AEvent
 from agio.core.exceptions import StopEventPropagate, EventRuntimeError, CallbackInitError
-from agio.core.utils.singleton import Singleton
-import click
+from agio.tools.singleton import Singleton
 
 logger = logging.getLogger(__name__)
 

@@ -11,12 +11,10 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 import requests
-
-from  agio.tools import packaging_tools
 from .. import venv_utils
 
 from .pkg_manager_base import PackageManagerBase
-from agio.core.utils.process_utils import start_process
+from agio.tools.process_utils import start_process
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +74,7 @@ class UVPackageManager(PackageManagerBase):
         if py_version:
             if py_version[0].isdigit():
                 py_version = f'~={py_version}'
-            py_version = packaging_tools.find_best_available_version(
+            py_version = venv_utils.find_best_available_version(
                 None,
                 py_version,
                 available_versions

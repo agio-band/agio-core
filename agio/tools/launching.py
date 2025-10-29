@@ -9,9 +9,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from agio.core import pkg
+from agio.core import workspaces
 from agio.core.exceptions import WorkspaceNotExists
-from agio.core.utils import process_utils, app_dirs
+from agio.tools import app_dirs
+from agio.tools import process_utils
 from agio.core.utils.pkg_manager import get_package_manager_class
 
 logger = logging.getLogger(__name__)
@@ -194,7 +195,7 @@ def get_default_env_executable():
 
 def exec_agio_command(
         args: list,
-        workspace: str|pkg.AWorkspaceManager = None,
+        workspace: str | workspaces.AWorkspaceManager = None,
         envs: dict = None,
         workdir: str = None,
         **kwargs
@@ -214,11 +215,11 @@ def exec_agio_command(
     ws_manager = None
     if not os.getenv('AGIO_FORCE_DEFAULT_WORKSPACE'):  # start in default env always (for beta version)
         if isinstance(workspace, str):
-            ws_manager = pkg.AWorkspaceManager.create_from_id(workspace)
-        elif isinstance(workspace, pkg.AWorkspaceManager):
+            ws_manager = workspaces.AWorkspaceManager.create_from_id(workspace)
+        elif isinstance(workspace, workspaces.AWorkspaceManager):
             ws_manager = workspace
         elif workspace is None:
-            ws_manager = pkg.AWorkspaceManager.current()
+            ws_manager = workspaces.AWorkspaceManager.current()
         else:
             raise TypeError("Workspace must be either a string or AWorkspaceManager.")
     return start_in_workspace(
@@ -231,7 +232,7 @@ def exec_agio_command(
 
 
 def start_in_workspace(
-        ws_manager: pkg.AWorkspaceManager|str|None,
+        ws_manager: workspaces.AWorkspaceManager | str | None,
         args: list = None,
         envs: dict = None,
         workdir: str = None,
@@ -240,7 +241,7 @@ def start_in_workspace(
     if os.getenv('AGIO_FORCE_DEFAULT_WORKSPACE'):   # start in default env always (for beta version)
         ws_manager = None
     if isinstance(ws_manager, str):
-        ws_manager = pkg.AWorkspaceManager.create_from_id(ws_manager)
+        ws_manager = workspaces.AWorkspaceManager.create_from_id(ws_manager)
     if ws_manager:
         ctx: LaunchContext = ws_manager.get_launch_context()
         ws_manager.install_or_update_if_needed()

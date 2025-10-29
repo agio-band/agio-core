@@ -9,7 +9,7 @@ from agio.core.exceptions import MakeReleaseError
 from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
 from urllib.parse import urlparse
 
-from agio.core.utils import config
+from agio.core.config import config
 
 logger = logging.getLogger(__name__)
 

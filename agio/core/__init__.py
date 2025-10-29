@@ -3,13 +3,13 @@ import logging
 import signal
 import threading
 
+
 from .events import emit as _emit
 from .events import subscribe as _subscribe
 from .init.init_packages import init_packages
 from .init.init_plugins import init_plugins
 from .utils import process_hub
 from .utils import setup_logger
-from .utils.app_context import show_context
 
 logger = logging.getLogger(__name__)
 init_packages()
@@ -34,5 +34,6 @@ else:
     atexit.register(_before_exit_event)
 
 
+# _emit('core.app.config_loaded', {'config': config})
 _emit('core.app.on_startup')
 logger.debug('Core init done')

@@ -9,7 +9,7 @@ from requests.exceptions import HTTPError, ConnectionError
 from agio.core.api.api_client import base
 from agio.core.api.utils import NOTSET
 from agio.core.exceptions import RequestError
-from agio.core.utils.json_serializer import JsonSerializer
+from agio.tools.json_serializer import JsonSerializer
 
 logger = logging.getLogger(__name__)
 

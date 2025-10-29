@@ -4,8 +4,8 @@ import os
 import sys
 from typing import Generator
 
-from agio.core.pkg import package
-from agio.core.utils.singleton import Singleton
+from agio.core.workspaces import package
+from agio.tools.singleton import Singleton
 
 
 class APackageHub(metaclass=Singleton):
