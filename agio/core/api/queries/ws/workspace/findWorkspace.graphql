@@ -26,6 +26,7 @@ query FindWorkspace(
                     name
                     code
                 }
+                deletedAt
             }
         }
     }

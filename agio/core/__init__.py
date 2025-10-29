@@ -9,6 +9,7 @@ from .init.init_packages import init_packages
 from .init.init_plugins import init_plugins
 from .utils import process_hub
 from .utils import setup_logger
+from .utils.app_context import show_context
 
 logger = logging.getLogger(__name__)
 init_packages()

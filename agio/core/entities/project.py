@@ -83,10 +83,10 @@ class AProject(domain.DomainBase):
     def workspace_id(self):
         return self._data['workspace']['id'] if self._data['workspace'] else None
 
-    def set_workspace(self, sorkspace: ws.AWorkspace|str|None) -> bool:
-        if sorkspace is None:
+    def set_workspace(self, workspace: ws.AWorkspace|str|None) -> bool:
+        if workspace is None:
             return self.unset_workspace()
-        ws_id = sorkspace.id if isinstance(sorkspace, ws.AWorkspace) else sorkspace
+        ws_id = workspace.id if isinstance(workspace, ws.AWorkspace) else workspace
         resp = api.track.update_project(self.id, workspace_id=ws_id)
         self.reload()
         return resp

@@ -88,7 +88,6 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
                 asset_files.append(filepath)
 
         repo_details = self.parse_url(repository_url)
-        # TODO: check release already exists
         base_url = self.get_api_base_url(repository_url)
         repo_name = re.sub(r"\.git$", '', repo_details['repository_name'])
         url = f"{base_url}/repos/{repo_details['username']}/{repo_name}/releases"

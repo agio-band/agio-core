@@ -1,11 +1,11 @@
 [project]
 name = "agio-core"
-version = "0.0.1"
+version = "0.0.2"
 description = "Core functionality for agio pipeline"
 authors = [
     { name = "paulwinex", email = "paulwinex@gmail.com" }
 ]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -24,7 +24,6 @@ dependencies = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 

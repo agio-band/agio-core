@@ -9,7 +9,7 @@ from . import APackageRelease, APackage
 from .entity import DomainBase
 from .workspace_revision import AWorkspaceRevision
 from ..events import emit
-from ..exceptions import RequestError, SettingsRevisionNotExists
+from ..exceptions import RequestError, SettingsRevisionNotExists, RevisionNotExists
 from ..utils import settings_hub
 
 
@@ -43,8 +43,18 @@ class AWorkspace(DomainBase):
         )
         return cls(ws_id)
 
+    @classmethod
+    def from_revision_id(cls, revision_id: str) -> 'AWorkspace':
+        rev = AWorkspaceRevision(revision_id)
+        return rev.get_workspace()
+
     def delete(self) -> bool:
         return api.workspace.delete_workspace(self.id)
+
+    def is_deleted(self):
+        if 'deletedAt' not in self._data:
+            raise ValueError('Data is missing "deletedAt"')
+        return bool(self._data['deletedAt'])
 
     @classmethod
     def find(cls, company_id: str = None, name: str = NOTSET) -> 'AWorkspace':
@@ -62,8 +72,7 @@ class AWorkspace(DomainBase):
 
     def get_current_revision(self):
         revision = api.workspace.get_revision_by_workspace_id(self.id)
-        if revision:
-            return AWorkspaceRevision(revision)
+        return AWorkspaceRevision(revision)
 
     def get_manager(self):
         from agio.core.pkg import AWorkspaceManager

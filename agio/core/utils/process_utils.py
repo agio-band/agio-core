@@ -5,27 +5,30 @@ import sys
 import signal
 import subprocess
 import argparse
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Callable
+from agio.core.utils import custom_pipe
+from agio.core.utils.custom_pipe import data_pipe
 
 logger = logging.getLogger(__name__)
+
+IS_WIN32 = sys.platform == "win32"
 
 def terminate_child(proc):
     """
     Terminates a process and its whole process group (or job).
     """
-    if sys.platform == "win32":
+    if IS_WIN32:
         # /F: Force termination
         # /T: Terminate the specified process and any child processes started by it
         subprocess.call(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
-        # Send SIGKILL to the entire process group
         try:
             os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
         except ProcessLookupError:
             pass # Process already dead
+
 
 
 def start_process(
@@ -39,59 +42,39 @@ def start_process(
         output_file=None,
         workdir: str = None,
         get_output: bool = False,
-        open_pipe: bool = False,
-        pipe_open_mode='text',  # text|binary
+        use_custom_pipe: bool = False,
         exit_on_done=False,
         **kwargs
 ):
     """
     Universal function to start a process with different modes.
 
-    Returns:
-        str/bytes: If get_output or open_pipe is True.
-        int: If blocking (wait_for_process=True) and not returning output (return code).
-        subprocess.Popen: If non_blocking or detached is True.
-        None: Otherwise (e.g., if exit_on_done is True).
+    Automatically terminates child process if parent is killed (when not detached).
+    Propagates exit code from child to parent if the child crashes.
     """
-
-    # --- Input Validation ---
-    if get_output and open_pipe:
+    if get_output and use_custom_pipe:
         raise Exception("open_pipe and get_output are mutually exclusive")
-    if detached and open_pipe:
+    if detached and use_custom_pipe:
         raise Exception('Argument open_pipe cannot be used with detached=True')
-    if open_pipe and replace:
+    if use_custom_pipe and replace:
         raise Exception('Argument open_pipe cannot be used with replace=True')
     if detached and replace:
         raise Exception('Argument replace cannot be used with detached=True')
     if replace and get_output:
         raise Exception('Argument replace cannot be used with get_output=True')
-
-    if open_pipe:
-        if pipe_open_mode == "text":
-            pipe_mode = 'r'
-        elif pipe_open_mode == "binary":
-            pipe_mode = 'rb'
-        else:
-            raise ValueError("pipe_open_mode must be 'text' or 'binary'")
-
-    # --- Environment and Working Directory Setup ---
     new_env = os.environ.copy()
     if clear_env:
         for env_name in clear_env:
             new_env.pop(env_name, None)
     if env:
         new_env.update(env)
-
     if workdir:
         workdir = os.path.abspath(os.path.expanduser(workdir))
         if not os.path.isdir(workdir):
-            print(f"Error: Working directory '{workdir}' does not exist.", file=sys.stderr)
+            print(f"Error: Working directory '{workdir}' does not exist.")
             sys.exit(1)
-
-    if isinstance(command, Iterable) and not isinstance(command, str):
+    if isinstance(command, Iterable):
         command = list(map(str, command))
-
-    # --- Replace Mode (os.execve/os.execvpe) ---
     if replace:
         if isinstance(command, str):
             command = shlex.split(command)
@@ -100,200 +83,112 @@ def start_process(
             try:
                 os.chdir(workdir)
             except OSError as e:
-                print(f"Error changing directory: {e}", file=sys.stderr)
-                sys.exit(1)
-
-        # os.execvpe searches PATH; os.execve requires an absolute path.
+                print(f"Error changing directory: {e}")
+                exit(1)
         if os.path.isabs(executable):
             os.execve(executable, command, new_env)
         else:
             os.execvpe(executable, command, new_env)
 
-    # --- Popen Initialization ---
     creationflags = 0
     stdin = None
-    stdout = None
-    stderr = None
     start_new_session = False
     use_shell = False
-
-    # Corrected: wait_for_process means blocking
     wait_for_process = not detached and not non_blocking
 
-    # --- I/O Redirection Logic ---
-    if get_output:
-        # Output must be piped back to parent for capture
+    stdout = None
+    stderr = None
+
+    if get_output or use_custom_pipe:
         if detached or non_blocking:
             raise ValueError("get_output can only be used when detached=False and non_blocking=False")
         stdout = subprocess.PIPE
         stderr = subprocess.PIPE
-
     elif detached and output_file:
-        # Redirect output to a file when detached. File handle must be closed manually later.
-        try:
-            # We open stdout to a file and redirect stderr to the same place.
-            stdout = open(output_file, "a")
-            stderr = subprocess.STDOUT
-        except Exception as e:
-            logging.error(f"Failed to open output file {output_file}: {e}")
-            raise
-
+        stdout = open(output_file, "a")
+        stderr = subprocess.STDOUT
     elif detached:
-        # Use DEVNULL constant to discard output and prevent resource leaks.
-        stdout = subprocess.DEVNULL
-        stderr = subprocess.DEVNULL
+        stdout = open(os.devnull, "w")
+        stderr = subprocess.STDOUT
 
-    # --- Platform-Specific Flags and Configuration ---
-    if sys.platform == "win32":
+    if IS_WIN32:
         if detached:
-            # DETACHED_PROCESS: Ensures process is fully independent.
-            # CREATE_NEW_PROCESS_GROUP: Prevents signals from reaching the detached group.
-            creationflags |= subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-
+            creationflags |= subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
         if new_console:
-            # CREATE_NEW_CONSOLE: Guarantees a new console window if one is not created implicitly.
             creationflags |= subprocess.CREATE_NEW_CONSOLE
         else:
-            # If new_console=False, attempt to hide the console.
             executable = Path(command[0])
-
-            # Optimization: Use pythonw.exe for python scripts to avoid console flash
             if executable.stem == 'python':
                 if executable.with_name('pythonw.exe').exists():
                     command[0] = str(executable.with_name('pythonw.exe'))
-            else:
-                # CREATE_NO_WINDOW: Explicitly prevents the creation of a console window.
-                # This overrides the implicit new console creation from DETACHED_PROCESS for console apps.
-                creationflags |= subprocess.CREATE_NO_WINDOW
-
-        # DEVNULL constant for stdin when detached is clean and correct for Windows.
+            creationflags |= subprocess.CREATE_NO_WINDOW # TODO make optional
         stdin = subprocess.DEVNULL if detached else None
-
-    else:  # Unix-like systems
+    else:
         if detached:
-            # Setsid/Start_new_session: Creates a new process group for detaching.
             start_new_session = True
-            # When detached, stdin must be explicitly opened from /dev/null for reading
-            # (or using the DEVNULL constant) to prevent blocking if the child reads from stdin.
             stdin = open(os.devnull, "r")
-
         if new_console:
-            # Launching a terminal emulator on Unix for new_console functionality
             terminal = os.environ.get("TERMINAL", "x-terminal-emulator")
             if terminal in ["gnome-terminal", "konsole", "xfce4-terminal"]:
                 command = [terminal, "--", *command]
             else:
-                # Fallback, requires shell=True
                 command = f'{terminal} -e "{subprocess.list2cmdline(command)}"'
                 use_shell = True
 
-    # Corrected: close_fds should be a boolean. True is standard for Unix unless pipes are needed.
-    close_fds = True if sys.platform != "win32" else False
+    after_start_callback: Callable|None = None
+    _read_pipe = _write_pipe = None
+    if use_custom_pipe:
+        extra_envs, after_start_callback, popen_kw, _read_pipe, _write_pipe = custom_pipe.create_pipe()
+        if extra_envs:
+            new_env.update(extra_envs)
+        if popen_kw:
+            kwargs.update(popen_kw)
 
-    write_fd = read_fd = None
-    if open_pipe:
-        # Prepare the pipe for inter-process communication
-        read_fd, write_fd = os.pipe()
-        os.set_inheritable(write_fd, True)
-        close_fds = False  # Must be False to allow the child to inherit the pipe FD
-        new_env['AGIO_CUSTOM_PIPE_FILE_NO'] = str(write_fd)
-        new_env['AGIO_CUSTOM_PIPE_FILE_MODE'] = pipe_open_mode
-
-    # --- Launch Process ---
-    logging.debug('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
+    logger.debug('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
     process = subprocess.Popen(
         command,
         env=new_env,
         stdout=stdout,
         stderr=stderr,
         stdin=stdin,
-        close_fds=close_fds,
         start_new_session=start_new_session,
         creationflags=creationflags,
         shell=use_shell,
         cwd=workdir,
         **kwargs
     )
+    if after_start_callback:
+        after_start_callback()
 
-    # --- Resource Cleanup (Post-Popen) ---
-    if write_fd:
-        # Close the write end of the pipe in the parent immediately
-        os.close(write_fd)
+    if detached and output_file and not get_output:
+        stdout.close()
 
-    # 1. Close the file handle used for stdout/stderr redirection when detached
-    if detached and output_file and stdout is not None and hasattr(stdout, 'close'):
-        try:
-            stdout.close()
-        except:
-            pass  # Ignore if close fails
-
-    # 2. Close stdin handle opened from os.devnull on Unix/Linux when detached
-    if sys.platform != "win32" and detached and stdin is not None and hasattr(stdin, 'close'):
-        try:
-            stdin.close()
-        except:
-            pass  # Ignore if close fails
-
-    # --- Parent Exit Handling (Kill Child) ---
-    if not detached and not replace:
-        if sys.platform == "win32":
-            import ctypes
-            # TODO: Close child process on parent exited -> Use Job Object
-            if "job" not in kwargs:
-                try:
-                    # Create Job Object with JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE (0x2000)
-                    job = ctypes.windll.kernel32.CreateJobObjectW(None, None)
-                    info = ctypes.wintypes.JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
-                    info.BasicLimitInformation.LimitFlags = 0x2000
-                    ctypes.windll.kernel32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info))
-
-                    # Assign the new process to the job
-                    handle = ctypes.windll.kernel32.OpenProcess(0x1F0FFF, False, process.pid)  # PROCESS_ALL_ACCESS
-                    ctypes.windll.kernel32.AssignProcessToJobObject(job, handle)
-                    ctypes.windll.kernel32.CloseHandle(handle)
-
-                    # Store the job object handle so it isn't garbage collected immediately
-                    process.job_object = job
-                except Exception as e:
-                    logging.warning(f"Could not assign process to Job Object (kill on parent exit): {e}")
-
-        else:
-            # TODO: Signal handlers (SIGTERM/SIGINT) for Unix should be handled by the main application
-            # (or by using prctl/setsid in combination with start_new_session logic).
-            # The current approach relies on the process remaining in the session/group,
-            # which is the default non-detached behavior.
-            pass
-
-    # --- Blocking / Non-Blocking Execution ---
     if wait_for_process:
         try:
             if get_output:
-                # Blocking call to read all output
                 output, error = process.communicate()
                 logging.debug(f'Exit Code: {process.returncode}')
-
                 if process.returncode != 0:
-                    error_str = error.decode(errors='replace') if isinstance(error, bytes) else error
-                    print(error_str, file=sys.stderr)
-
-                output_str = output.decode(errors='replace') if isinstance(output, bytes) else output
-                return output_str
-
-            elif open_pipe:
-                # Read from the pipe created earlier
-                if not read_fd:
-                    raise Exception("open_pipe requires read_fd object")
-
-                # The pipe handler ensures the read end is closed upon exit
-                with os.fdopen(read_fd, pipe_mode) as data_pipe_handler:
-                    data = data_pipe_handler.read()
-
-                # Wait for the child process to complete after reading the pipe data
-                process.wait()
-                return data
-
+                    if isinstance(error, bytes):
+                        error = error.decode()
+                    print(error, file=sys.stderr)
+                if isinstance(output, bytes):
+                    output = output.decode()
+                return output
+            elif use_custom_pipe:
+                output, error = process.communicate()
+                if error:
+                    if isinstance(error, bytes):
+                        error = error.decode()
+                    msg = error.strip().split('\n')[-1]
+                    print(error, file=sys.stderr, flush=True)
+                    raise RuntimeError(msg)
+                if isinstance(_read_pipe, int):
+                    num = _read_pipe
+                else:
+                    num = _read_pipe.value
+                return custom_pipe.read_pipe(num)
             else:
-                # Simple blocking wait for return code
                 process.wait()
                 logging.debug(f'Exit Code: {process.returncode}')
 
@@ -307,59 +202,20 @@ def start_process(
                 sys.exit(1)
 
     elif non_blocking or detached:
-        # Return the Popen object for the caller to manage
         return process
 
     return None
 
 
-def write_to_pipe(data: str):
+def write_to_pipe(data: str|bytes):
     """
     Use open_pipe=True with function start_process to create custom pipe and write to him in child process
     """
-    if not pipe_is_allowed():
-        raise Exception("Data Pipe is not allowed")
-    mode = os.getenv('AGIO_CUSTOM_PIPE_FILE_MODE')
-    if not mode:
-        if isinstance(data, bytes):
-            mode = 'wb'
-        elif isinstance(data, str):
-            mode = 'w'
-        else:
-            raise TypeError('data must be str or bytes')
-    pipe_num = os.getenv('AGIO_CUSTOM_PIPE_FILE_NO')
-    if not pipe_num:
-        raise ValueError('Custom pipe file not set')
-    with os.fdopen(int(pipe_num), mode) as data_pipe_handler:
-        data_pipe_handler.write(data)
-        data_pipe_handler.flush()
-
-
-@contextmanager
-def data_pipe():
-    """
-    Use open_pipe=True with function start_process to create custom pipe and write to him in child process
-    Context manager allow you to write multiple times.
-    Use write_to_pipe(data) to write and close in single step/
-
-    Usage:
-    >>> with data_pipe() as pipe:
-    >>>     ...
-    >>>     pipe.write('text1')
-    >>>     ...
-    >>>     pipe.write('text2')
-    """
-    pipe_num = os.getenv('AGIO_CUSTOM_PIPE_FILE_NO')
-    if not pipe_num:
-        raise ValueError('Custom pipe file not set')
-    mode = os.getenv('AGIO_CUSTOM_PIPE_FILE_MODE')
-    with os.fdopen(int(pipe_num), mode) as data_pipe_handler:
-        yield data_pipe_handler
-        data_pipe_handler.flush()
+    return custom_pipe.write_pipe(data)
 
 
 def pipe_is_allowed():
-    return bool(os.getenv('AGIO_CUSTOM_PIPE_FILE_NO'))
+    return custom_pipe.pipe_defined()
 
 
 def process_exists(pid) -> bool:

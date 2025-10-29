@@ -4,11 +4,13 @@ from pathlib import Path
 
 import click
 
-from agio.core.entities import APackageRelease
+from agio.core.entities import APackageRelease, AWorkspace
 from agio.core.pkg.package_repostory import APackageRepository
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
-from agio.tools import package_template
+from agio.core.utils.app_dirs import get_default_env_dir
+from agio.core.utils.pkg_manager import get_package_manager
 from agio.core.utils.text_utils import unslugify
+from agio.tools import package_template
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +113,6 @@ class PackageBuildCommand(ASubCommand):
         APackageRepository(path).build(**kwargs)
 
 
-
 class PackageRegisterCommand(ASubCommand):
     command_name = "register"
     arguments = [
@@ -129,7 +130,6 @@ class PackageRegisterCommand(ASubCommand):
         logger.info(f"Register package {path}...")
         pkg = APackageRepository(path).register_package(**kwargs)
         logger.info(f"Package registered: {pkg}")
-
 
 
 class PackageReleaseCommand(ASubCommand):
@@ -155,7 +155,6 @@ class PackageReleaseCommand(ASubCommand):
         logger.info(f"Package release created: {release.id}")
 
 
-
 class PackageInfoCommand(ASubCommand):
     command_name = "info"
     arguments = [
@@ -164,6 +163,48 @@ class PackageInfoCommand(ASubCommand):
 
     def execute(self, **kwargs):
         click.secho('Show packages info... [TODO]', fg='yellow')
+
+
+class PackageInstallCommand(ASubCommand):
+    command_name = "install"
+    arguments = [
+        click.argument("name",),
+        click.option('-v', '--version', default=None, help='Package version to install'),
+    ]
+
+    def execute(self, name: str, version: str):
+        click.secho(f'Install package "{name}"' + f' v{version}' if version else '', fg='green')
+        try:
+            ws_manager = AWorkspace.current()
+            manager = ws_manager.get_manager().venv_manager
+        except RuntimeError:
+            manager = get_package_manager(get_default_env_dir())
+        try:
+            resp = manager.install_package_by_name(name, version)
+            print(resp)
+        except Exception as e:
+            click.secho(f'Install package "{name}" failed: {e}', fg='red')
+
+
+class PackageUninstallCommand(ASubCommand):
+    command_name = "uninstall"
+    arguments = [
+        click.argument("name",),
+    ]
+
+    def execute(self, name: str, **kwargs):
+        click.secho(f'Uninstall package "{name}"', fg='red')
+        try:
+            ws_manager = AWorkspace.current()
+            manager = ws_manager.get_manager().venv_manager
+        except RuntimeError:
+            manager = get_package_manager(get_default_env_dir())
+        try:
+            resp = manager.uninstall_package(name)
+            print(resp)
+        except Exception as e:
+            click.secho(f'Install package "{name}" failed: {e}', fg='red')
+
 
 
 class PackageCommand(ACommandPlugin):
@@ -175,5 +216,7 @@ class PackageCommand(ACommandPlugin):
         PackageReleaseCommand,
         PackageRegisterCommand,
         PackageInfoCommand,
+        PackageInstallCommand,
+        PackageUninstallCommand,
     ]
     help = 'Manage packages'

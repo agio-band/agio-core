@@ -64,8 +64,6 @@ class AWorkspaceManager:
             return cls(revision, **kwargs)
         elif isinstance(workspace, AWorkspace):
             current_revision = workspace.get_current_revision()
-            if not current_revision:
-                raise Exception(f"No current revision found for workspace {workspace}")
             return cls(current_revision, **kwargs)
 
     @property

@@ -2,9 +2,11 @@ import inspect
 import os
 import logging
 import subprocess
+from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 import shlex
 
+from agio.core.entities import APackage, APackageRelease
 from agio.core.pkg import APackageManager
 from agio.core.utils.process_utils import start_process
 from agio.core.utils import venv_utils
@@ -52,7 +54,7 @@ class PackageManagerBase:
     def site_packages(self):
         if not self.venv_exists():
             raise FileNotFoundError(f'venv is not installed yet: {self.path}')
-        return self.run(['run', 'python', '-c' "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
+        return self.run(['run', 'python', '-c', "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
                         get_output=True).strip()
 
     @property
@@ -75,7 +77,17 @@ class PackageManagerBase:
             return version
         return '.'.join(version.split('.')[:2])
 
-    def install_package(self, package_name):
+    def install_package_by_name(self, package_name: str, version: str = None, **kwargs):
+        package = APackage.find(package_name)
+        if not package:
+            raise NameError(f"Package '{package_name}' not found")
+        release: APackageRelease = package.get_release(version=version) if version else package.latest_release()
+        if not release:
+            raise PackageNotFoundError(f'Package "{package_name}" has not releases')
+        cmd = release.get_installation_command()
+        return self.install_packages(cmd, **kwargs)
+
+    def install_packages(self, *packages, **kwargs):
         raise NotImplementedError
 
     def uninstall_package(self, package_name):
@@ -116,6 +128,9 @@ class PackageManagerBase:
     def get_installed_python_versions(self):
         raise NotImplementedError
 
+    def run_envs(self) -> dict|None:
+        return
+
     def run(self, cmd, workdir=None, **kwargs):
         if not self.venv_exists():
             caller_name = inspect.stack()[1].function
@@ -126,9 +141,10 @@ class PackageManagerBase:
         cmd = list(map(str, [self.get_executable(), *cmd]))
         workdir = workdir or str(self.path)
         logger.debug(f'Running command: {" ".join(cmd)}')
-        logger.debug(f'In directory: {workdir}')
         kwargs.setdefault('get_output', False)
-        return start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], **kwargs)
+        envs = self.run_envs() or {}
+        envs.update(kwargs.pop('envs', {}))
+        return start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], env=envs, **kwargs)
 
     @classmethod
     def get_package_manager_installation_path(cls):

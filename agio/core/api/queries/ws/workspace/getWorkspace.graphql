@@ -10,5 +10,6 @@ query GetSingleWorkspaceById($id: ID!) {
             name
             code
         }
+        deletedAt
     }
 }

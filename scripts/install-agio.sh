@@ -66,28 +66,28 @@ chmod +x $bin_file
 # temporary install main packages for first version of pipeline
 # install core
 echo "Installing additional libs..."
-# pipe
-echo "agio.pipe"
-if ! uv pip install --quiet https://github.com/agio-band/agio-pipe/releases/download/0.0.1/agio_pipe-0.0.1-py3-none-any.whl; then
-    echo "Error: Failed to install agio.pipe." >&2
-    exit 1
-fi
 # broker
 echo "agio.broker"
 if ! uv pip install --quiet https://github.com/agio-band/agio-broker/releases/download/0.0.1/agio_broker-0.1.0-py3-none-any.whl; then
-    echo "Error: Failed to install agio.broker." >&2
+    echo "Error: Failed to install agio_broker." >&2
     exit 1
 fi
 # desk
 echo "agio.desk"
 if ! uv pip install --quiet https://github.com/agio-band/agio-desk/releases/download/0.0.1/agio_desk-0.0.1-py3-none-any.whl; then
-    echo "Error: Failed to install agio.desk." >&2
+    echo "Error: Failed to install agio_desk." >&2
+    exit 1
+fi
+# pipe
+echo "agio.pipe"
+if ! uv pip install --quiet https://github.com/agio-band/agio-pipe/releases/download/0.0.1/agio_pipe-0.0.1-py3-none-any.whl; then
+    echo "Error: Failed to install agio_pipe." >&2
     exit 1
 fi
 ## publish simple
 echo "agio.publish"
 if ! uv pip install --quiet https://github.com/agio-band/agio-publish-simple/releases/download/0.0.3/agio_publish_simple-0.0.3-py3-none-any.whl; then
-    echo "Error: Failed to install agio.publish." >&2
+    echo "Error: Failed to install agio_publish_simple." >&2
     exit 1
 fi
 

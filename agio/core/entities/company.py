@@ -44,6 +44,13 @@ class ACompany(dm.DomainBase):
     def current(cls):
         return cls(api.desk.get_current_company())
 
+    @classmethod
+    def switch(cls, company_id: str) -> ACompany:
+        if api.desk.switch_company(company_id):
+            return cls.current()
+        else:
+            raise NotFoundError(detail="Company not found")
+
     def find_project(self, name: str = None, state: str = None, code: str = None) -> project.AProject|None:
         return project.AProject.find(company=self.id, name=name, state=state, code=code)
 

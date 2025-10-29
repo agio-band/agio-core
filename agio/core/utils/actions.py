@@ -157,6 +157,15 @@ def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
             # TODO add divider
     return grp
 
+
+def get_all_actions():
+    for plugin in plugin_hub.APluginHub.instance().iter_plugins('service'):
+        for action_data in plugin.collect_actions():
+            action = ActionItem(**action_data)
+            action.name = f"{plugin.package.package_name}.{action.name}"
+            yield action
+
+
 def get_action_func(action_full_name: str) -> Callable:
 
     service_name, action_name = action_full_name.split('.')
@@ -167,3 +176,8 @@ def get_action_func(action_full_name: str) -> Callable:
     if not action_func:
         raise Exception(f'Action {action_full_name} not found')
     return action_func
+
+
+def execute_action(action_name, *args, **kwargs):
+    action_func = get_action_func(action_name)
+    return action_func(*args, **kwargs)

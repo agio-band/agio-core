@@ -221,7 +221,7 @@ def exec_agio_command(
             ws_manager = pkg.AWorkspaceManager.current()
         else:
             raise TypeError("Workspace must be either a string or AWorkspaceManager.")
-    start_in_workspace(
+    return start_in_workspace(
         ws_manager=ws_manager,
         args=['-m', 'agio'] + args,
         envs=envs,
@@ -258,7 +258,7 @@ def start_in_workspace(
         ctx.add_args(*args)
     if not Path(ctx.executable).exists():
         raise FileNotFoundError(f'Executable not found {ctx.executable}')
-    logger.info('Launching command: %s', ' '.join(ctx.command))
+    logger.debug('Launching command: %s', ' '.join(ctx.command))
     return process_utils.start_process(
         ctx.command,
         env=ctx.envs,

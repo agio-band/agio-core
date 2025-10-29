@@ -1,0 +1,7 @@
+mutation SwitchCompany($id: ID!){
+  switchCompany (
+    companyId: $id
+  ){
+    ok
+  }
+}

@@ -18,47 +18,56 @@ def get_project(project_id: str|UUID) -> dict:
 
 
 def get_project_by_name(company_id: str|UUID, name: str) -> dict:
+    filters = dict(
+        where=dict(
+            name={'equalTo': name},
+            company={'id': {'equalTo': company_id}},
+        )
+    )
     data = client.make_query(
         'track/projects/findProject',
-        company_id=str(company_id),
-        name=name,
+        filter=filters,
     )
     if data['data']['projects']['edges']:
-        return data['data']['projects']['edges'][0]
+        return data['data']['projects']['edges'][0]['node']
     raise ProjectNotExists
 
 
-def create_project(payload: dict) -> dict:
-    raise NotImplementedError
-
-
 def update_project(
-        project_id: UUID,
+        project_id: str|UUID,
         state: str = NOTSET,
         facility_ids: list[str] = NOTSET,
         fields: dict[str, Any] = NOTSET,
         workspace_id: str|UUID|None = NOTSET,
 ) -> bool:
+    input_data = dict(
+        state=state,
+        facilityIds=facility_ids,
+        fields=fields,
+        workspaceId=workspace_id,
+    )
+    input_data = {k: v for k, v in input_data.items() if v is not NOTSET}
+    if not input_data:
+        raise ValueError('No input data provided')
     return client.make_query(
         'track/projects/updateProject',
         id=str(project_id),
-        input=dict(
-            state = state if state is not NOTSET else NOTSET,
-            facilityIds = facility_ids if facility_ids is not NOTSET else NOTSET,
-            fields = fields if fields is not NOTSET else NOTSET,
-            workspaceId = workspace_id if workspace_id is not NOTSET else NOTSET,
-        )
+        input=input_data
     )['data']['updateProject']['ok']
 
 
-def iter_projects(company_id: str|UUID, items_per_page: int = 50) -> Iterator[dict]:
+def iter_projects(company_id: str|UUID, has_workspace: bool = NOTSET, items_per_page: int = 50) -> Iterator[dict]:
+    filters = deep_dict()
+    filters['where']['company']['id']['equalTo'] = str(company_id)
+    if has_workspace:
+        filters['where']['workspaceId']['notNull'] = True
     return iter_query_list(
         'track/projects/projectsList',
         'projects',
         variables={
-            "companyId": company_id,
-            'limit': items_per_page
-        }
+            "filter": filters,
+        },
+        limit=items_per_page
     )
 
 def find_project(
@@ -70,18 +79,18 @@ def find_project(
 ) -> dict:
     filters = deep_dict()
     if company_id:
-        filters['company']['id']['equalTo'] = company_id
+        filters['where']['company']['id']['equalTo'] = company_id
     if company_name:
-        filters['company']['name']['equalTo'] = company_name
+        filters['where']['company']['name']['equalTo'] = company_name
     if name:
-        filters['name']['equalTo'] = name
-    if state:
-        filters['state']['equalTo'] = state
+        filters['where']['name']['equalTo'] = name
     if code:
-        filters['code']['equalTo'] = code
+        filters['where']['code']['equalTo'] = code
+    if state:
+        filters['where']['state']['equalTo'] = state
     data = client.make_query(
         'track/projects/findProject',
-        filters=filters
+        filter=filters
     )
     if data['data']['projects']['edges']:
         return data['data']['projects']['edges'][0]['node']
