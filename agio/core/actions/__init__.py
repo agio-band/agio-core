@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Callable
 
-from agio.core.utils import plugin_hub
+from ..plugins import plugin_hub
 from .action_item import ActionGroupItem, ActionItem
 
 

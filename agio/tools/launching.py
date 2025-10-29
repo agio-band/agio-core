@@ -13,7 +13,7 @@ from agio.core import workspaces
 from agio.core.exceptions import WorkspaceNotExists
 from agio.tools import app_dirs
 from agio.tools import process_utils
-from agio.core.utils.pkg_manager import get_package_manager_class
+from agio.tools.pkg_manager import get_package_manager_class
 
 logger = logging.getLogger(__name__)
 

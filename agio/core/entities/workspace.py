@@ -9,8 +9,8 @@ from . import APackageRelease, APackage
 from .entity import DomainBase
 from .workspace_revision import AWorkspaceRevision
 from ..events import emit
-from ..exceptions import RequestError, SettingsRevisionNotExists, RevisionNotExists
-from ..utils import settings_hub
+from ..exceptions import RequestError, SettingsRevisionNotExists
+from ..settings import settings_hub
 
 
 class AWorkspace(DomainBase):
@@ -172,7 +172,7 @@ class AWorkspace(DomainBase):
              {'settings': settings, 'workspace': self, 'revision': revision})
         return settings
 
-    def set_settings(self, settings: dict|settings_hub.WorkspaceSettingsHub, set_current: bool = True):
+    def set_settings(self, settings: dict | settings_hub.WorkspaceSettingsHub, set_current: bool = True):
         rev = self.get_current_revision()
         if not isinstance(settings, dict):
             settings = settings.dump()

@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Any
 
-from agio.core.utils.event_hub import EventHub
+from agio.core.events.event_hub import EventHub
 from agio.tools.modules import import_module_by_path
 from .event import AEvent
 

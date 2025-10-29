@@ -8,7 +8,7 @@ from agio.core.entities import APackageRelease, AWorkspace
 from agio.core.workspaces.package_repostory import APackageRepository
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 from agio.tools.app_dirs import default_env_dir
-from agio.core.utils.pkg_manager import get_package_manager
+from agio.tools.pkg_manager import get_package_manager
 from agio.tools.text_helpers import unslugify
 from agio.tools import package_template
 

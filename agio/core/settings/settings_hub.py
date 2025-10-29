@@ -4,7 +4,7 @@ from agio.core.api.utils import NOTSET
 from agio.core.events import emit
 from agio.core.settings import package_settings as package_settings_class
 from agio.core.settings import collector
-from agio.core.utils import package_hub
+from agio.core.workspaces import package_hub
 
 
 class ASettingsHub:
@@ -105,10 +105,10 @@ class ASettingsHub:
             raise KeyError(f"Package {package_name} not found in workspace settings")
         return package_settings.get_parameter(param_name)
 
-    def dump(self):
+    def dump(self, skip_default: bool = True) -> dict:
         all_settings = {}
         for name, pkg in self._package_settings.items():
-            pkg_settings = {f"{name}.{k}": v for k,v in pkg.__dump_settings__(skip_default=True).items()}
+            pkg_settings = {f"{name}.{k}": v for k,v in pkg.__dump_settings__(skip_default=skip_default).items()}
             all_settings.update(pkg_settings)
         return all_settings
 

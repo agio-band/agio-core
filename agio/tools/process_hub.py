@@ -62,7 +62,7 @@ class ProcessWrapper:
         if cwd:
             self.launch_context.set_workdir(cwd)
         if env:
-            self.launch_context.set_env(**env)
+            self.launch_context.append_envs(**env)
         self.stop(_hard=False)
         time.sleep(0.2)
         self.start()

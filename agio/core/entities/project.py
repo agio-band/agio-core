@@ -7,7 +7,7 @@ from agio.core import settings
 from agio.core.entities import domain
 from agio.core.entities import workspace as ws
 from agio.core.entities import company as company_entity
-from agio.core.utils import settings_hub
+from agio.core.settings import settings_hub
 
 
 class AProject(domain.DomainBase):
@@ -115,7 +115,7 @@ class AProject(domain.DomainBase):
     def get_local_settings(self):
         return settings.get_local_settings(self)
 
-    def set_local_settings(self, settings_data: settings_hub.LocalSettingsHub|dict):
+    def set_local_settings(self, settings_data: settings_hub.LocalSettingsHub | dict):
         if isinstance(settings_data, dict):
             settings_data = settings_hub.LocalSettingsHub(settings_data)
         return settings.save_local_settings(settings_data, self)

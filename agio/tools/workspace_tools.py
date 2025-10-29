@@ -1,9 +1,8 @@
 from agio.core.api.utils import NOTSET
-from agio.core.entities import AWorkspace, AWorkspaceRevision, APackage, APackageRelease
+from agio.core.entities import AWorkspace, AWorkspaceRevision, APackageRelease
 from agio.core.entities.company import ACompany
-from agio.core.entities.project import AProject
 from agio.core.exceptions import WorkspaceNotExists
-from agio.core.utils.settings_hub import WorkspaceSettingsHub
+from agio.core.settings.settings_hub import WorkspaceSettingsHub
 from agio.tools.packaging_tools import collect_packages_to_install
 
 

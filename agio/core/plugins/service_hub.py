@@ -4,7 +4,7 @@ from typing import Iterable
 
 from agio.core.events import subscribe, unsubscribe
 from agio.tools.singleton import Singleton
-from agio.core.utils import plugin_hub
+from agio.core.plugins import plugin_hub
 
 
 class AServiceHub(metaclass=Singleton):

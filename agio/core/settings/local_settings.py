@@ -8,7 +8,7 @@ from agio.core.entities import project as pd
 from agio.core.events import emit
 from agio.tools import app_dirs
 from agio.tools.json_serializer import JsonSerializer
-from agio.core.utils import settings_hub
+from agio.core.settings import settings_hub
 
 logger = logging.getLogger(__name__)
 

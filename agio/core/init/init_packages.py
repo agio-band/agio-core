@@ -1,7 +1,7 @@
 import logging
 
 from agio.core.events import register_callbacks, emit
-from agio.core.utils import package_hub
+from agio.core.workspaces import package_hub
 
 logger = logging.getLogger(__name__)
 

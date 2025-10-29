@@ -13,10 +13,11 @@ from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.workspaces.package import APackageManager
 from agio.core.workspaces.workspace import AWorkspaceManager
-from agio.core.utils import package_hub, plugin_hub
+from agio.core.plugins import plugin_hub
+from agio.core.workspaces import package_hub
 from agio.core.api import client, profile
 if TYPE_CHECKING:
-    from agio.core.utils.settings_hub import LocalSettingsHub
+    from agio.core.settings.settings_hub import LocalSettingsHub
 
 
 

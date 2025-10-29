@@ -10,8 +10,9 @@ from agio.core.events import emit
 from agio.core.actions import action_item
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.plugins.mixins import BasePluginClass
-from agio.core.utils import package_hub, plugin_hub, process_hub
-from agio.tools import text_helpers
+from agio.core.plugins import plugin_hub
+from agio.core.workspaces import package_hub
+from agio.tools import text_helpers, process_hub
 
 logger = logging.getLogger(__name__)
 

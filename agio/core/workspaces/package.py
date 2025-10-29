@@ -139,7 +139,7 @@ class APackageManager:
 
     @property
     def repository_api(self):
-        return self.get_meta_data_field('repository_api')
+        return os.getenv('AGIO_FORCED_GIT_SERVICE') or self.get_meta_data_field('repository_api')
 
     # domains
 

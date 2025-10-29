@@ -3,8 +3,7 @@ from dataclasses import dataclass
 from fnmatch import fnmatch
 from typing import Callable
 
-from agio.core.utils import plugin_hub
-
+from agio.core.plugins import plugin_hub
 
 logger = logging.getLogger(__name__)
 

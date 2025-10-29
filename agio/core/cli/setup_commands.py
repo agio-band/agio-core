@@ -1,9 +1,8 @@
 import os
 
 import click
-from agio.core.utils  import plugin_hub
+from agio.core.plugins import plugin_hub
 from agio.core.workspaces.workspace import AWorkspaceManager
-from agio.tools import launching
 
 
 class CustomGroup(click.Group):

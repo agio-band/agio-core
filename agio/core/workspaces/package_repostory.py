@@ -2,14 +2,14 @@ import logging
 from functools import cached_property
 from pathlib import Path
 
+from agio.core import api
 from agio.core.entities import APackageRelease, APackage
 from agio.core.exceptions import PackageRepositoryError, PackageError, PackageLoadingError
-from agio.core.workspaces.package import APackageManager
+from agio.core.plugins import plugin_hub
 from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
+from agio.core.workspaces.package import APackageManager
 from agio.tools import git_utils
-from agio.core.utils.pkg_manager import get_package_manager
-from agio.core import api
-from agio.core.utils import plugin_hub
+from agio.tools.pkg_manager import get_package_manager
 
 logger = logging.getLogger(__name__)
 

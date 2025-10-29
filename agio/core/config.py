@@ -30,6 +30,7 @@ class ApiSettings(_BaseSettings):
 
 
 class WorkspaceSettings(_BaseSettings):
+    # additional resources dir
     RESOURCES_DIR: str = ""
     CACHE_ROOT: str = app_dirs.cache_dir().as_posix()
     INSTALL_DIR: str = app_dirs.workspaces_install_root().as_posix()

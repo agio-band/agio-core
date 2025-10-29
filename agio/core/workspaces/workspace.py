@@ -13,7 +13,7 @@ from agio.core.entities import AWorkspaceRevision, AWorkspace
 from agio.core.events import emit
 from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotExistsError
 from agio.core.config import config
-from agio.core.utils import pkg_manager
+from agio.tools import pkg_manager
 from agio.tools.launching import LaunchContext
 
 logger = logging.getLogger(__name__)

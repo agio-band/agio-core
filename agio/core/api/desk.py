@@ -1,10 +1,10 @@
 from typing import Iterator
 from uuid import UUID
 
+# from .schemas.desk import UserProfileResponseSchema, CurrentCompanyResponseSchema, CompanyResponseSchema
+# from .utils.response_typing import response_schema
 from . import client
-from .schemas.desk import UserProfileResponseSchema, CurrentCompanyResponseSchema, CompanyResponseSchema
 from .utils.query_tools import iter_query_list
-from .utils.response_typing import response_schema
 from ..exceptions import NotFoundError
 
 

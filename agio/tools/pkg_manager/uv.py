@@ -11,7 +11,7 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 import requests
-from .. import venv_utils
+from agio.core.utils import venv_utils
 
 from .pkg_manager_base import PackageManagerBase
 from agio.tools.process_utils import start_process
