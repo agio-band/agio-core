@@ -12,10 +12,20 @@ from typing import Iterable
 logger = logging.getLogger(__name__)
 
 def terminate_child(proc):
+    """
+    Terminates a process and its whole process group (or job).
+    """
     if sys.platform == "win32":
-        subprocess.call(["taskkill", "/F", "/T", "/PID", str(proc.pid)])
+        # /F: Force termination
+        # /T: Terminate the specified process and any child processes started by it
+        subprocess.call(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
-        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        # Send SIGKILL to the entire process group
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except ProcessLookupError:
+            pass # Process already dead
 
 
 def start_process(
@@ -37,9 +47,14 @@ def start_process(
     """
     Universal function to start a process with different modes.
 
-    Automatically terminates child process if parent is killed (when not detached).
-    Propagates exit code from child to parent if the child crashes.
+    Returns:
+        str/bytes: If get_output or open_pipe is True.
+        int: If blocking (wait_for_process=True) and not returning output (return code).
+        subprocess.Popen: If non_blocking or detached is True.
+        None: Otherwise (e.g., if exit_on_done is True).
     """
+
+    # --- Input Validation ---
     if get_output and open_pipe:
         raise Exception("open_pipe and get_output are mutually exclusive")
     if detached and open_pipe:
@@ -50,6 +65,7 @@ def start_process(
         raise Exception('Argument replace cannot be used with detached=True')
     if replace and get_output:
         raise Exception('Argument replace cannot be used with get_output=True')
+
     if open_pipe:
         if pipe_open_mode == "text":
             pipe_mode = 'r'
@@ -58,21 +74,25 @@ def start_process(
         else:
             raise ValueError("pipe_open_mode must be 'text' or 'binary'")
 
+    # --- Environment and Working Directory Setup ---
     new_env = os.environ.copy()
     if clear_env:
         for env_name in clear_env:
             new_env.pop(env_name, None)
     if env:
         new_env.update(env)
+
     if workdir:
         workdir = os.path.abspath(os.path.expanduser(workdir))
         if not os.path.isdir(workdir):
-            print(f"Error: Working directory '{workdir}' does not exist.")
+            print(f"Error: Working directory '{workdir}' does not exist.", file=sys.stderr)
             sys.exit(1)
-    if isinstance(command, Iterable):
-        command = list(map(str, command))
-    if replace:
 
+    if isinstance(command, Iterable) and not isinstance(command, str):
+        command = list(map(str, command))
+
+    # --- Replace Mode (os.execve/os.execvpe) ---
+    if replace:
         if isinstance(command, str):
             command = shlex.split(command)
         executable = command[0]
@@ -80,68 +100,107 @@ def start_process(
             try:
                 os.chdir(workdir)
             except OSError as e:
-                print(f"Error changing directory: {e}")
-                exit(1)
+                print(f"Error changing directory: {e}", file=sys.stderr)
+                sys.exit(1)
+
+        # os.execvpe searches PATH; os.execve requires an absolute path.
         if os.path.isabs(executable):
             os.execve(executable, command, new_env)
         else:
             os.execvpe(executable, command, new_env)
 
+    # --- Popen Initialization ---
     creationflags = 0
     stdin = None
-    start_new_session = False
-    use_shell = False
-    wait_for_process = not detached and not non_blocking
-
     stdout = None
     stderr = None
+    start_new_session = False
+    use_shell = False
 
+    # Corrected: wait_for_process means blocking
+    wait_for_process = not detached and not non_blocking
+
+    # --- I/O Redirection Logic ---
     if get_output:
+        # Output must be piped back to parent for capture
         if detached or non_blocking:
             raise ValueError("get_output can only be used when detached=False and non_blocking=False")
         stdout = subprocess.PIPE
         stderr = subprocess.PIPE
-    elif detached and output_file:
-        stdout = open(output_file, "a")
-        stderr = subprocess.STDOUT
-    elif detached:
-        stdout = open(os.devnull, "w")
-        stderr = subprocess.STDOUT
 
+    elif detached and output_file:
+        # Redirect output to a file when detached. File handle must be closed manually later.
+        try:
+            # We open stdout to a file and redirect stderr to the same place.
+            stdout = open(output_file, "a")
+            stderr = subprocess.STDOUT
+        except Exception as e:
+            logging.error(f"Failed to open output file {output_file}: {e}")
+            raise
+
+    elif detached:
+        # Use DEVNULL constant to discard output and prevent resource leaks.
+        stdout = subprocess.DEVNULL
+        stderr = subprocess.DEVNULL
+
+    # --- Platform-Specific Flags and Configuration ---
     if sys.platform == "win32":
         if detached:
-            creationflags |= subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
+            # DETACHED_PROCESS: Ensures process is fully independent.
+            # CREATE_NEW_PROCESS_GROUP: Prevents signals from reaching the detached group.
+            creationflags |= subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+
         if new_console:
+            # CREATE_NEW_CONSOLE: Guarantees a new console window if one is not created implicitly.
             creationflags |= subprocess.CREATE_NEW_CONSOLE
         else:
+            # If new_console=False, attempt to hide the console.
             executable = Path(command[0])
+
+            # Optimization: Use pythonw.exe for python scripts to avoid console flash
             if executable.stem == 'python':
                 if executable.with_name('pythonw.exe').exists():
                     command[0] = str(executable.with_name('pythonw.exe'))
-            creationflags |= subprocess.CREATE_NO_WINDOW # TODO make optional
+            else:
+                # CREATE_NO_WINDOW: Explicitly prevents the creation of a console window.
+                # This overrides the implicit new console creation from DETACHED_PROCESS for console apps.
+                creationflags |= subprocess.CREATE_NO_WINDOW
+
+        # DEVNULL constant for stdin when detached is clean and correct for Windows.
         stdin = subprocess.DEVNULL if detached else None
-    else:
+
+    else:  # Unix-like systems
         if detached:
+            # Setsid/Start_new_session: Creates a new process group for detaching.
             start_new_session = True
+            # When detached, stdin must be explicitly opened from /dev/null for reading
+            # (or using the DEVNULL constant) to prevent blocking if the child reads from stdin.
             stdin = open(os.devnull, "r")
+
         if new_console:
+            # Launching a terminal emulator on Unix for new_console functionality
             terminal = os.environ.get("TERMINAL", "x-terminal-emulator")
             if terminal in ["gnome-terminal", "konsole", "xfce4-terminal"]:
                 command = [terminal, "--", *command]
             else:
+                # Fallback, requires shell=True
                 command = f'{terminal} -e "{subprocess.list2cmdline(command)}"'
                 use_shell = True
 
-    close_fds = True if sys.platform != "win32" else False,
+    # Corrected: close_fds should be a boolean. True is standard for Unix unless pipes are needed.
+    close_fds = True if sys.platform != "win32" else False
 
     write_fd = read_fd = None
     if open_pipe:
+        # Prepare the pipe for inter-process communication
         read_fd, write_fd = os.pipe()
         os.set_inheritable(write_fd, True)
-        close_fds = False
+        close_fds = False  # Must be False to allow the child to inherit the pipe FD
         new_env['AGIO_CUSTOM_PIPE_FILE_NO'] = str(write_fd)
         new_env['AGIO_CUSTOM_PIPE_FILE_MODE'] = pipe_open_mode
-    logger.debug('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
+
+    # --- Launch Process ---
+    logging.debug('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
     process = subprocess.Popen(
         command,
         env=new_env,
@@ -155,59 +214,102 @@ def start_process(
         cwd=workdir,
         **kwargs
     )
+
+    # --- Resource Cleanup (Post-Popen) ---
     if write_fd:
+        # Close the write end of the pipe in the parent immediately
         os.close(write_fd)
 
-    if detached and output_file and not get_output:
-        stdout.close()
+    # 1. Close the file handle used for stdout/stderr redirection when detached
+    if detached and output_file and stdout is not None and hasattr(stdout, 'close'):
+        try:
+            stdout.close()
+        except:
+            pass  # Ignore if close fails
 
-    if not detached:
+    # 2. Close stdin handle opened from os.devnull on Unix/Linux when detached
+    if sys.platform != "win32" and detached and stdin is not None and hasattr(stdin, 'close'):
+        try:
+            stdin.close()
+        except:
+            pass  # Ignore if close fails
+
+    # --- Parent Exit Handling (Kill Child) ---
+    if not detached and not replace:
         if sys.platform == "win32":
-            pass # TODO close child process on parent exited
-            # job = ctypes.windll.kernel32.CreateJobObjectW(None, None)
-            # info = ctypes.wintypes.JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
-            # info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-            # ctypes.windll.kernel32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info))
-            # ctypes.windll.kernel32.AssignProcessToJobObject(job, process._handle)
-        else:
-            pass # TODO error if called from non main thread
-            # def handle_parent_exit(*_):
-            #     terminate_child(process)
-            #     sys.exit(1)
-            # signal.signal(signal.SIGTERM, handle_parent_exit)
-            # signal.signal(signal.SIGINT, handle_parent_exit)
+            import ctypes
+            # TODO: Close child process on parent exited -> Use Job Object
+            if "job" not in kwargs:
+                try:
+                    # Create Job Object with JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE (0x2000)
+                    job = ctypes.windll.kernel32.CreateJobObjectW(None, None)
+                    info = ctypes.wintypes.JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
+                    info.BasicLimitInformation.LimitFlags = 0x2000
+                    ctypes.windll.kernel32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info))
 
+                    # Assign the new process to the job
+                    handle = ctypes.windll.kernel32.OpenProcess(0x1F0FFF, False, process.pid)  # PROCESS_ALL_ACCESS
+                    ctypes.windll.kernel32.AssignProcessToJobObject(job, handle)
+                    ctypes.windll.kernel32.CloseHandle(handle)
+
+                    # Store the job object handle so it isn't garbage collected immediately
+                    process.job_object = job
+                except Exception as e:
+                    logging.warning(f"Could not assign process to Job Object (kill on parent exit): {e}")
+
+        else:
+            # TODO: Signal handlers (SIGTERM/SIGINT) for Unix should be handled by the main application
+            # (or by using prctl/setsid in combination with start_new_session logic).
+            # The current approach relies on the process remaining in the session/group,
+            # which is the default non-detached behavior.
+            pass
+
+    # --- Blocking / Non-Blocking Execution ---
     if wait_for_process:
         try:
             if get_output:
+                # Blocking call to read all output
                 output, error = process.communicate()
                 logging.debug(f'Exit Code: {process.returncode}')
+
                 if process.returncode != 0:
-                    if isinstance(error, bytes):
-                        error = error.decode()
-                    print(error, file=sys.stderr)
-                if isinstance(output, bytes):
-                    output = output.decode()
-                return output
+                    error_str = error.decode(errors='replace') if isinstance(error, bytes) else error
+                    print(error_str, file=sys.stderr)
+
+                output_str = output.decode(errors='replace') if isinstance(output, bytes) else output
+                return output_str
+
             elif open_pipe:
+                # Read from the pipe created earlier
                 if not read_fd:
                     raise Exception("open_pipe requires read_fd object")
+
+                # The pipe handler ensures the read end is closed upon exit
                 with os.fdopen(read_fd, pipe_mode) as data_pipe_handler:
                     data = data_pipe_handler.read()
+
+                # Wait for the child process to complete after reading the pipe data
+                process.wait()
                 return data
+
             else:
+                # Simple blocking wait for return code
                 process.wait()
                 logging.debug(f'Exit Code: {process.returncode}')
+
                 if exit_on_done:
                     sys.exit(process.returncode)
                 return process.returncode
+
         except KeyboardInterrupt:
             terminate_child(process)
             if exit_on_done:
                 sys.exit(1)
+
     elif non_blocking or detached:
-        # Return the Popen object if non-blocking or detached.
+        # Return the Popen object for the caller to manage
         return process
+
     return None
 
 
