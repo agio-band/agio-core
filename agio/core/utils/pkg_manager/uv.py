@@ -11,6 +11,8 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 import requests
+
+from  agio.tools import packaging_tools
 from .. import venv_utils
 
 from .pkg_manager_base import PackageManagerBase
@@ -74,7 +76,7 @@ class UVPackageManager(PackageManagerBase):
         if py_version:
             if py_version[0].isdigit():
                 py_version = f'~={py_version}'
-            py_version = venv_utils.find_best_available_version(
+            py_version = packaging_tools.find_best_available_version(
                 None,
                 py_version,
                 available_versions

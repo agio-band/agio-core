@@ -131,7 +131,7 @@ class APackageManager:
 
     @property
     def packages_dependencies(self):
-        return self.get_meta_data_field('agio_package_dependencies')
+        return self.get_meta_data_field('required_packages')
 
     @property
     def source_url(self):

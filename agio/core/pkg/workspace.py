@@ -137,6 +137,7 @@ class AWorkspaceManager:
         package_list = list(self.get_package_list())
         if not package_list:
             raise Exception('No packages to install')
+        # package list must be resolved with all dependencies and saved to revision
         install_args = [pkg.get_installation_command() for pkg in package_list]
         reinstall = clean or self.need_to_reinstall()
         if reinstall:

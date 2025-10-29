@@ -19,6 +19,7 @@ class PackageLoadingError(AException):
 class PackageNotFound(AException):
     detail: str = "Package Not Found"
 
+
 class PackageRuntimeError(AException):
     detail: str = "Package Runtime Error"
 

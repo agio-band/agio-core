@@ -44,7 +44,7 @@ class APackage(DomainBase):
         return api.package.delete_package(self.id)
 
     @classmethod
-    def find(cls, name: str) -> 'APackage'|None:
+    def find(cls, name: str) -> 'APackage' or None:
         pkg = api.package.find_package(name)
         if pkg is not None:
             return cls(pkg)

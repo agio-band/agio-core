@@ -3,8 +3,10 @@ from typing import Iterator
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
+from agio.core.entities import workspace
 from . import APackageRelease
 from .entity import DomainBase
+
 
 
 class AWorkspaceRevision(DomainBase):
@@ -19,7 +21,7 @@ class AWorkspaceRevision(DomainBase):
                layout: dict = NOTSET,
                status: str = NOTSET,
                ) -> None:
-        api.workspace.update_revision(set_current=set_current, layout=layout, status=status)
+        api.workspace.update_revision(self.id, set_current=set_current, layout=layout, status=status)
 
     @classmethod
     def iter(cls, workspace_id: str, **kwargs) -> Iterator['AWorkspaceRevision']:
@@ -28,7 +30,7 @@ class AWorkspaceRevision(DomainBase):
 
     @classmethod
     def create(cls,
-               workspace_id: str,
+               workspace_id: str|workspace.AWorkspace,
                package_releases: list,
                set_current: bool = NOTSET,
                status: str = NOTSET,
@@ -46,13 +48,15 @@ class AWorkspaceRevision(DomainBase):
                 release_ids.append(package_release["id"])
             else:
                 raise TypeError(f"Invalid package_release type: {type(package_release)}")
+        if isinstance(workspace_id, workspace.AWorkspace):
+            workspace_id = workspace_id.id
         revision_id = api.workspace.create_revision(
             workspace_id=workspace_id,
             package_release_ids=release_ids,
             set_current=set_current,
             status=status or 'ready', # TODO
-            layout=layout,
-            comment=comment,
+            layout=layout or NOTSET,
+            comment=comment or NOTSET,
             metadata=metadata or {}
         )
         return cls(revision_id)

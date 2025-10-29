@@ -121,3 +121,10 @@ class APackageRelease(DomainBase):
         else:
             raise PackageError(f"Error fetching package {self}, installation command not created")
         return cmd
+
+    @property
+    def install_name(self):
+        return f'{self.get_package_name()}=={self.get_version()}'
+
+    def get_dependencies(self):
+        return self._data.get('metadata', {}).get('required_packages', [])
