@@ -8,6 +8,7 @@ from typing import Any, Generator, Type
 import yaml
 
 from agio.core.entities import package
+from agio.core.events import emit
 from agio.core.exceptions import PackageMetadataError, PackageError
 from agio.core.plugins.base_plugin import APlugin
 from agio.tools.modules import import_object_by_dotted_path
@@ -135,7 +136,10 @@ class APackageManager:
 
     @property
     def source_url(self):
-        return self.get_meta_data_field('urls').get('source_url', None)
+        source_url = self.get_meta_data_field('urls').get('source_url', None)
+        payload = {'package_manager': self, 'source_url': source_url}
+        emit('core.package.get_source_url', payload)
+        return payload['source_url']
 
     @property
     def repository_api(self):

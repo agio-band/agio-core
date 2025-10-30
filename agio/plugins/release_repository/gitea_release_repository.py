@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 class GiteaRepositoryPlugin(GitHubRepositoryPlugin):
     name = 'gitea_release_repository'
     repository_api = 'gitea'
-    check_url_pattern=  None
+    check_url_pattern = None
+    check_release_url_key = 'url'
 
     def get_api_base_url(self, repository_url: str):
         repo_details = self.parse_url(repository_url)

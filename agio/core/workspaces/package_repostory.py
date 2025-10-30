@@ -87,8 +87,17 @@ class APackageRepository:
         if self.pkg_manager.package_version in remote_tags:
             if release := self.remote_repository.get_release_with_tag(
                     self.pkg_manager.source_url,
-                    self.pkg_manager.package_version, access_data):
-                raise ValueError(f"Version {self.pkg_manager.package_name} already exists in remote repository")
+                    self.pkg_manager.package_version,
+                    access_data):
+                if not replace:
+                    raise ValueError(f"Version {self.pkg_manager.package_name} already exists in remote repository")
+                else:
+                    logger.info(f'Delete release {self.pkg_manager.package_name}')
+                    self.remote_repository.delete_release(
+                        self.pkg_manager.source_url,
+                        self.pkg_manager.package_version,
+                        access_data
+                    )
         # build
         logger.debug(f'Build release...')
         build_path = self.build(**kwargs)

@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import platform
 import re
@@ -7,14 +8,14 @@ import stat
 import tarfile
 import tempfile
 import zipfile
-import logging
 from functools import lru_cache
 from pathlib import Path
-import requests
-from agio.core.utils import venv_utils
 
-from .pkg_manager_base import PackageManagerBase
+import requests
+
+from agio.tools.packaging_tools import find_best_available_version
 from agio.tools.process_utils import start_process
+from .pkg_manager_base import PackageManagerBase
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ class UVPackageManager(PackageManagerBase):
         if py_version:
             if py_version[0].isdigit():
                 py_version = f'~={py_version}'
-            py_version = venv_utils.find_best_available_version(
+            py_version = find_best_available_version(
                 None,
                 py_version,
                 available_versions

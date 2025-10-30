@@ -19,6 +19,7 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
     repository_api = 'github'
     check_url_pattern = r'https://github\.com.+'
     default_token = os.getenv('GITHUB_TOKEN')
+    check_release_url_key = 'assets_url'
 
     def get_token(self, access_data: dict) -> str:
         token = self.default_token
@@ -109,7 +110,8 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
         for file_path in asset_files:
             logger.info(f"Upload file {file_path}")
             self.upload_github_file(upload_url, file_path.as_posix(), access_data)
-        assets_url = release_data['assets_url']
+        assets_url = release_data[self.check_release_url_key]
+        logger.debug(f"Check assets url: {assets_url}")
         resp = requests.get(assets_url, headers=headers)
         resp.raise_for_status()
         return release_data
