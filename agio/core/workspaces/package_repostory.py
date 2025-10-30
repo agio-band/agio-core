@@ -89,22 +89,27 @@ class APackageRepository:
                     self.pkg_manager.source_url,
                     self.pkg_manager.package_version,
                     access_data):
-                if not replace:
-                    raise ValueError(f"Version {self.pkg_manager.package_name} already exists in remote repository")
-                else:
+                if replace:
                     logger.info(f'Delete release {self.pkg_manager.package_name}')
                     self.remote_repository.delete_release(
                         self.pkg_manager.source_url,
                         self.pkg_manager.package_version,
                         access_data
                     )
+                else:
+                    raise ValueError(f"Version {self.pkg_manager.package_name} already exists in remote repository")
         # build
         logger.debug(f'Build release...')
         build_path = self.build(**kwargs)
         # create local tag
+        keep_tag = kwargs.get('keep_tag', False)
         if self.pkg_manager.package_version in local_tags:
-            git_utils.delete_tag(self.root.as_posix(), self.pkg_manager.package_version)
-        git_utils.create_tag(self.root.as_posix(), self.pkg_manager.package_version)
+            if not keep_tag:
+                # move tag to current commit
+                git_utils.delete_tag(self.root.as_posix(), self.pkg_manager.package_version)
+                git_utils.create_tag(self.root.as_posix(), self.pkg_manager.package_version)
+        else:
+            git_utils.create_tag(self.root.as_posix(), self.pkg_manager.package_version)
         # create release on remote repository
         logger.debug(f"Upload release...")
         self.remote_repository.create_and_upload_release(
