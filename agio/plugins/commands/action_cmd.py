@@ -8,6 +8,7 @@ from agio.core.actions import action_item, get_actions
 class ActionCommand(ACommandPlugin):
     name = 'action_cmd'
     command_name = 'action'
+
     allow_extra_args = True
     arguments = [
         click.argument('action'),
@@ -25,6 +26,7 @@ class ActionCommand(ACommandPlugin):
 class GetActionsCommand(ACommandPlugin):
     name = 'get_actions_cmd'
     command_name = 'get-actions'
+    help = 'Getting all actions as JSON'
     allow_extra_args = True
     allow_write_output_to_custom_pipe = True    # temporary forced write to custom pipe
 

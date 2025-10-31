@@ -19,6 +19,7 @@ class LogoutCommand(ASubCommand):
 class AuthCommand(ACommandPlugin):
     name = "auth_cmd"
     command_name = 'auth'
+    help = 'Authorization commands'
     subcommands = [LoginCommand, LogoutCommand]
 
     def execute(self, *args, **kwargs):

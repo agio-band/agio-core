@@ -205,6 +205,7 @@ class DiskInfoCommand(ASubCommand):
 class InfoCommand(ACommandPlugin):
     name = 'info_cmd'
     command_name = 'info'
+    help = 'System details'
 
     subcommands = (
         EnvInfoCommand,
