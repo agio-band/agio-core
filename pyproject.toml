@@ -19,7 +19,6 @@ dependencies = [
     "pyyaml>=6.0.2",
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
-    "rich>=14.2.0",
     "unidecode>=1.4.0",
 ]
 classifiers = [
@@ -47,11 +46,6 @@ include-package-data = true
     "core/api/templates/*",
     "resources/**"
 ]
-
-#[tool.uv.workspace]
-#members = [
-#    "agio/resources/workspaces-template-default",
-#]
 
 [dependency-groups]
 dev = [
