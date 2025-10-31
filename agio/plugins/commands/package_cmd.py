@@ -1,16 +1,17 @@
 import logging
 import re
+import traceback
 from pathlib import Path
 
 import click
 
-from agio.core.entities import APackageRelease, AWorkspace
-from agio.core.workspaces.package_repostory import APackageRepository
+from agio.core.entities import APackageRelease, AWorkspace, APackage
+from agio.core.exceptions import WorkspaceNotDefined
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
-from agio.tools.app_dirs import default_env_dir
-from agio.tools.pkg_manager import get_package_manager
+from agio.core.workspaces import AWorkspaceManager
+from agio.core.workspaces.package_repostory import APackageRepository
+from agio.tools import package_template, packaging_tools
 from agio.tools.text_helpers import unslugify
-from agio.tools import package_template
 
 logger = logging.getLogger(__name__)
 
@@ -167,49 +168,61 @@ class PackageInfoCommand(ASubCommand):
 
 class PackageInstallCommand(ASubCommand):
     command_name = "install"
+    help = 'Install packages by name and version'
     arguments = [
-        click.argument("name",),
-        click.option('-v', '--version', default=None, help='Package version to install'),
+        click.argument("packages", nargs=-1),
     ]
 
-    def execute(self, name: str, version: str):
-        click.secho(f'Install package "{name}"' + f' v{version}' if version else '', fg='green')
+    def execute(self, packages: list[str]):
+        click.secho(f'Install packages...', fg='green')
+        # collect packages
+        releases = packaging_tools.collect_packages_to_install(packages)
+        # get manager
         try:
-            ws_manager = AWorkspace.current()
-            manager = ws_manager.get_manager().venv_manager
-        except RuntimeError:
-            manager = get_package_manager(default_env_dir())
+            manager = AWorkspace.current().get_manager()
+        except WorkspaceNotDefined:
+            manager = AWorkspaceManager.default()
+        # isntall
         try:
-            resp = manager.install_package_by_name(name, version)
-            print(resp)
+            manager.install_packages(*releases)
         except Exception as e:
-            click.secho(f'Install package "{name}" failed: {e}', fg='red')
+            click.secho(f'Installation failed failed: {e}', fg='red')
 
 
 class PackageUninstallCommand(ASubCommand):
     command_name = "uninstall"
     arguments = [
-        click.argument("name",),
+        click.argument("packages", nargs=-1),
     ]
 
-    def execute(self, name: str, **kwargs):
-        click.secho(f'Uninstall package "{name}"', fg='red')
+    def execute(self, packages: list[str], **kwargs):
+        click.secho(f'Uninstall packages', fg='magenta')
+        # collect packages
+        pkgs = []
+        for name in packages:
+            p = APackage.find(name)
+            if not p:
+                raise NameError(f"Package {name} not found")
+            pkgs.append(p)
+        # get local manager
         try:
-            ws_manager = AWorkspace.current()
-            manager = ws_manager.get_manager().venv_manager
-        except RuntimeError:
-            manager = get_package_manager(default_env_dir())
+            ws: AWorkspace = AWorkspace.current()
+            print(ws)
+            manager: AWorkspace = ws.get_manager()
+        except WorkspaceNotDefined:
+            manager: AWorkspaceManager = AWorkspaceManager.default()
+        # uninstall
         try:
-            resp = manager.uninstall_package(name)
-            print(resp)
+            manager.uninstall_packages(*pkgs)
         except Exception as e:
-            click.secho(f'Install package "{name}" failed: {e}', fg='red')
+            traceback.print_exc()
+            click.secho(f'Uninstall packages failed: {e}', fg='red')
 
 
 
 class PackageCommand(ACommandPlugin):
     name = 'package_cmd'
-    command_name = "workspaces"
+    command_name = "packages"
     subcommands = [
         PackageNewCommand,
         PackageBuildCommand,
