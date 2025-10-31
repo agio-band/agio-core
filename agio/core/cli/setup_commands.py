@@ -3,6 +3,7 @@ import os
 import click
 from agio.core.plugins import plugin_hub
 from agio.core.workspaces.workspace import AWorkspaceManager
+from agio.tools import launching
 
 
 class CustomGroup(click.Group):
@@ -61,7 +62,7 @@ def agio_group(ctx, workspace, debug, **kwargs):
             if ws:
                 # execute in different env if not current ws is defined
                 full_command = [cmd_name, *cmd_args]
-                launch_utils.exec_agio_command(full_command, ws)
+                launching.exec_agio_command(full_command, ws)
                 ctx.exit(0)
             else:
                 raise click.exceptions.ClickException('Workspace not found')
@@ -80,7 +81,7 @@ def agio_group(ctx, workspace, debug, **kwargs):
         os.environ['AGIO_DEBUG'] = 'true'
 
 
-@agio_group.command
+@agio_group.command(help='Test ping command')
 def ping():
     click.secho('PONG', fg='green')
 
