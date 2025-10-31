@@ -46,8 +46,8 @@ class UVPackageManager(PackageManagerBase):
         cmd.extend(packages)
         return self.run(cmd)
 
-    def uninstall_package(self, package_name):
-        cmd = ['pip', 'uninstall', package_name]
+    def uninstall_packages(self, *package_names):
+        cmd = ['pip', 'uninstall', *package_names]
         self.run(cmd)
 
     def list_installed_packages(self) -> dict:

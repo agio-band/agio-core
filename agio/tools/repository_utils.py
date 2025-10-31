@@ -1,3 +1,4 @@
+import logging
 import re
 from pathlib import Path
 from typing import List
@@ -6,6 +7,8 @@ from urllib.parse import urlparse
 import requests
 from packaging.tags import sys_tags, Tag
 from packaging.utils import parse_wheel_filename
+
+logger = logging.getLogger(__name__)
 
 
 def extract_repo_info(repo_url: str):
@@ -90,7 +93,7 @@ def filter_compatible_package(files: List[str]) -> str:
 
     if best_match:
         return best_match
-    raise ValueError("No compatible .whl found for your platform.")
+    raise ValueError("No compatible .whl found for your platform. Probably incorrect file name?")
 
 
 

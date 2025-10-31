@@ -6,6 +6,8 @@ from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 import shlex
 
+import yaml
+
 from agio.core.entities import APackage, APackageRelease
 from agio.core.workspaces import APackageManager
 from agio.tools.process_utils import start_process
@@ -90,7 +92,7 @@ class PackageManagerBase:
     def install_packages(self, *packages, **kwargs):
         raise NotImplementedError
 
-    def uninstall_package(self, package_name):
+    def uninstall_packages(self, *package_names):
         raise NotImplementedError
 
     def list_installed_packages(self):
@@ -105,13 +107,18 @@ class PackageManagerBase:
     def get_package_version(self, package_name):
         raise NotImplementedError
 
-    def iter_packages(self):
-        site_packages_path = venv_utils.get_site_packages_path(self.python_executable)
+    def iter_packages(self, *names):
+        site_packages_path = venv_helpers.get_site_packages_path(self.python_executable)
         if not site_packages_path:
             return
         site_packages_path = Path(site_packages_path)
-        for package in site_packages_path.glob(f'*/{APackageManager.info_file_name}'):
-            yield APackageManager(package.parent.as_posix())
+        for meta_file in site_packages_path.glob(f'*/{APackageManager.info_file_name}'):
+            if names:
+                with open(meta_file) as f:
+                    data = yaml.safe_load(f)
+                    if data['name'] not in names:
+                        continue
+            yield APackageManager(meta_file.parent.as_posix())
 
     def create_venv(self):
         raise NotImplementedError

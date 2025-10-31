@@ -16,7 +16,7 @@ def create_new_package(destination_path: str|Path,
                        **kwargs):
     py_name = python_package_name or validate_python_name(name)
 
-    template_path = template_path or get_res('core/workspaces-template-default')
+    template_path = template_path or get_res('core/pkg-template-default')
     if not template_path:
         raise RuntimeError('Template path is required')
 

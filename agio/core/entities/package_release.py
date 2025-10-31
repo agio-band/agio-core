@@ -9,6 +9,7 @@ from agio.core.api.utils import NOTSET
 from agio.core.exceptions import PackageError
 from agio.tools.repository_utils import filter_compatible_package
 from .entity import DomainBase
+from ..events import emit
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ class APackageRelease(DomainBase):
 
     def get_installation_command(self, **kwargs):
         package = self.get_package()
-        force_download = kwargs.pop('force_download', False)
+        # force_download = kwargs.pop('force_download', False)
 
         if assets := self.get_assets():
             name_list = [asset['name'] for asset in assets]
@@ -97,18 +98,20 @@ class APackageRelease(DomainBase):
             if not name:
                 raise PackageError(f"Error fetching whl file, Compatible asset not found")
             url = next(iter([x['url'] for x in assets if x['name'] == name]))
-            if url.startswith('https'):
-                cmd = url
-                # # TODO: check if is private package saved on private store
-                # logger.debug(f'Download file {name}: {url}')
-                # cmd = download_file(
-                #     url,
-                #     Path(app_dirs.temp_dir(), 'releases').as_posix(),
-                #     name,
-                #     skip_exists=not force_download
-                # )
+            if url.startswith('http'):
+                payload = {
+                    'package_release': self,
+                    'source_url': url,
+                }
+                emit('core.package.get_release_install_url', payload)
+                cmd = payload['source_url']
             elif url.startswith('git+'):
-                cmd = url
+                payload = {
+                    'package_release': self,
+                    'source_url': url[4:],
+                }
+                emit('core.package.get_release_install_url', payload)
+                cmd = 'git+'+payload['source_url']
             else:
                 path = os.path.expandvars(Path(url).expanduser())
                 if not os.path.exists(path):

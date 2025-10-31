@@ -64,6 +64,7 @@ class MakeReleaseError(AException):
 class ProjectNotExists(NotExistsError):
     detail: str = "Project does not exist"
 
+
 class ProjectWorkspaceNotSet(NotExistsError):
     detail: str = "Project workspace not set"
 
@@ -158,3 +159,8 @@ class ServiceStartupError(AException):
 
 class NotFoundError(AException):
     detail = "Entity not found"
+
+
+# context
+class WorkspaceNotDefined(AException):
+    detail = "Workspace not defined"

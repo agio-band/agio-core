@@ -9,14 +9,19 @@ from functools import cached_property, cache
 from pathlib import Path
 
 from agio.core import api, env_names
-from agio.core.entities import AWorkspaceRevision, AWorkspace
+from agio.core.entities import AWorkspaceRevision, AWorkspace, APackageRelease, APackage
 from agio.core.events import emit
 from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotExistsError
 from agio.core.config import config
-from agio.tools import pkg_manager
+from agio.tools import pkg_manager, app_dirs
 from agio.tools.launching import LaunchContext
+from agio.tools.venv_helpers import check_current_python_version
 
 logger = logging.getLogger(__name__)
+
+
+class DefaultWorkspaceError(Exception):
+    pass
 
 
 class AWorkspaceManager:
@@ -24,7 +29,8 @@ class AWorkspaceManager:
     _meta_file_name = '__agio_ws__.json'
     workspaces_root = Path(config.WS.INSTALL_DIR).expanduser()
 
-    def __init__(self, revision: AWorkspaceRevision|str|dict, **kwargs):
+    def __init__(self, revision: AWorkspaceRevision|str|dict = None, root: str|Path = None, **kwargs):
+        self._install_root = None
         if revision is not None:
             if isinstance(revision, (str, dict)):
                 self._revision = AWorkspaceRevision(revision)
@@ -32,11 +38,19 @@ class AWorkspaceManager:
                 self._revision = revision
             else:
                 raise TypeError('Invalid revision type')
+        else:
+            if not root:
+                raise TypeError('Root directory or revision must be specified')
+            self._revision = None
+            self._install_root = root
         self._kwargs = kwargs
         self._extra_launch_envs = {}
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} revision={self._revision.id}>'
+        if self._revision:
+            return f'<{self.__class__.__name__} revision={self._revision.id}>'
+        else:
+            return f'<{self.__class__.__name__} DEFAULT>'
 
     @property
     def extra_launch_envs(self) -> dict:
@@ -93,16 +107,24 @@ class AWorkspaceManager:
             return cls(rev_id)
 
     @classmethod
+    def default(cls):
+        return cls(root=app_dirs.default_env_dir())
+
+    @classmethod
     def is_defined(cls):
         return bool(os.getenv(env_names.WORKSPACE_ENV_NAME))
 
     # props
 
     def get_workspace(self) -> AWorkspace:
+        if not self._revision:
+            raise DefaultWorkspaceError('No revision for default workspace')
         return AWorkspace(self.workspace_id)
 
     @property
     def workspace_id(self):
+        if not self._revision:
+            raise DefaultWorkspaceError('No ID for default workspace')
         return self.revision.workspace_id
 
     @property
@@ -111,16 +133,24 @@ class AWorkspaceManager:
 
     @property
     def root(self):
+        if self._install_root:
+            return self._install_root
         return Path(config.WS.INSTALL_DIR, self.workspace_id).expanduser().resolve()
 
     @property
     def install_root(self):
+        if self._install_root:
+            return self._install_root
         return self.root.joinpath('-'.join([self.revision.id, self.root_suffix]).strip('-'))
 
-    def exists(self) -> bool:
-        return self.install_root.exists()
+    @property
+    def bin_path(self):
+        return self.install_root / '.venv/bin'
 
     def get_package_list(self):
+        if not self._revision:
+            # TODO get from globals
+            raise DefaultWorkspaceError('No package list for default workspace')
         return self.revision.get_package_list()
 
     def get_py_version(self):
@@ -134,11 +164,12 @@ class AWorkspaceManager:
 
     def install(self, clean: bool = False, no_cache: bool = False):
         logger.debug(f'Installing workspace {self.install_root}')
-        emit('core.workspace.before_install', {'revision': self})
+        emit('core.workspace.before_install', {'workspace': self})
+        # check package list
         package_list = list(self.get_package_list())
         if not package_list:
             raise Exception('No packages to install')
-        install_args = [pkg.get_installation_command() for pkg in package_list]
+        # create or recreate venv
         reinstall = clean or self.need_to_reinstall()
         if reinstall:
             logger.info('Reinstalling workspace...')
@@ -146,30 +177,48 @@ class AWorkspaceManager:
                 self.remove()
             py_version_required = self.get_py_version()
             self.venv_manager.create_venv(py_version_required)
+        # install packages
+        self.install_packages(*package_list, no_cache=no_cache)
+        # save meta file
+        with open(self.local_meta_file, 'w') as f:
+            data = copy.deepcopy(self.revision.to_dict())
+            data['workspace_suffix'] = self.root_suffix
+            json.dump(data, f, indent=4)
+        logger.debug(f'meta file saved: {self.local_meta_file}')
+        emit('core.workspace.installed',
+                {'revision': self,
+                 'packages': package_list,
+                 'meta_filename': self.local_meta_file}
+             )
+        logger.debug('Installation complete')
 
-        # debug message TODO remove later
+    def install_packages(self, *package_list: APackageRelease, **kwargs):
+        install_args = [pkg.get_installation_command() for pkg in package_list]
         print('-'*100)
         print('Python version:', self.venv_manager.get_python_version())
         print('-'*100)
         for pkg in install_args:
             print(pkg)
         print('-'*100)
-
         logger.info(f'Packages to install: {len(package_list)}')
-        resp = self.venv_manager.install_packages(*install_args, no_cache=no_cache)
-        if resp:
-            try:
-                shutil.rmtree(self.install_root)
-            except FileNotFoundError:
-                pass
-            raise Exception(f'Installation failed for workspace {self.workspace_id}. Exit code: {resp}')
-        with open(self.local_meta_file, 'w') as f:
-            data = copy.deepcopy(self.revision.to_dict())
-            data['workspace_suffix'] = self.root_suffix
-            json.dump(data, f, indent=4)
-        emit('core.workspace.installed',
-             {'revision': self, 'packages': package_list, 'meta_filename': self.local_meta_file}
-             )
+        status_code = self.venv_manager.install_packages(*install_args, **kwargs)
+        if status_code:
+            raise Exception(f'Failed to install packages. Status code:{status_code}')
+        # on pacakge installed callbacks
+        for pkg in self.iter_installed_packages():
+            pkg.execute_package_callback('on_installed', self)
+
+    def uninstall_packages(self, *packages: APackage|APackageRelease):
+        packages = [x.get_package() if isinstance(x, APackageRelease) else x for x in packages]
+        all_installed = {x.package_name: x for x in list(self.iter_installed_packages())}
+        to_uninstall = [man for _, man in all_installed.items() if man.package in packages]
+        logger.info(f'Before uninstall callbacks')
+        for pkg in to_uninstall:
+            pkg.execute_package_callback('before_uninstalling', self)
+        install_args = [pkg.name for pkg in packages]
+        status_code = self.venv_manager.uninstall_packages(*install_args)
+        if status_code:
+            raise Exception(f'Failed to install packages. Status code:{status_code}')
 
     def is_installed(self):
         return self.local_meta_file.exists()
@@ -179,7 +228,7 @@ class AWorkspaceManager:
             required_py_version = self.get_py_version()
             if required_py_version:
                 current_version = self.venv_manager.get_python_version(full=True)
-                if not venv_utils.check_current_python_version(
+                if not check_current_python_version(
                         required_py_version,
                         current_version):
                     return True
@@ -189,13 +238,14 @@ class AWorkspaceManager:
 
     @cache
     def get_site_packages_path(self):
-        if not self.exists():
+        if not self.is_installed():
             raise WorkspaceNotInstalled('Workspace revision not installed locally')
         return self.venv_manager.site_packages
 
     def remove(self) -> bool:
         emit('core.workspace.before_remove', {'revision': self})
-        if self.exists():
+        if self.is_installed():
+            self.uninstall_packages(*self.iter_installed_packages())
             self.venv_manager.delete_venv()
             shutil.rmtree(self.install_root)
             emit('core.workspace.removed', {'revision': self})
@@ -212,8 +262,8 @@ class AWorkspaceManager:
 
     # packages
 
-    def iter_installed_packages(self):
-        yield from self.venv_manager.iter_packages()
+    def iter_installed_packages(self, *names):
+        yield from self.venv_manager.iter_packages(*names)
 
     # modify and launch
 
@@ -251,7 +301,7 @@ class AWorkspaceManager:
 
     def install_or_update_if_needed(self):
         # TODO
-        if not self.exists():
+        if not self.is_installed():
             self.install()
 
     @classmethod # TODO cache it

@@ -9,7 +9,7 @@ from . import APackageRelease, APackage
 from .entity import DomainBase
 from .workspace_revision import AWorkspaceRevision
 from ..events import emit
-from ..exceptions import RequestError, SettingsRevisionNotExists
+from ..exceptions import RequestError, SettingsRevisionNotExists, WorkspaceNotDefined
 from ..settings import settings_hub
 
 
@@ -67,7 +67,7 @@ class AWorkspace(DomainBase):
     def current(cls):
         ws_id = os.getenv(env_names.WORKSPACE_ENV_NAME)
         if not ws_id:
-            raise RuntimeError('Workspace is not initialized')
+            raise WorkspaceNotDefined
         return cls(ws_id)
 
     def get_current_revision(self):
@@ -77,7 +77,12 @@ class AWorkspace(DomainBase):
     def get_manager(self):
         from agio.core.workspaces import AWorkspaceManager
 
-        return AWorkspaceManager(self.get_current_revision())
+        revision_id = os.getenv(env_names.REVISION_ENV_NAME)
+        if revision_id:
+            revision = AWorkspaceRevision(revision_id)
+        else:
+            revision = self.get_current_revision()
+        return AWorkspaceManager(revision)
 
     @property
     def company_id(self):

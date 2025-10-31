@@ -11,7 +11,8 @@ from agio.core.entities import package
 from agio.core.events import emit
 from agio.core.exceptions import PackageMetadataError, PackageError
 from agio.core.plugins.base_plugin import APlugin
-from agio.tools.modules import import_object_by_dotted_path
+from agio.tools.modules import import_object_by_dotted_path, import_module_by_path
+from agio.core.workspaces import workspace
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,7 @@ class APackageManager:
             return
 
     @classmethod
-    def find_package(cls, path: str|Path) -> 'APackageManager'|None:
+    def find_package(cls, path: str|Path) -> 'APackageManager' or None:
         pkg_root = cls.find_package_root(path)
         if pkg_root:
             return cls(pkg_root)
@@ -266,3 +267,14 @@ class APackageManager:
         for path in callbacks:
             yield self.root.joinpath(path).with_suffix('.py').as_posix()
 
+    def execute_package_callback(self, callback_name: str, workspace_manager: workspace.AWorkspaceManager):
+        file_name = self.get_meta_data_field('package_callbacks') or 'callbacks/package_callbacks.py'
+        full_path = self.root.joinpath(file_name)
+        if full_path.exists():
+            mod = import_module_by_path(full_path.as_posix())
+            callback = getattr(mod, callback_name, None)
+            if callable(callback):
+                try:
+                    callback(self, workspace_manager)
+                except Exception as e:
+                    raise Exception(f'Error executing callback {callback_name} from {full_path}: {e}') from e

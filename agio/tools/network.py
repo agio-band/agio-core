@@ -5,8 +5,9 @@ import socket
 
 
 def download_file(url: str, dest_dir: str, filename: str = None, params: dict = None,
-                  headers=None, use_credentials = None, allow_redirects=False,
-                  skip_exists: bool = False) -> str:
+                  headers=None, allow_redirects=False,
+                  skip_exists: bool = False,
+                  ) -> str:
     """
     Скачивает файл по URL и сохраняет в указанную директорию.
     """
