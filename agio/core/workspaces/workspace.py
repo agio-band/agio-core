@@ -16,6 +16,7 @@ from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotE
 from agio.core.config import config
 from agio.tools import pkg_manager, app_dirs
 from agio.tools.launching import LaunchContext
+from agio.tools.packaging_tools import collect_packages_to_install
 from agio.tools.venv_helpers import check_current_python_version
 
 logger = logging.getLogger(__name__)
@@ -140,7 +141,7 @@ class AWorkspaceManager:
     @property
     def install_root(self):
         if self._install_root:
-            return self._install_root
+            return Path(self._install_root)
         return self.root.joinpath('-'.join([self.revision.id, self.root_suffix]).strip('-'))
 
     @property
@@ -157,7 +158,7 @@ class AWorkspaceManager:
         custom = self._kwargs.get('python_version')
         if custom:
             return custom
-        if self._revision:
+        if self.revision:
             return self.revision.metadata.get('py_version', {}).get(sys.platform.lower())
         return self.default_python_version
 
@@ -168,15 +169,14 @@ class AWorkspaceManager:
         return pkg_manager.get_package_manager(self.install_root, self.custom_py_executable)
 
     def install(self, clean: bool = False, no_cache: bool = False):
-        if not self._revision:
-            raise DefaultWorkspaceError('Can not use install method without workspace or revision entity. '
-                                        'Use install_packages() method directly.')
+
         logger.debug(f'Installing workspace {self.install_root}')
         emit('core.workspace.before_install', {'workspace': self})
         # check package list
-        package_list = list(self.get_package_list())
-        if not package_list:
-            raise Exception('No packages to install')
+        if self.revision:
+            package_list = list(self.get_package_list())
+        else:
+            package_list = []
         # create or recreate venv
         reinstall = clean or self.need_to_reinstall()
         if reinstall:
@@ -186,21 +186,34 @@ class AWorkspaceManager:
             py_version_required = self.get_py_version()
             self.venv_manager.create_venv(py_version_required)
         # install packages
-        self.install_packages(*package_list, no_cache=no_cache)
+        if package_list:
+            self.install_packages(*package_list, no_cache=no_cache)
         # save meta file
-        with open(self.local_meta_file, 'w') as f:
-            data = copy.deepcopy(self.revision.to_dict())
-            data['workspace_suffix'] = self.root_suffix
-            json.dump(data, f, indent=4)
-        logger.debug(f'meta file saved: {self.local_meta_file}')
-        emit('core.workspace.installed',
-                {'revision': self,
-                 'packages': package_list,
-                 'meta_filename': self.local_meta_file}
-             )
+        if self.revision:
+            with open(self.local_meta_file, 'w') as f:
+                data = copy.deepcopy(self.revision.to_dict())
+                data['workspace_suffix'] = self.root_suffix
+                json.dump(data, f, indent=4)
+            logger.debug(f'meta file saved: {self.local_meta_file}')
+            emit('core.workspace.installed',
+                    {'revision': self.revision.id,
+                     'packages': package_list,
+                     'meta_filename': self.local_meta_file,
+                     'workspace_manager': self
+                     }
+                 )
+        else:
+            emit('core.workspace.installed',
+                 {'revision': None,
+                  'packages': [],
+                  'meta_filename': None,
+                  'workspace_manager': self
+                  }
+                 )
         logger.debug('Installation complete')
 
-    def install_packages(self, *package_list: APackageRelease, **kwargs):
+    def install_packages(self, *package_list: APackageRelease|str, **kwargs):
+        package_list = collect_packages_to_install(package_list)
         install_args = [pkg.get_installation_command() for pkg in package_list]
         # print('-'*100)
         # print('Python version:', self.venv_manager.get_python_version())
@@ -216,8 +229,18 @@ class AWorkspaceManager:
         for pkg in self.iter_installed_packages():
             pkg.execute_package_callback('on_installed', self)
 
-    def uninstall_packages(self, *packages: APackage|APackageRelease):
-        packages = [x.get_package() if isinstance(x, APackageRelease) else x for x in packages]
+    def uninstall_packages(self, *packages: APackage|APackageRelease|str):
+        existing_packages = []
+        for p in packages:
+            if isinstance(p, APackage):
+                existing_packages.append(p)
+            elif isinstance(p, APackageRelease):
+                existing_packages.append(p.get_package())
+            elif isinstance(p, str):
+                existing_packages.append(APackage.find(name=p))
+            else:
+                raise TypeError(f'Unsupported package type: {type(p)}')
+        packages = existing_packages
         all_installed = {x.package_name: x for x in list(self.iter_installed_packages())}
         to_uninstall = [man for _, man in all_installed.items() if man.package in packages]
         logger.info(f'Before uninstall callbacks')
