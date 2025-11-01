@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 import time
+from datetime import datetime
 from functools import cached_property, cache
 from pathlib import Path
 
@@ -28,9 +29,11 @@ class AWorkspaceManager:
     """Manage workspaces on local host"""
     _meta_file_name = '__agio_ws__.json'
     workspaces_root = Path(config.WS.INSTALL_DIR).expanduser()
+    default_python_version = '>=3.11'
 
     def __init__(self, revision: AWorkspaceRevision|str|dict = None, root: str|Path = None, **kwargs):
-        self._install_root = None
+        self._install_root = root
+        self._revision = None
         if revision is not None:
             if isinstance(revision, (str, dict)):
                 self._revision = AWorkspaceRevision(revision)
@@ -38,11 +41,8 @@ class AWorkspaceManager:
                 self._revision = revision
             else:
                 raise TypeError('Invalid revision type')
-        else:
-            if not root:
-                raise TypeError('Root directory or revision must be specified')
-            self._revision = None
-            self._install_root = root
+        if not root and not revision:
+            raise TypeError('Root directory or revision must be specified')
         self._kwargs = kwargs
         self._extra_launch_envs = {}
 
@@ -50,7 +50,7 @@ class AWorkspaceManager:
         if self._revision:
             return f'<{self.__class__.__name__} revision={self._revision.id}>'
         else:
-            return f'<{self.__class__.__name__} DEFAULT>'
+            return f'<{self.__class__.__name__} NO-REVISION>'
 
     @property
     def extra_launch_envs(self) -> dict:
@@ -94,7 +94,7 @@ class AWorkspaceManager:
     def _load_local_data(self):
         meta_file = self.local_meta_file
         if not meta_file.exists():
-            raise WorkspaceNotInstalled('Workspace revision not installed locally')
+            raise WorkspaceNotInstalled('Workspace not installed locally')
         with meta_file.open() as f:
             return json.load(f)
 
@@ -112,7 +112,7 @@ class AWorkspaceManager:
 
     @classmethod
     def is_defined(cls):
-        return bool(os.getenv(env_names.WORKSPACE_ENV_NAME))
+        return bool(os.getenv(env_names.WORKSPACE_ENV_NAME)) or bool(os.getenv(env_names.REVISION_ENV_NAME))
 
     # props
 
@@ -149,12 +149,17 @@ class AWorkspaceManager:
 
     def get_package_list(self):
         if not self._revision:
-            # TODO get from globals
+            # TODO get package list for default workspace
             raise DefaultWorkspaceError('No package list for default workspace')
         return self.revision.get_package_list()
 
     def get_py_version(self):
-        return self._kwargs.get('python_version') or self.revision.metadata.get('py_version', {}).get(sys.platform.lower())
+        custom = self._kwargs.get('python_version')
+        if custom:
+            return custom
+        if self._revision:
+            return self.revision.metadata.get('py_version', {}).get(sys.platform.lower())
+        return self.default_python_version
 
     # install and manage
 
@@ -163,6 +168,9 @@ class AWorkspaceManager:
         return pkg_manager.get_package_manager(self.install_root, self.custom_py_executable)
 
     def install(self, clean: bool = False, no_cache: bool = False):
+        if not self._revision:
+            raise DefaultWorkspaceError('Can not use install method without workspace or revision entity. '
+                                        'Use install_packages() method directly.')
         logger.debug(f'Installing workspace {self.install_root}')
         emit('core.workspace.before_install', {'workspace': self})
         # check package list
@@ -194,12 +202,12 @@ class AWorkspaceManager:
 
     def install_packages(self, *package_list: APackageRelease, **kwargs):
         install_args = [pkg.get_installation_command() for pkg in package_list]
-        print('-'*100)
-        print('Python version:', self.venv_manager.get_python_version())
-        print('-'*100)
-        for pkg in install_args:
-            print(pkg)
-        print('-'*100)
+        # print('-'*100)
+        # print('Python version:', self.venv_manager.get_python_version())
+        # print('-'*100)
+        # for pkg in install_args:
+        #     print(pkg)
+        # print('-'*100)
         logger.info(f'Packages to install: {len(package_list)}')
         status_code = self.venv_manager.install_packages(*install_args, **kwargs)
         if status_code:
@@ -242,23 +250,34 @@ class AWorkspaceManager:
             raise WorkspaceNotInstalled('Workspace revision not installed locally')
         return self.venv_manager.site_packages
 
-    def remove(self) -> bool:
-        emit('core.workspace.before_remove', {'revision': self})
+    def remove(self, fast=False) -> bool:
+        emit('core.workspace.before_remove', {'revision': self, 'fast': fast})
         if self.is_installed():
-            self.uninstall_packages(*self.iter_installed_packages())
+            if not fast:
+                self.uninstall_packages(*self.iter_installed_packages())
             self.venv_manager.delete_venv()
             shutil.rmtree(self.install_root)
-            emit('core.workspace.removed', {'revision': self})
+            emit('core.workspace.removed', {'revision': self, 'fast': fast})
             return True
         return False
 
     def touch(self):
+        """Update latest time usage"""
         if not self.is_installed():
             raise WorkspaceNotInstalled('Workspace revision not installed locally')
         timestamp_file = self.install_root / 'timestamp'
-        self.install_root.mkdir(parents=True, exist_ok=True)
+        if not timestamp_file.exists():
+            self.install_root.mkdir(parents=True, exist_ok=True)
+            timestamp_file.write_text(
+                '--- Uses the access time of this file as the last access time of the workspace ---'
+            )
         timestamp_file.touch(exist_ok=True)
-        timestamp_file.write_text(str(time.time()))
+
+    def get_latest_used_datetime(self):
+        if not self.is_installed():
+            raise WorkspaceNotInstalled('Workspace revision not installed locally')
+        timestamp_file = self.install_root / 'timestamp'
+        return datetime.fromtimestamp(timestamp_file.stat().st_atime)
 
     # packages
 
