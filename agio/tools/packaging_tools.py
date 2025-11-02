@@ -124,11 +124,16 @@ def collect_packages_to_install(packages: list[p.APackage|r.APackageRelease|str]
     for release in releases_to_install:
         deps = release.get_dependencies()
         if deps:
-            all_dependencies[release.get_package_name()] = release.get_dependencies()
+            all_dependencies[release.get_package_name()] = deps
     resolved_dependencies = resolve_dependencies(all_dependencies)
     for release_name in resolved_dependencies:
         name, version = _split_name_constrain(release_name, strip_constraints=True)
-        release = p.APackage.find(name).get_release(version)
+        pkg = p.APackage.find(name)
+        if not pkg:
+            raise Exception(f'Dependency package "{name}" not found')
+        release = pkg.get_release(version)
+        if not release:
+            raise Exception(f'Dependency release "{name} v{version}" not found')
         releases_to_install.append(release)
     return releases_to_install
 
