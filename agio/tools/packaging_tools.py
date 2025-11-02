@@ -66,7 +66,7 @@ def _simplify_specifiers(spec: SpecifierSet) -> SpecifierSet:
 def _merge_specifiers(spec1: SpecifierSet, spec2: SpecifierSet) -> SpecifierSet:
     """combines two sets of specifiers, checking for conflict."""
     if _specifiers_conflict(spec1, spec2):
-        raise DependencyConflictError(f"Конфликт версий: {spec1} и {spec2}")
+        raise DependencyConflictError(f"Version conflict: {spec1} и {spec2}")
     combined = SpecifierSet(str(spec1) + "," + str(spec2))
     return _simplify_specifiers(combined)
 
@@ -135,7 +135,16 @@ def collect_packages_to_install(packages: list[p.APackage|r.APackageRelease|str]
         if not release:
             raise Exception(f'Dependency release "{name} v{version}" not found')
         releases_to_install.append(release)
-    return releases_to_install
+    # filter duplicates with max version
+    filtered = dict()
+    for r in releases_to_install:
+        pkg_name = r.get_package_name()
+        if pkg_name not in filtered:
+            filtered[pkg_name] = r
+        else:
+            if r.get_version() > filtered[pkg_name].get_version():
+                filtered[pkg_name] = r
+    return list(filtered.values())
 
 
 
