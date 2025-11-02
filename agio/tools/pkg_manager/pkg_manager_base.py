@@ -148,10 +148,12 @@ class PackageManagerBase:
         cmd = list(map(str, [self.get_executable(), *cmd]))
         workdir = workdir or str(self.path)
         logger.debug(f'Running command: {" ".join(cmd)}')
-        kwargs.setdefault('get_output', False)
+        kwargs.setdefault('get_output', True)
         envs = self.run_envs() or {}
         envs.update(kwargs.pop('envs', {}))
-        return start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], env=envs, **kwargs)
+        resp = start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], env=envs, **kwargs)
+        print(resp)
+        return resp
 
     @classmethod
     def get_package_manager_installation_path(cls):
