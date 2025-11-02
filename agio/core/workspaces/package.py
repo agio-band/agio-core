@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 import os
 from functools import cache, cached_property
@@ -6,6 +7,11 @@ from pathlib import Path
 from typing import Any, Generator, Type
 
 import yaml
+
+try:
+    import tomllib as toml
+except ModuleNotFoundError:
+    import tomli as toml
 
 from agio.core.entities import package
 from agio.core.events import emit
@@ -21,14 +27,16 @@ class APackageManager:
     """
     Manage local installed packages.
     """
-    info_file_name = '__agio__.yml'
+    metadata_filename = '__agio__.yml'
 
     def __init__(self, package_root: str|Path):
         self._root = Path(package_root)
-        self._info_file = Path(package_root, self.info_file_name)
-        self._info_data = self.__check_info_data(
-            self.__load_info_file(
-                self.__get_info_file(package_root)
+        self._meta_data_file = Path(package_root, self.metadata_filename)
+        self._metadata = self.__check_metadata(
+            self.__extend_meta_data(
+                self.__load_metadata(
+                    self.__get_metadata_file(package_root)
+                )
             )
         )
         self._package = None
@@ -36,40 +44,55 @@ class APackageManager:
     def __repr__(self):
         return f'APackageManager({repr(self.package_name)})'
 
-    # info file
+    # metadata file
 
-    def __get_info_file(self, path: str | Path) -> Path:
+    def __get_metadata_file(self, path: str | Path) -> Path:
         if not self.is_package_root(path):
             raise PackageError(f"Path is not a package root: {path}")
-        info_file = Path(path, self.info_file_name)
-        if not info_file.exists():
-            raise PackageError(f"Manifest file not found: {info_file}")
-        return info_file
+        metadata_file = Path(path, self.metadata_filename)
+        if not metadata_file.exists():
+            raise PackageError(f"Manifest file not found: {metadata_file}")
+        return metadata_file
 
-    def __load_info_file(self, info_file: str | Path) -> dict:
+    def __load_metadata(self, metadata_file: str | Path) -> dict:
         import yaml
         try:
-            with open(info_file, 'r') as f:
+            with open(metadata_file, 'r') as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
-            raise PackageMetadataError(f"Metadata file not found: {info_file}")
+            raise PackageMetadataError(f"Metadata file not found: {metadata_file}")
         except yaml.YAMLError as e:
-            raise PackageMetadataError(f"Error parsing info file: {e}")
+            raise PackageMetadataError(f"Error parsing metadata file: {e}")
         except Exception as e:
-            raise PackageMetadataError(f"Error loading info file: {e}")
+            raise PackageMetadataError(f"Error loading metadata file: {e}")
 
-    def __check_info_data(self, info_data: dict) -> dict:
+    def __check_metadata(self, metadata_data: dict) -> dict:
         # data is not empty
-        if not info_data:
-            raise PackageMetadataError(f"Manifest file is empty [{self._info_file}]")
+        if not metadata_data:
+            raise PackageMetadataError(f"Manifest file is empty [{self._meta_data_file}]")
         # data is dict
-        if not isinstance(info_data, dict):
-            raise PackageMetadataError(f"Manifest file is not a dictionary [{self._info_file}]")
-        return info_data
+        if not isinstance(metadata_data, dict):
+            raise PackageMetadataError(f"Manifest file is not a dictionary [{self._meta_data_file}]")
+        return metadata_data
+
+    def __extend_meta_data(self, metadata_data: dict) -> dict:
+        if 'version' not in metadata_data:
+            pyproject_data = self.__load_pyproject_toml_file()
+            if pyproject_data:
+                metadata_data['version'] = pyproject_data['project']['version']
+        return metadata_data
+
+    def __load_pyproject_toml_file(self):
+        file_path = self.root.joinpath('../pyproject.toml')
+        if not file_path.exists():
+            return
+        with open(str(file_path), 'rb') as f:
+            py_project_data = toml.load(f)
+        return py_project_data
 
     def get_meta_data_field(self, field_path: str, default = None) -> Any:
         parts = field_path.split('.')
-        current_level = self._info_data.copy()
+        current_level = self._metadata.copy()
         while parts:
             next_part = parts.pop(0)
             if not isinstance(current_level, dict):
@@ -80,18 +103,18 @@ class APackageManager:
         return current_level
 
     @property
-    def info_file(self):
-        return self.root / self.info_file_name
+    def metadata_file(self):
+        return self.root / self.metadata_filename
 
     def get_pacakge_metadata(self):
-        return self._info_data
+        return self._metadata
 
     # creators
 
     @classmethod
     def find_package_root(cls, path: str|Path) -> Path|None:
         try:
-            meta_file = next(Path(path).rglob(cls.info_file_name))
+            meta_file = next(Path(path).rglob(cls.metadata_filename))
             return meta_file.parent
         except StopIteration:
             return
@@ -104,8 +127,8 @@ class APackageManager:
 
     @classmethod
     def is_package_root(cls, path: str) -> bool:
-        info_file = os.path.join(path, cls.info_file_name)
-        return os.path.exists(info_file)
+        metadata_file = os.path.join(path, cls.metadata_filename)
+        return os.path.exists(metadata_file)
 
     # props
 
@@ -113,7 +136,7 @@ class APackageManager:
     def root(self) -> Path:
         return self._root
 
-    # from info file
+    # from metadata file
 
     @cached_property
     def label(self):
@@ -164,7 +187,7 @@ class APackageManager:
     # package content
 
     def get_resource_dir(self):
-        return self.root / self._info_data.get('resources_dir', 'resources')
+        return self.root / self._metadata.get('resources_dir', 'resources')
 
     def get_import_path(self, dotted_path: str) -> str:
         package_name = self.root.stem
@@ -179,15 +202,15 @@ class APackageManager:
 
     def iterate_plugin_classes(self) -> Generator[tuple[dict, Type[APlugin]], None, None]:
         plugin_info: dict
-        if not self.info_file.exists():
+        if not self.metadata_file.exists():
             raise PackageMetadataError(f"Package metafile file is not found")
         for plugin_info in self.iter_plugin_descriptions():
-            for plugin in APlugin.load_from_info(plugin_info, self.info_file.as_posix()):
+            for plugin in APlugin.load_from_info(plugin_info, self.metadata_file.as_posix()):
                 if plugin:
                     yield plugin_info, plugin
 
     def iter_plugin_descriptions(self) -> Generator[list[dict[str, Any]], None, None]:
-        plugins = self._info_data.get('plugins') or []
+        plugins = self._metadata.get('plugins') or []
         if not isinstance(plugins, list):
             raise PackageMetadataError(f"Plugins must be a list")
         yield from plugins

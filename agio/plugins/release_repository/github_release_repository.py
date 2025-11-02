@@ -148,9 +148,8 @@ class GitHubRepositoryPlugin(RemoteRepositoryPlugin):
                 return response.json()
             elif response.status_code == 404:
                 retry += 1
-                logger.info(f"Error on request {response.reason}: {url}")
-                logger.info('Retry...')
-                time.sleep(.5)
+                logger.debug(f"Error on request {response.reason}: {url}")
+                time.sleep(.3)
                 continue
             else:
                 logger.warning(f"GitHub API error: {response.status_code} {response.text}")

@@ -1,5 +1,4 @@
 name: package_name
-version: 0.0.1
 label: Package Label
 description: |
   Long text description
@@ -17,7 +16,7 @@ urls:
 resources_dir: "custom/resources"
 # default "/resources"
 
-agio_package_dependencies: [
+required_packages: [
   "agio_core>=0.0.1",
   "my_other_package>=0.0.1",
 ]

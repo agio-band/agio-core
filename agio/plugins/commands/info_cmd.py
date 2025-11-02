@@ -227,5 +227,4 @@ class InfoCommand(ACommandPlugin):
         click.echo(f'URL: {client.platform_url}')
         click.echo(f'User: {user_profile["firstName"]} {user_profile["lastName"]}')
         click.echo(f'Email: {user_profile["email"]}')
-
-
+        #TODO installation path

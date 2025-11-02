@@ -112,7 +112,7 @@ class PackageManagerBase:
         if not site_packages_path:
             return
         site_packages_path = Path(site_packages_path)
-        for meta_file in site_packages_path.glob(f'*/{APackageManager.info_file_name}'):
+        for meta_file in site_packages_path.glob(f'*/{APackageManager.metadata_filename}'):
             if names:
                 with open(meta_file) as f:
                     data = yaml.safe_load(f)

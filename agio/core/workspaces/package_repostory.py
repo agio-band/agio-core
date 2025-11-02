@@ -1,6 +1,10 @@
 import logging
+import shutil
+import tempfile
 from functools import cached_property
 from pathlib import Path
+
+import yaml
 
 from agio.core import api
 from agio.core.entities import APackageRelease, APackage
@@ -8,7 +12,7 @@ from agio.core.exceptions import PackageRepositoryError, PackageError, PackageLo
 from agio.core.plugins import plugin_hub
 from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
 from agio.core.workspaces.package import APackageManager
-from agio.tools import git_utils
+from agio.tools import git_utils, file_utils
 from agio.tools.pkg_manager import get_package_manager
 
 logger = logging.getLogger(__name__)
@@ -20,11 +24,14 @@ class APackageRepository:
     """
     def __init__(self, repository_root: str|Path):
         self.root = Path(repository_root)
-        if not self.repository_is_valid():
-            raise PackageRepositoryError(f"Repository '{repository_root}' is not valid")
+        self.check_repository_root()
 
     def repository_is_valid(self):
-        return self.root.is_dir() and self.root.joinpath('.git').exists()
+        return self.root.is_dir() and self.root.joinpath('pyproject.toml').exists()
+
+    def check_repository_root(self):
+        if not self.repository_is_valid():
+            raise PackageRepositoryError(f"Repository '{self.root}' is not valid. File pyproject.toml not found")
 
     @cached_property
     def pkg_manager(self):
@@ -151,8 +158,25 @@ class APackageRepository:
     def py_package_manager(self):
         return get_package_manager(self.root)
 
+    def get_package_manager(self) -> APackageManager:
+        return APackageManager.find_package(self.root)
+
     def build(self, **kwargs):
-        return self.py_package_manager.build_package(**kwargs)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            file_utils.copy_tree_with_ignore_file(self.root.as_posix(), tmpdir)
+            pkg = APackageRepository(tmpdir)
+            # update info file
+            pkg_manager = pkg.get_package_manager()
+            with open(pkg_manager.metadata_file, 'w') as f:
+                yaml.dump(pkg_manager.get_pacakge_metadata(), f, default_flow_style=False)
+            # start build
+            dist = Path(pkg.py_package_manager.build_package(**kwargs))
+            local_dist = self.root/dist.name
+            if local_dist.exists():
+                shutil.rmtree(local_dist)
+            shutil.copytree(dist, local_dist)
+            logger.debug(f"Built to: {local_dist}")
+        return local_dist
 
     def register_release(self, assets: list, metadata: dict = None):
         release = APackageRelease.create(
@@ -165,9 +189,6 @@ class APackageRepository:
             # icon
         )
         return release
-
-    def remove_release(self):
-        pass
 
     def register_package(self, **kwargs):
         pkg_meta_data = self.pkg_manager.get_pacakge_metadata()
