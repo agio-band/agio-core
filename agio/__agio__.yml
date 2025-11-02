@@ -48,6 +48,10 @@ plugins:
     implementations:
       - module: plugins/commands/settings_cmd.py
 
+  - label: Manage revisions
+    implementations:
+      - module: plugins/commands/revision_cmd.py
+
   # auth
   - label: Auth command
     implementations:
