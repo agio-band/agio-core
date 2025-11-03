@@ -14,7 +14,7 @@ init_packages()
 init_plugins()
 _process_hub = process_hub.ProcessHub()
 _subscribe('core.app.exit', _process_hub.shutdown)
-_emit('core.app.logger_created', logger)
+_emit('core.app.logger_created', {'logger': logger})
 
 
 def _before_exit_event(signum, frame):
