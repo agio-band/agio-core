@@ -12,6 +12,9 @@ event_hub = EventHub()
 
 
 def emit(event_name: str, payload: Any = None) -> None:
+    if payload is not None:
+        if not isinstance(payload, dict):
+            raise TypeError("payload must be a dict")
     return event_hub.emit(event_name, payload)
 
 
