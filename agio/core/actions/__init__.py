@@ -24,7 +24,7 @@ def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
 
 def get_all_actions():
     for plugin in plugin_hub.APluginHub.instance().iter_plugins('service'):
-        for action_data in plugin.collect_actions():
+        for action_data in plugin.collect_actions(hidden=True):
             action = ActionItem(**action_data)
             action.name = f"{plugin.package.package_name}.{action.name}"
             yield action
