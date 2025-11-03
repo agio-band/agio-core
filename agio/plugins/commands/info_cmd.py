@@ -16,6 +16,7 @@ from agio.core.workspaces.workspace import AWorkspaceManager
 from agio.core.plugins import plugin_hub
 from agio.core.workspaces import package_hub
 from agio.core.api import client, profile
+from agio.tools import app_dirs
 if TYPE_CHECKING:
     from agio.core.settings.settings_hub import LocalSettingsHub
 
@@ -161,12 +162,12 @@ class ActionsInfoCommand(ASubCommand):
 
     def execute(self, *args, **kwargs):
         from agio.core.actions import get_all_actions
-
+        click.secho(f"--- Action List -------------", fg='yellow', bold=True)
         for act in get_all_actions():
-            click.secho(f"{act.label}", bold=True, fg='green')
-            click.secho(f"  name: ", nl=False, fg='yellow')
+            click.secho(f"{act.label}", bold=True, fg='bright_blue')
+            click.secho(f"  name: ", nl=False, fg='bright_black')
             click.secho(act.name)
-            click.secho( '  menu: ', nl=False, fg='yellow')
+            click.secho( '  menu: ', nl=False, fg='bright_black')
             if isinstance(act.menu_name, str):
                 menu = act.menu_name
             elif isinstance(act.menu_name, list):
@@ -174,7 +175,7 @@ class ActionsInfoCommand(ASubCommand):
             else:
                 menu = '*'
             click.secho(menu)
-            click.secho( '  app:  ', nl=False, fg='yellow')
+            click.secho( '  app:  ', nl=False, fg='bright_black')
             if isinstance(act.app_name, str):
                 app = act.app_name
             elif isinstance(act.app_name, list):
@@ -227,4 +228,5 @@ class InfoCommand(ACommandPlugin):
         click.echo(f'URL: {client.platform_url}')
         click.echo(f'User: {user_profile["firstName"]} {user_profile["lastName"]}')
         click.echo(f'Email: {user_profile["email"]}')
-        #TODO installation path
+        click.echo(f'Path: {app_dirs.install_dir()}')
+
