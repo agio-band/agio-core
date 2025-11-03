@@ -109,7 +109,7 @@ class AWorkspaceManager:
 
     @classmethod
     def default(cls):
-        return cls(root=app_dirs.default_env_dir())
+        return cls(root=app_dirs.default_env_install_dir())
 
     @classmethod
     def is_defined(cls):
