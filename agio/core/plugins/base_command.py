@@ -159,3 +159,11 @@ class AStartAppCommand(ACommandPlugin):
         if context.app_name != self.app_name:
             logger.debug(f'Restart as application "{self.app_name}"')
             restart_with_env({'AGIO_APP_NAME': self.app_name})
+
+    def start(self, **kwargs):
+        raise NotImplementedError(f'Not implemented in {self.__class__.__name__}')
+
+
+    def execute(self, **kwargs):
+        self.before_start(**kwargs)
+        self.start()
