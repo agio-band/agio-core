@@ -134,12 +134,12 @@ class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
         self.on_stopped()
 
     @lru_cache
-    def collect_actions(self):
+    def collect_actions(self, hidden=False):
         items = []
         for name, func in self.__iter_actions__(visible_only=True):
             acton_data = getattr(func, '_action_data')
             action_menu_name = acton_data.get('menu_name') or self.menu_name
-            if not action_menu_name:
+            if not action_menu_name and not hidden:
                 continue
             item_data = {k: v for k, v in acton_data.items() if k in action_item.ActionItem.get_fields()}
             emit('core.services.action_item_created', item_data)
