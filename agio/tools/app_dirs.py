@@ -117,7 +117,7 @@ def get_global_config() -> dict:
     if not config_file.exists():
         return {}
     try:
-        with open(config_file, 'r') as f:
+        with open(config_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
     except Exception as e:
         logger.error('Failed read info file', e)
