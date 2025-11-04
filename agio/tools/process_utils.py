@@ -144,6 +144,12 @@ def start_process(
             kwargs.update(popen_kw)
 
     logger.debug('CMD: %s', ' '.join(command) if isinstance(command, list) else command)
+    if os.name == 'nt':
+        kwargs.update(dict(
+            encoding="utf-8",
+            errors="replace",
+            )
+        )
     process = subprocess.Popen(
         command,
         env=new_env,
