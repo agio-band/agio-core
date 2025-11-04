@@ -239,9 +239,8 @@ def process_exists(pid) -> bool:
 
 def restart_with_env(env: dict):
     """Restart current process with extend envs"""
-    cmd = [sys.executable]+sys.argv
     env = {**os.environ.copy(), **env}
-    start_process(cmd, env=env, replace=True, workdir=os.getcwd())
+    start_process(sys.argv, env=env, replace=True, workdir=os.getcwd())
 
 
 if __name__ == "__main__":
