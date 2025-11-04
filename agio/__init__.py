@@ -1,4 +1,5 @@
-# import agio.core
+import os
 
-__version__ = "0.0.1"
+os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
+
 __all__ = []
