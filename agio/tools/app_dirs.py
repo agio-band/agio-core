@@ -12,12 +12,13 @@ IS_LINUX = sys.platform == 'linux'
 IS_MAC = sys.platform == 'darwin'
 
 
-def install_dir() -> Path:
+def install_dir(*inner_parts) -> Path:
     """Path where agio software is installed"""
     from_env = os.getenv("AGIO_INSTALL_PATH")
     if from_env:
-        return Path(from_env)
-    return get_global_config().get('install_path') or default_install_dir()
+        return Path(from_env, *inner_parts)
+    path = get_global_config().get('install_path') or default_install_dir()
+    return Path(path, *inner_parts)
 
 
 def default_install_dir(*inner_parts) -> Path:
@@ -45,7 +46,6 @@ def projects_settings_dir(*inner_parts: str) -> Path:
 
 def cache_dir(*inner_parts) -> Path:
     """Path for cache data"""
-    # install_dir('cache') ???
     if IS_LINUX:
         return Path('~/.cache/agio', *inner_parts).expanduser()
     elif IS_WINDOWS:
@@ -138,3 +138,9 @@ def delete_global_config_file():
     file = get_global_config_file_path()
     if file.exists():
         file.unlink()
+
+
+def logs_dir() -> Path:
+    log_dir = config_dir('logs')
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
