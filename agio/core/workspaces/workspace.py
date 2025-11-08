@@ -30,7 +30,7 @@ class AWorkspaceManager:
     """Manage workspaces on local host"""
     _meta_file_name = '__agio_ws__.json'
     workspaces_root = Path(config.WS.INSTALL_DIR).expanduser()
-    default_python_version = '>=3.11'
+    default_python_version = '>=3.11,<3.12'
 
     def __init__(self, revision: AWorkspaceRevision|str|dict = None, root: str|Path = None, **kwargs):
         self._install_root = root
@@ -159,7 +159,9 @@ class AWorkspaceManager:
         if custom:
             return custom
         if self.revision:
-            return self.revision.metadata.get('py_version', {}).get(sys.platform.lower())
+            rev_version = self.revision.metadata.get('python_version', {}).get(sys.platform.lower())
+            if rev_version:
+                return rev_version
         return self.default_python_version
 
     # install and manage
@@ -210,7 +212,7 @@ class AWorkspaceManager:
                   'workspace_manager': self
                   }
                  )
-        logger.debug('Installation complete')
+        logger.info(f'Workspace installation complete: {self.install_root}')
 
     def install_packages(self, *package_list: APackageRelease|str, **kwargs):
         package_list = collect_packages_to_install(package_list)
