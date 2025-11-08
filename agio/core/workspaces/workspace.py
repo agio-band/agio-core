@@ -4,15 +4,16 @@ import logging
 import os
 import shutil
 import sys
-import time
+from diskcache import Cache, Lock
 from datetime import datetime
 from functools import cached_property, cache
 from pathlib import Path
 
-from agio.core import api, env_names
+from agio.core import api
 from agio.core.entities import AWorkspaceRevision, AWorkspace, APackageRelease, APackage
 from agio.core.events import emit
-from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotExistsError
+from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotExistsError, WorkspaceInstallationLocked, \
+    PackageInstallationError
 from agio.core.config import config
 from agio.tools import pkg_manager, app_dirs, env_names
 from agio.tools.launching import LaunchContext
@@ -31,6 +32,8 @@ class AWorkspaceManager:
     _meta_file_name = '__agio_ws__.json'
     workspaces_root = Path(config.WS.INSTALL_DIR).expanduser()
     default_python_version = '>=3.11,<3.12'
+    __cache_locker = Cache(app_dirs.temp_dir('ws-locker').as_posix())
+    install_lock = Lock(__cache_locker, 'ws-locker')
 
     def __init__(self, revision: AWorkspaceRevision|str|dict = None, root: str|Path = None, **kwargs):
         self._install_root = root
@@ -171,7 +174,8 @@ class AWorkspaceManager:
         return pkg_manager.get_package_manager(self.install_root, self.custom_py_executable)
 
     def install(self, clean: bool = False, no_cache: bool = False):
-
+        if self.install_lock.locked():
+            raise WorkspaceInstallationLocked
         logger.debug(f'Installing workspace {self.install_root}')
         emit('core.workspace.before_install', {'workspace': self})
         # check package list
@@ -226,7 +230,7 @@ class AWorkspaceManager:
         logger.info(f'Packages to install: {len(package_list)}')
         status_code = self.venv_manager.install_packages(*install_args, **kwargs)
         if status_code:
-            raise Exception(f'Failed to install packages. Status code:{status_code}')
+            raise PackageInstallationError(f'Failed to install packages. Status code:{status_code}')
         # on pacakge installed callbacks
         for pkg in self.iter_installed_packages():
             pkg.execute_package_callback('on_installed', self)
@@ -251,7 +255,7 @@ class AWorkspaceManager:
         install_args = [pkg.name for pkg in packages]
         status_code = self.venv_manager.uninstall_packages(*install_args)
         if status_code:
-            raise Exception(f'Failed to install packages. Status code:{status_code}')
+            raise PackageInstallationError(f'Failed to install packages. Status code:{status_code}')
 
     def is_installed(self):
         return self.local_meta_file.exists()
@@ -374,7 +378,7 @@ class AWorkspaceManager:
         try:
             revision = api.workspace.get_revision_by_project_id(entity_id)
             manager = cls(revision)
-            manager.add_launch_envs({'AGIO_PROJECT_ID': entity_id})
+            manager.add_launch_envs({env_names.PROJECT_ID: entity_id})
             return manager
         except NotExistsError:
             pass

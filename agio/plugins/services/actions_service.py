@@ -1,8 +1,10 @@
 import json
 
 from agio.core.entities.project import AProject
+from agio.core.exceptions import WorkspaceInstallationLocked
 from agio.core.plugins.base_service import ServicePlugin, make_action
 from agio.core.actions import get_actions
+from agio.core.workspaces import AWorkspaceManager
 from agio.tools.launching import exec_agio_command
 
 
@@ -25,6 +27,8 @@ class ActionsService(ServicePlugin):
             workspace = project.get_workspace()
             if not workspace:
                 raise Exception(f'No workspace found for project {project.name}')
+            if AWorkspaceManager.install_lock.locked():
+                raise WorkspaceInstallationLocked
             cmd = [
                 'get-actions',
                 '-m', menu_name,

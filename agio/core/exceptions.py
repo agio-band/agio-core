@@ -32,6 +32,10 @@ class PackageRepositoryError(AException):
     detail: str = "Package Repository Error"
 
 
+class PackageInstallationError(AException):
+    detail: str = "Package Installation Error"
+
+
 # api
 class ApiError(AException):
     detail: str = "Workspace Error"
@@ -57,6 +61,10 @@ class WorkspaceNotInstalled(ApiError):
     detail: str = "Workspace Not Installed"
 
 
+class WorkspaceInstallationLocked(ApiError):
+    detail: str = "Workspace Installation Locked"
+
+
 class MakeReleaseError(AException):
     detail: str = "Make Release Error"
 
@@ -67,7 +75,6 @@ class ProjectNotExists(NotExistsError):
 
 class ProjectWorkspaceNotSet(NotExistsError):
     detail: str = "Project workspace not set"
-
 
 
 class EntityNotExists(NotExistsError):
