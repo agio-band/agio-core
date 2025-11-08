@@ -4,10 +4,11 @@ import os
 from pathlib import Path
 
 import requests
-from requests.exceptions import HTTPError, ConnectionError
+from requests.exceptions import HTTPError, ConnectionError, JSONDecodeError
 
 from agio.core.api.api_client import base
 from agio.core.api.utils import NOTSET
+from agio.tools import env_names
 from agio.core.exceptions import RequestError
 from agio.tools.json_serializer import JsonSerializer
 
@@ -19,7 +20,7 @@ class ApiClient(base._ApiClientAuth):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._debug_query = bool(os.getenv('AGIO_DEBUG_QUERY'))
+        self._debug_query = bool(os.getenv(env_names.DEBUG_QUERY))
 
     def set_debug_query(self, val: bool):
         self._debug_query = bool(val)
@@ -56,11 +57,16 @@ class ApiClient(base._ApiClientAuth):
             self._pprint_request(data)
         response = self.session.post(self.base_api_url, json=data)
         if not response.ok:
-            logger.exception(f"Request failed with status code: {response.status_code}")
+            logger.error(f"Request failed with status code: {response.status_code}")
         try:
             response.raise_for_status()
         except HTTPError as e:
-            raise RequestError(f'Request failed: {response.text}') from e
+            try:
+                resp_data = response.json()
+                resp_data = resp_data['error']['status']
+            except JSONDecodeError:
+                resp_data = response.text
+            raise RequestError(f'{resp_data}') from e
         result = response.json()
         if self._debug_query:
             self._print_response(result)
