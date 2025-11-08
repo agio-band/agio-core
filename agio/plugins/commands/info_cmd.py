@@ -224,9 +224,21 @@ class InfoCommand(ACommandPlugin):
     execute_root_command_before_subcommand = False
 
     def execute(self, *args, **kwargs):
-        user_profile = profile.get_current_user()
+        try:
+            user_ok = True
+            user_profile = profile.get_current_user()
+            user = f'{user_profile["firstName"]} {user_profile["lastName"]} ({user_profile["email"]})'
+        except Exception as e:
+            user = f' {e}'
+            user_ok = False
+        # platform url
         click.echo(f'URL: {client.platform_url}')
-        click.echo(f'User: {user_profile["firstName"]} {user_profile["lastName"]}')
-        click.echo(f'Email: {user_profile["email"]}')
+        # user name
+        click.echo(f'User:', nl=False)
+        if user_ok:
+            click.secho(user)
+        else:
+            click.secho(user, fg='red')
+        # install path
         click.echo(f'Path: {app_dirs.install_dir()}')
 
