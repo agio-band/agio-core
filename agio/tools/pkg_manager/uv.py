@@ -84,19 +84,19 @@ class UVPackageManager(PackageManagerBase):
             py_version = self._get_latest_version(available_versions)   # TODO use actual from vfx platform
         return py_version
 
-    def create_venv(self, py_version: str|None = None):
-        if self._custom_python_executable:
-            py_version = self._custom_python_executable
-        else:
-            py_version = self._get_available_py_version(py_version)
-            if py_version:
-                # py_version = '==' + py_version  # force match version
-                if py_version not in self.get_installed_python_versions():
-                    logger.info('Installing python version: %s', py_version)
-                    cmd = ['python', 'install', '==' + py_version]  # or ~= ???
-                    self.run(cmd, workdir=Path.home().as_posix())
+    def create_venv(self, py_version: str|None = None, **kwargs):
+        if not py_version:
+            if self._custom_python_executable:
+                py_version = self._custom_python_executable
             else:
-                raise RuntimeError('No python version available')
+                py_version = self._get_available_py_version(py_version)
+                if py_version:
+                    if py_version not in self.get_installed_python_versions():
+                        logger.info('Installing python version: %s', py_version)
+                        cmd = ['python', 'install', '==' + py_version]  # or ~= ???
+                        self.run(cmd, workdir=Path.home().as_posix())
+                else:
+                    raise RuntimeError('No python version available')
         logger.info('Create venv with python: %s', py_version)
         self.path.mkdir(parents=True, exist_ok=True)
         self.run(['init', '--bare', '--python', py_version], workdir=self.path.as_posix())

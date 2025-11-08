@@ -120,7 +120,7 @@ class PackageManagerBase:
                         continue
             yield APackageManager(meta_file.parent.as_posix())
 
-    def create_venv(self):
+    def create_venv(self, **kwargs):
         raise NotImplementedError
 
     def venv_exists(self):
@@ -142,7 +142,7 @@ class PackageManagerBase:
         if not self.venv_exists():
             caller_name = inspect.stack()[1].function
             if caller_name != 'create_venv':
-                self.create_venv()
+                self.create_venv(**kwargs)
         if isinstance(cmd, str):
             cmd = shlex.split(cmd)
         cmd = list(map(str, [self.get_executable(), *cmd]))
