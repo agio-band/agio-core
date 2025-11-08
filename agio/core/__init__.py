@@ -3,7 +3,7 @@ import logging
 import signal
 import threading
 
-from agio.core import setup_logger
+from agio.tools import setup_logger
 from agio.core.events import emit as _emit, subscribe as _subscribe
 from agio.core.init.init_packages import init_packages
 from agio.core.init.init_plugins import init_plugins
@@ -31,7 +31,7 @@ if threading.current_thread() is threading.main_thread():
 else:
     atexit.register(_before_exit_event)
 
-
-# _emit('core.app.config_loaded', {'config': config})
+from agio.core.config import config
+_emit('core.app.config_loaded', {'config': config})
 _emit('core.app.on_startup')
 logger.debug('Core init done')

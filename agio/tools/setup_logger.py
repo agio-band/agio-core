@@ -15,7 +15,7 @@ def debug_flag_is_set():
 
 DEBUG_MODE = bool(os.getenv("DEBUG") or os.getenv('AGIO_DEBUG')) or debug_flag_is_set()
 if DEBUG_MODE:
-    print(" Debug mode is on ".center(40, '='), flush=True)
+    print(" Debug mode is on ".center(40, '='), flush=True) #type: ignore
 USER_PREF_DIR = Path(os.getenv("USER_PREF_DIR", "~/.agio")).expanduser().resolve()
 DEFAULT_LOG_DIR = Path(USER_PREF_DIR, "logs").expanduser().resolve()
 # default level
@@ -76,7 +76,6 @@ LOG_SETTINGS = {
             "mode": "a",
             "maxBytes": FILE_SIZE,
             "backupCount": FILE_COUNT,
-            # "filters": ["ignore_file"],
         },
         "file_errors": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -86,7 +85,6 @@ LOG_SETTINGS = {
             "mode": "a",
             "maxBytes": FILE_SIZE,
             "backupCount": FILE_COUNT,
-            # "filters": ["ignore_file"],
         },
     },
     "formatters": {
