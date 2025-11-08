@@ -9,7 +9,7 @@ from agio.core.entities import APackage
 from agio.core.events import emit
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.base_plugin import APlugin
-from agio.tools import context
+from agio.tools import context, env_names
 from agio.tools import args_helper
 from agio.tools.process_utils import restart_with_env, pipe_is_allowed, write_to_pipe
 
@@ -31,7 +31,7 @@ class AbstractCommandPlugin(ABC):
     # execute root command before sub command
     execute_root_command_before_subcommand = False
     # allow to write output to custom pipe
-    allow_write_output_to_custom_pipe = bool(os.getenv('AGIO_ALLOW_COMMAND_OUTPUT_TO_CUSTOM_PIPE'))
+    allow_write_output_to_custom_pipe = bool(os.getenv(env_names.ALLOW_COMMAND_OUTPUT_TO_CUSTOM_PIPE))
 
     def __init__(self, parent_group=None):
         self._init_click(parent_group)
@@ -158,7 +158,8 @@ class AStartAppCommand(ACommandPlugin):
             raise ValueError(f"{self.__class__.__name__}: app_name must be defined.")
         if context.app_name != self.app_name:
             logger.debug(f'Restart as application "{self.app_name}"')
-            restart_with_env({'AGIO_APP_NAME': self.app_name})
+            restart_with_env({env_names.APP_NAME: self.app_name})
+            # TODO env_names.APP_VERSION
 
     def start(self, **kwargs):
         raise NotImplementedError(f'Not implemented in {self.__class__.__name__}')

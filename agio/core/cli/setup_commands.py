@@ -3,7 +3,7 @@ import os
 import click
 from agio.core.plugins import plugin_hub
 from agio.core.workspaces.workspace import AWorkspaceManager
-from agio.tools import launching
+from agio.tools import launching, env_names
 
 
 class CustomGroup(click.Group):
@@ -78,7 +78,7 @@ def agio_group(ctx, workspace, debug, **kwargs):
         # no command
         click.echo(ctx.get_help())
     if debug:
-        os.environ['AGIO_DEBUG'] = 'true'
+        os.environ[env_names.DEBUG] = 'true'
 
 
 @agio_group.command(help='Test ping command')

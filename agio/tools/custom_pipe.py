@@ -3,8 +3,10 @@ import os
 import sys
 from contextlib import contextmanager
 
+from agio.tools import env_names
+
 IS_WINDOWS = sys.platform == 'win32'
-FILE_NO_ENV = 'AGIO_CUSTOM_PIPE_FILE_NO'
+FILE_NO_ENV = env_names.FILE_NO_ENV
 
 # create
 

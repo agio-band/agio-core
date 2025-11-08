@@ -10,7 +10,7 @@ from agio.core.exceptions import WorkspaceNotDefined
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 from agio.core.workspaces import AWorkspaceManager
 from agio.core.workspaces.package_repostory import APackageRepository
-from agio.tools import package_template, packaging_tools
+from agio.tools import package_template, packaging_tools, env_names
 from agio.tools.text_helpers import unslugify
 
 logger = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ class PackageRegisterCommand(ASubCommand):
 class PackageReleaseCommand(ASubCommand):
     command_name = "release"
     arguments = [
-        click.option('-t', '--token', envvar='AGIO_GIT_REPOSITORY_TOKEN',),
+        click.option('-t', '--token', envvar=env_names.GIT_REPOSITORY_TOKEN, ),
         click.option('-b', '--no-check-branch', is_flag=True, default=False, help='Skip branch check'),
         click.option('-c', '--no-check-commits', is_flag=True, default=False, help='Skip commits check'),
         click.option('-p', '--no-check-pushed', is_flag=True, default=False, help='Skip push check'),

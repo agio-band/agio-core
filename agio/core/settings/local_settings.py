@@ -6,13 +6,13 @@ from pathlib import Path
 
 from agio.core.entities import project as pd
 from agio.core.events import emit
-from agio.tools import app_dirs
+from agio.tools import app_dirs, env_names
 from agio.tools.json_serializer import JsonSerializer
 from agio.core.settings import settings_hub
 
 logger = logging.getLogger(__name__)
 
-_settings_dir = Path(os.getenv('AGIO_SETTINGS_DIR') or app_dirs.projects_settings_dir())
+_settings_dir = Path(os.getenv(env_names.SETTINGS_DIR) or app_dirs.projects_settings_dir())
 _settings_file_name = 'settings.json'
 
 

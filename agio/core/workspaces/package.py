@@ -8,6 +8,8 @@ from typing import Any, Generator, Type
 
 import yaml
 
+from agio.tools import env_names
+
 try:
     import tomllib as toml
 except ModuleNotFoundError:
@@ -167,7 +169,7 @@ class APackageManager:
 
     @property
     def repository_api(self):
-        return os.getenv('AGIO_FORCED_GIT_SERVICE') or self.get_meta_data_field('repository_api')
+        return os.getenv(env_names.FORCED_GIT_SERVICE) or self.get_meta_data_field('repository_api')
 
     # domains
 

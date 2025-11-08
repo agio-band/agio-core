@@ -11,7 +11,7 @@ from pathlib import Path
 
 from agio.core import workspaces
 from agio.core.exceptions import WorkspaceNotExists
-from agio.tools import app_dirs
+from agio.tools import app_dirs, env_names
 from agio.tools import process_utils
 from agio.tools.pkg_manager import get_package_manager_class
 
@@ -182,14 +182,14 @@ class LaunchContext:
 
 
 def get_default_env_executable():
-    default_exec = os.getenv('AGIO_DEFAULT_WORKSPACE_PY_EXECUTABLE')
+    default_exec = os.getenv(env_names.DEFAULT_WORKSPACE_PY_EXECUTABLE)
     if default_exec:
         return default_exec
     default_venv = app_dirs.default_env_install_dir()
     manager  = get_package_manager_class()
     default_exec = manager(default_venv).python_executable
     if not default_exec:
-        raise WorkspaceNotExists('AGIO_DEFAULT_WORKSPACE_PY_EXECUTABLE not set')
+        raise WorkspaceNotExists(f'Env variable {env_names.DEFAULT_WORKSPACE_PY_EXECUTABLE} not set')
     return default_exec
 
 
@@ -213,7 +213,7 @@ def exec_agio_command(
     Commands plugin must be registered
     """
     ws_manager = None
-    if not os.getenv('AGIO_FORCE_DEFAULT_WORKSPACE'):  # start in default env always (for beta version)
+    if not os.getenv(env_names.FORCE_DEFAULT_WORKSPACE):  # start in default env always (for beta version)
         if isinstance(workspace, str):
             ws_manager = workspaces.AWorkspaceManager.create_from_id(workspace)
         elif isinstance(workspace, workspaces.AWorkspaceManager):
@@ -238,7 +238,7 @@ def start_in_workspace(
         workdir: str = None,
         **kwargs
     ):
-    if os.getenv('AGIO_FORCE_DEFAULT_WORKSPACE'):   # start in default env always (for beta version)
+    if os.getenv(env_names.FORCE_DEFAULT_WORKSPACE):   # start in default env always (for beta version)
         ws_manager = None
     if isinstance(ws_manager, str):
         ws_manager = workspaces.AWorkspaceManager.create_from_id(ws_manager)

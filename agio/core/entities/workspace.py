@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 from typing import Iterator
 
-from agio.core import api, env_names
+from agio.core import api
+from ...tools import env_names
 from agio.core.api.utils import NOTSET
 from . import APackageRelease, APackage
 from .entity import DomainBase
@@ -65,7 +66,7 @@ class AWorkspace(DomainBase):
 
     @classmethod
     def current(cls):
-        ws_id = os.getenv(env_names.WORKSPACE_ENV_NAME)
+        ws_id = os.getenv(env_names.WORKSPACE_ID)
         if not ws_id:
             raise WorkspaceNotDefined
         return cls(ws_id)
@@ -77,7 +78,7 @@ class AWorkspace(DomainBase):
     def get_manager(self):
         from agio.core.workspaces import AWorkspaceManager
 
-        revision_id = os.getenv(env_names.REVISION_ENV_NAME)
+        revision_id = os.getenv(env_names.REVISION_ID)
         if revision_id:
             revision = AWorkspaceRevision(revision_id)
         else:

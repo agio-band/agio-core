@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import click
 
+from agio.tools import env_names
 from agio.core.workspaces import AWorkspaceManager
 from agio.core.workspaces.workspace import AWorkspace
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
@@ -86,7 +87,7 @@ class ShowWorkspaceDetailCommand(ASubCommand):
 class UpdateWorkspaceCommand(ASubCommand):
     command_name = 'update'
     arguments = [
-        click.argument('workspace_id', envvar='AGIO_WORKSPACE_ID'),
+        click.argument('workspace_id', envvar=env_names.WORKSPACE_ID),
     ]
     help = 'Show workspace details'
 

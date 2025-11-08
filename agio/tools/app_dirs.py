@@ -5,6 +5,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from agio.tools import env_names
+
 logger = logging.getLogger(__name__)
 
 IS_WINDOWS = sys.platform == 'win32'
@@ -14,7 +16,7 @@ IS_MAC = sys.platform == 'darwin'
 
 def install_dir(*inner_parts) -> Path:
     """Path where agio software is installed"""
-    from_env = os.getenv("AGIO_INSTALL_PATH")
+    from_env = os.getenv(env_names.INSTALL_PATH)
     if from_env:
         return Path(from_env, *inner_parts)
     path = get_global_config().get('install_path') or default_install_dir()

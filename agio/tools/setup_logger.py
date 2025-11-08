@@ -5,6 +5,7 @@ from logging import *
 from logging.config import dictConfig
 import os
 import sys
+from . import env_names
 
 
 def debug_flag_is_set():
@@ -13,40 +14,40 @@ def debug_flag_is_set():
     return '--debug' in first_cmd_args
 
 
-DEBUG_MODE = bool(os.getenv("DEBUG") or os.getenv('AGIO_DEBUG')) or debug_flag_is_set()
+DEBUG_MODE = bool(os.getenv("DEBUG") or os.getenv(env_names.DEBUG)) or debug_flag_is_set()
 if DEBUG_MODE:
     print(" Debug mode is on ".center(40, '='), flush=True) #type: ignore
 USER_PREF_DIR = Path(os.getenv("USER_PREF_DIR", "~/.agio")).expanduser().resolve()
 DEFAULT_LOG_DIR = Path(USER_PREF_DIR, "logs").expanduser().resolve()
 # default level
-DEFAULT_LEVEL = DEBUG if DEBUG_MODE else (os.getenv("AGIO_LOG_LEVEL") or INFO)
+DEFAULT_LEVEL = DEBUG if DEBUG_MODE else (os.getenv(env_names.LOG_LEVEL) or INFO)
 DEFAULT_LEVEL_NAME = getLevelName(DEFAULT_LEVEL)
-DEFAULT_FILE_LEVEL = DEBUG if DEBUG_MODE else (os.getenv("AGIO_FILE_LOG_LEVEL") or WARNING)
+DEFAULT_FILE_LEVEL = DEBUG if DEBUG_MODE else (os.getenv(env_names.FILE_LOG_LEVEL) or WARNING)
 # file paths
-LOG_DIR = Path(os.getenv("AGIO_LOG_DIR") or DEFAULT_LOG_DIR).expanduser().resolve()
+LOG_DIR = Path(os.getenv(env_names.LOG_DIR) or DEFAULT_LOG_DIR).expanduser().resolve()
 LOG_DIR.mkdir(parents=True, exist_ok=True)
-log_file_prefix = os.getenv("AGIO_LOG_FILE_PREFIX", "")
+log_file_prefix = os.getenv(env_names.LOG_FILE_PREFIX, "")
 LOG_FILE = LOG_DIR / (log_file_prefix + "stdout.log")
 ERROR_LOG_FILE = LOG_DIR / (log_file_prefix + "stderr.log")
 DEBUG_LOG_FILE = LOG_DIR / (log_file_prefix + "debug.log")
 FILE_COUNT = 10
 # # maximum file size
-FILE_SIZE_MB = float(os.getenv("AGIO_LOG_FILE_SIZE", 10))  # 10 Mb
+FILE_SIZE_MB = float(os.getenv(env_names.LOG_FILE_SIZE, 10))  # 10 Mb
 FILE_SIZE = int(FILE_SIZE_MB * 1024 * 1024)
 # # max file count
 MESSAGE_FORMAT = (
-    os.getenv("AGIO_LOGGING_MESSAGE_FORMAT")
+    os.getenv(env_names.LOGGING_MESSAGE_FORMAT)
     or "%(asctime)s | %(levelname)-8s | %(name)-50s | %(lineno)-4d  | %(message)s"
 )
 MESSAGE_FORMAT_CONSOLE = (
-    os.getenv("AGIO_LOGGING_MESSAGE_FORMAT_CONSOLE") or "%(levelname)-8s | %(name)-50s | %(lineno)-4d  | %(message)s"
+    os.getenv(env_names.LOGGING_MESSAGE_FORMAT_CONSOLE) or "%(levelname)-8s | %(name)-50s | %(lineno)-4d  | %(message)s"
 )
-DATETIME_FORMAT = os.getenv("AGIO_LOGGING_DATETIME_FORMAT") or "%Y.%m.%d %H:%M:%S"
+DATETIME_FORMAT = os.getenv(env_names.LOGGING_DATETIME_FORMAT) or "%Y.%m.%d %H:%M:%S"
 
 disabled_loggers = [
     "urllib3.connectionpool"
 ]
-DISABLED_LOGGERS = os.getenv("AGIO_DISABLED_LOGGERS")
+DISABLED_LOGGERS = os.getenv(env_names.DISABLED_LOGGERS)
 if DISABLED_LOGGERS:
     disabled_loggers.extend(DISABLED_LOGGERS.split(","))
 

@@ -14,7 +14,7 @@ from agio.core.entities import AWorkspaceRevision, AWorkspace, APackageRelease, 
 from agio.core.events import emit
 from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotExistsError
 from agio.core.config import config
-from agio.tools import pkg_manager, app_dirs
+from agio.tools import pkg_manager, app_dirs, env_names
 from agio.tools.launching import LaunchContext
 from agio.tools.packaging_tools import collect_packages_to_install
 from agio.tools.venv_helpers import check_current_python_version
@@ -59,12 +59,12 @@ class AWorkspaceManager:
 
     @property
     def root_suffix(self) -> str:
-        return str(self._kwargs.get('root_suffix', '')) or os.getenv('AGIO_WORKSPACE_SUFFIX') or ''
+        return str(self._kwargs.get('root_suffix', '')) or os.getenv(env_names.WORKSPACE_SUFFIX) or ''
 
     def set_suffix(self, suffix: str):
         """Customize pyproject location folder name"""
         self._kwargs['root_suffix'] = suffix
-        self._extra_launch_envs['AGIO_WORKSPACE_SUFFIX'] = suffix
+        self._extra_launch_envs[env_names.WORKSPACE_SUFFIX] = suffix
 
     @property
     def custom_py_executable(self) -> str:
@@ -102,9 +102,9 @@ class AWorkspaceManager:
     # define
     @classmethod
     def current(cls) -> 'AWorkspaceManager':
-        if ws_id := os.getenv(env_names.WORKSPACE_ENV_NAME):
+        if ws_id := os.getenv(env_names.WORKSPACE_ID):
             return cls.from_workspace(ws_id)
-        elif rev_id := os.getenv(env_names.REVISION_ENV_NAME):
+        elif rev_id := os.getenv(env_names.REVISION_ID):
             return cls(rev_id)
 
     @classmethod
@@ -113,7 +113,7 @@ class AWorkspaceManager:
 
     @classmethod
     def is_defined(cls):
-        return bool(os.getenv(env_names.WORKSPACE_ENV_NAME)) or bool(os.getenv(env_names.REVISION_ENV_NAME))
+        return bool(os.getenv(env_names.WORKSPACE_ID)) or bool(os.getenv(env_names.REVISION_ID))
 
     # props
 
@@ -326,13 +326,13 @@ class AWorkspaceManager:
     def get_launch_envs(self):
         env = {
             **self._extra_launch_envs,
-            env_names.COMPANY_ENV_NAME: self.get_workspace().company_id,
-            env_names.WORKSPACE_ENV_NAME: str(self.revision.workspace_id),
-            env_names.REVISION_ENV_NAME: str(self.revision.id),
+            env_names.COMPANY_ID: self.get_workspace().company_id,
+            env_names.WORKSPACE_ID: str(self.revision.workspace_id),
+            env_names.REVISION_ID: str(self.revision.id),
             'VIRTUAL_ENV': self.install_root.as_posix()
         }
         if self.settings_id:
-            env[env_names.SETTINGS_REVISION_ENV_NAME] = str(self.settings_id)
+            env[env_names.SETTINGS_REVISION_ID] = str(self.settings_id)
         emit('core.workspace.get_launch_envs', {'envs': env, 'revision': self._revision})
         return env
 
