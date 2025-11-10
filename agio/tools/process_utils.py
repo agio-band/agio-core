@@ -244,6 +244,14 @@ def restart_with_env(env: dict):
     start_process(sys.argv, env=env, replace=True, workdir=os.getcwd())
 
 
+def is_started_as_admin() -> bool:
+    if IS_WIN32:
+        import ctypes
+        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+    else:
+        return os.geteuid() == 0
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Start a process with different execution modes")
 
