@@ -5,10 +5,10 @@ import os
 from abc import ABC
 import click
 
-from agio.core.entities import APackage
 from agio.core.events import emit
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.base_plugin import APlugin
+from agio.core.workspaces import APackageManager
 from agio.tools import context, env_names
 from agio.tools import args_helper
 from agio.tools.process_utils import restart_with_env, pipe_is_allowed, write_to_pipe
@@ -107,13 +107,13 @@ class AbstractCommandPlugin(ABC):
         if parent_group:
             parent_group.add_command(self.command)
 
-    def execute(self, **kwargs):
+    def execute(self, *args, **kwargs):
         pass
 
 
 class ACommandPlugin(BasePluginClass, AbstractCommandPlugin, APlugin):
 
-    def __init__(self, package: APackage, plugin_info: dict, parent_group=None):
+    def __init__(self, package: APackageManager, plugin_info: dict, parent_group=None):
         APlugin.__init__(self, package, plugin_info)
         AbstractCommandPlugin.__init__(self, parent_group)
 
