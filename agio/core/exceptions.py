@@ -62,7 +62,7 @@ class WorkspaceNotInstalled(ApiError):
 
 
 class WorkspaceInstallationLocked(ApiError):
-    detail: str = "Workspace Installation Locked"
+    detail: str = "Workspace installation already in progress"
 
 
 class MakeReleaseError(AException):

@@ -33,7 +33,7 @@ class AWorkspaceManager:
     workspaces_root = Path(config.WS.INSTALL_DIR).expanduser()
     default_python_version = '>=3.11,<3.12'
     __cache_locker = Cache(app_dirs.temp_dir('ws-locker').as_posix())
-    install_lock = Lock(__cache_locker, 'ws-locker')
+
 
     def __init__(self, revision: AWorkspaceRevision|str|dict = None, root: str|Path = None, **kwargs):
         self._install_root = root
@@ -49,6 +49,10 @@ class AWorkspaceManager:
             raise TypeError('Root directory or revision must be specified')
         self._kwargs = kwargs
         self._extra_launch_envs = {}
+        if self._revision:
+            self.install_lock = Lock(self.__cache_locker, f'ws-locker-{self.revision_id}-{self.root_suffix}')
+        else:
+            self.install_lock = Lock(self.__cache_locker, f'ws-locker-default')
 
     def __repr__(self):
         if self._revision:
@@ -130,6 +134,12 @@ class AWorkspaceManager:
         if not self._revision:
             raise DefaultWorkspaceError('No ID for default workspace')
         return self.revision.workspace_id
+
+    @property
+    def revision_id(self):
+        if not self._revision:
+            raise DefaultWorkspaceError('No ID for default workspace')
+        return self._revision.id
 
     @property
     def revision(self):
