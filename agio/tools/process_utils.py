@@ -84,6 +84,7 @@ def start_process(
             except OSError as e:
                 print(f"Error changing directory: {e}")
                 exit(1)
+        command = [shlex.quote(x).replace("'", '"') for x in command]   # fix quotes for Windows os
         if os.path.isabs(executable):
             os.execve(executable, command, new_env)
         else:
