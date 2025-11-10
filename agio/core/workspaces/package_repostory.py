@@ -12,6 +12,7 @@ from agio.core.exceptions import PackageRepositoryError, PackageError, PackageLo
 from agio.core.plugins import plugin_hub
 from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
 from agio.core.workspaces.package import APackageManager
+from agio.core.workspaces import workspace
 from agio.tools import git_utils, file_utils
 from agio.tools.pkg_manager import get_package_manager
 
@@ -170,7 +171,9 @@ class APackageRepository:
             with open(pkg_manager.metadata_file, 'w') as f:
                 yaml.dump(pkg_manager.get_pacakge_metadata(), f, default_flow_style=False)
             # start build
-            dist = Path(pkg.py_package_manager.build_package(**kwargs))
+            dist = Path(pkg.py_package_manager.build_package(
+                python_version=workspace.AWorkspaceManager.default_python_version,
+                **kwargs))
             local_dist = self.root/dist.name
             if local_dist.exists():
                 shutil.rmtree(local_dist)

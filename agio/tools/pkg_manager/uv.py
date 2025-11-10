@@ -84,26 +84,29 @@ class UVPackageManager(PackageManagerBase):
             py_version = self._get_latest_version(available_versions)   # TODO use actual from vfx platform
         return py_version
 
-    def create_venv(self, py_version: str|None = None, **kwargs):
-        if not py_version:
+    def create_venv(self, python_version: str | None = None, **kwargs):
+        if not python_version:
             if self._custom_python_executable:
-                py_version = self._custom_python_executable
+                python_version = self._custom_python_executable
             else:
-                py_version = self._get_available_py_version(py_version)
-                if py_version:
-                    if py_version not in self.get_installed_python_versions():
-                        logger.info('Installing python version: %s', py_version)
-                        cmd = ['python', 'install', '==' + py_version]  # or ~= ???
+                python_version = self._get_available_py_version(python_version)
+                if python_version:
+                    if python_version not in self.get_installed_python_versions():
+                        logger.info('Installing python version: %s', python_version)
+                        cmd = ['python', 'install', '==' + python_version]  # or ~= ???
                         self.run(cmd, workdir=Path.home().as_posix())
                 else:
                     raise RuntimeError('No python version available')
-        logger.info('Create venv with python: %s', py_version)
+        logger.info('Create venv with python: %s', python_version)
         self.path.mkdir(parents=True, exist_ok=True)
-        self.run(['init', '--bare', '--python', py_version], workdir=self.path.as_posix())
-        resp = self.run(['venv', '--python', py_version], workdir=self.path.as_posix())
+        if not self.path.joinpath('pyproject.toml').exists():
+            self.run(['init', '--bare', '--python', python_version], workdir=self.path.as_posix())
+        else:
+            logger.info(f'venv already exists {self.path}')
+        resp = self.run(['venv', '--python', python_version], workdir=self.path.as_posix())
         if resp:
             raise RuntimeError('Process finished with exit code: %s', resp)
-        logger.info('Create venv with version %s: %s', py_version, self.path)
+        logger.info('Create venv with version %s: %s', python_version, self.path)
 
     def venv_exists(self):
         return Path(self.venv_path, 'pyvenv.cfg').exists()
@@ -127,11 +130,14 @@ class UVPackageManager(PackageManagerBase):
     def build_package(self, cleanup=True, **kwargs):
         if self._custom_python_executable:
             raise RuntimeError('Dont use this method with custom python interpreter')
-        self.run(['pip', 'install', 'build'])
+        # self.run(['pip', 'install', 'build', '--link-mode=copy'], **kwargs)   ???
         dist_path = self.path/'dist'
         if dist_path.exists():
             shutil.rmtree(dist_path)
-        self.run(['build', '--wheel'])
+        cmd = ['build', '--wheel']
+        if 'verbose' not in kwargs:
+            cmd.append('--quiet')
+        self.run(cmd, **kwargs)
         if cleanup and not kwargs.get('no_cleanup'):
             self.cleanup_build_files()
         return dist_path

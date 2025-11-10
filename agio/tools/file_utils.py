@@ -78,9 +78,10 @@ def copy_tree_with_ignore_file(source_dir: str, target_dir: str, ignore_file_pat
         ignore_patterns = []
 
     ignore_patterns.extend([".venv", ".git", "__pycache__"])
+    logger.debug("Ignore patterns: %s", ignore_patterns)
 
     def is_ignored(path: Path) -> bool:
-        """Chack patterns."""
+        """Check patterns."""
         rel_path = str(path.relative_to(source_dir)).replace("\\", "/")
         for pattern in ignore_patterns:
             normalized = pattern.rstrip("/")

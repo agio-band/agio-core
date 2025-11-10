@@ -151,8 +151,8 @@ class PackageManagerBase:
         kwargs.setdefault('get_output', True)
         envs = self.run_envs() or {}
         envs.update(kwargs.pop('envs', {}))
-        resp = start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], env=envs, **kwargs)
-        print(resp)
+        process_kwargs = kwargs.pop('process_kwargs', {})
+        resp = start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], env=envs, **process_kwargs)
         return resp
 
     @classmethod
