@@ -156,6 +156,37 @@ class PackageReleaseCommand(ASubCommand):
         logger.info(f"Package release created: {release.id}")
 
 
+class RegisterReleaseCommand(ASubCommand):
+    """
+    Register existing on github package release on staging platform as new release
+    """
+    command_name = "register-release"
+    help = 'Register existing release on platform DB (for develop server)'
+    arguments = [
+        click.option('-t', '--token', envvar=env_names.GIT_REPOSITORY_TOKEN, ),
+        click.argument("path",
+                       type=click.Path(exists=True, dir_okay=True, resolve_path=True),
+                       default=Path.cwd().absolute().as_posix()),
+    ]
+
+    def execute(self, path: str, token: str, **kwargs):
+        access_data = {'token': token}
+        repo = APackageRepository(path)
+        pkg_manager = repo.pkg_manager
+        click.secho(f"Register release {pkg_manager.package_version}", fg='green')
+        release = repo.remote_repository.get_release_with_tag(
+            pkg_manager.source_url,
+            pkg_manager.package_version,
+            access_data)
+        if not release:
+            raise RuntimeError(f"No release found for tag {pkg_manager.package_version} on {pkg_manager.source_url}")
+        assets = repo.release_to_assets(release)
+        if not assets:
+            raise RuntimeError(f"No assets found for release {pkg_manager.package_version}")
+        metadata = pkg_manager.get_pacakge_metadata()
+        repo.register_release(assets, metadata)
+
+
 class PackageInfoCommand(ASubCommand):
     command_name = "info"
     arguments = [
@@ -228,6 +259,7 @@ class PackageCommand(ACommandPlugin):
         PackageBuildCommand,
         PackageReleaseCommand,
         PackageRegisterCommand,
+        RegisterReleaseCommand,
         PackageInfoCommand,
         PackageInstallCommand,
         PackageUninstallCommand,
