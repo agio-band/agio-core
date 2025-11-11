@@ -138,13 +138,7 @@ class APackageRepository:
         logger.debug(f"Release created!")
         if not release.get('assets'):
             raise Exception(f"Release {self.pkg_manager.package_version} has no assets")
-        assets = []
-        for ast in release['assets']:
-            assets.append(dict(
-                name=ast['name'],
-                size=ast['size'],
-                url=ast['browser_download_url'],
-            ))
+        assets = self.release_to_assets(release)
         self.register_release(assets, metadata=self.pkg_manager.get_pacakge_metadata())
         release_data = dict(
             release_url=release['html_url'],
@@ -154,6 +148,17 @@ class APackageRepository:
             created_at=release['created_at'],
         )
         return release_data
+
+    @classmethod
+    def release_to_assets(cls, release: dict) -> list:
+        assets = []
+        for ast in release['assets']:
+            assets.append(dict(
+                name=ast['name'],
+                size=ast['size'],
+                url=ast['browser_download_url'],
+            ))
+        return assets
 
     @cached_property
     def py_package_manager(self):
