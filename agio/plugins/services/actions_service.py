@@ -27,7 +27,8 @@ class ActionsService(ServicePlugin):
             workspace = project.get_workspace()
             if not workspace:
                 raise Exception(f'No workspace found for project {project.name}')
-            if AWorkspaceManager.install_lock.locked():
+
+            if workspace.get_manager().install_lock.locked():
                 raise WorkspaceInstallationLocked
             cmd = [
                 'get-actions',
