@@ -4,7 +4,7 @@ import shutil
 from functools import cache
 from pathlib import Path
 
-from agio.core import config
+from agio.core.config import config
 from agio.core.exceptions import AuthorizationError
 from agio.tools import app_dirs, process_utils
 
@@ -13,7 +13,7 @@ def get_token(platform_url: str = None, client_id: str = None,
               auth_local_port: int = None, token_only: bool = False,
               cache_dir: str = None) -> str|dict:
     platform_url = platform_url or config.API.PLATFORM_URL.rstrip('/')
-    client_id = client_id or config.API.DEFAULT_CLIENT_ID
+    client_id = client_id or config.API.CLIENT_ID
     auth_local_port = auth_local_port or config.API.AUTH_LOCAL_PORT
     cache_dir = cache_dir or _get_session_cache_dir()
     agio_login_binary = _get_agio_login_binary()
@@ -21,7 +21,7 @@ def get_token(platform_url: str = None, client_id: str = None,
         agio_login_binary,
         'get-token',
         '--oidc-issuer-url', f'{platform_url}/.ory/hydra/public',
-        '--oidc-client-id', client_id or config.API.DEFAULT_CLIENT_ID,
+        '--oidc-client-id', client_id or config.API.CLIENT_ID,
         '--listen-address', f'localhost:{auth_local_port}',
         '--oidc-extra-scope', 'offline'
     ]

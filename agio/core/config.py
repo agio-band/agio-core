@@ -20,13 +20,14 @@ class ApiSettings(_BaseSettings):
     # request timeout
     API_REQUEST_TIMEOUT: int = 5
     # base url
-    PLATFORM_URL: str = "https://platform.agio.services"
-    # default api client
-    DEFAULT_CLIENT_ID: str = "b5431a17-4c52-43cf-b71b-ac700b43985f"
+    PLATFORM_URL: str = "https://platform.agio.services"        # <= production url
+    # api client id
+    CLIENT_ID: str = "b5431a17-4c52-43cf-b71b-ac700b43985f"     # <= default for prod
     # auth local server port
     AUTH_LOCAL_PORT: int = 9082
     # git repository connectio attempts
     MAX_REQUEST_ATTEMPTS: int = 5
+    MAX_LOGIN_ATTEMPTS: int = 2
 
 
 class WorkspaceSettings(_BaseSettings):

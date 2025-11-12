@@ -75,4 +75,4 @@ settings:
     layout: package_settings/local_layout.yml
     model: package_settings.local_settings.CoreSettings
 
-
+package_callbacks: plugins/callbacks/package_callbacks.py
