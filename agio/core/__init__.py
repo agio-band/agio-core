@@ -3,13 +3,15 @@ import logging
 import signal
 import threading
 
-from agio.tools import setup_logger
+from agio.tools import setup_logger # noqa: F401
 from agio.core.events import emit as _emit, subscribe as _subscribe
 from agio.core.init.init_packages import init_packages
 from agio.core.init.init_plugins import init_plugins
 from agio.tools import process_hub
 
+
 logger = logging.getLogger(__name__)
+
 init_packages()
 init_plugins()
 _process_hub = process_hub.ProcessHub()
