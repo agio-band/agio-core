@@ -24,22 +24,40 @@ class ApiClient:
     def __init__(self, *args, **kwargs):
         self.session = requests.Session()
         self._debug_query = bool(os.getenv(env_names.DEBUG_QUERY))
+        self._load_session()
 
-    def login(self):
+    def login(self, refresh=False):
         # long time blocking command !
-        token = auth_services.get_token()
-        if token:
-            self._set_token(token)
+        emit('core.auth.before_login')
+        auth_data = auth_services.get_token(refresh_only=refresh)
+        if auth_data:
+            auth_services.write_cache_file(auth_data)
+            self._set_token(auth_data)
             logger.info('Logged in')
-            emit('core.auth.user_logged_in')
+            emit('core.auth.on_login')
         else:
+            emit('core.auth.login_error')
             raise AuthorizationError
 
     def logout(self):
+        emit('core.auth.before_logout')
         self.session.headers.pop('Authorization', None)
         auth_services.logout()
         logger.info('Logged out')
-        emit('core.auth.user_logged_out')
+        emit('core.auth.on_logout')
+
+    def is_logged_in(self):
+        return bool(self.session.headers.get('Authorization'))
+
+    def refresh(self):
+        if not self.session.headers.get('Authorization'):
+            raise AuthorizationError
+        self.login(refresh=True)
+
+    def _load_session(self):
+        session = auth_services.read_auth_cache_file()
+        if session:
+            self._set_token(session)
 
     def _set_token(self, session: dict):
         self.session.headers.update({
@@ -116,7 +134,7 @@ class ApiClient:
             if attempt >= config.API.MAX_LOGIN_ATTEMPTS:
                 emit('core.api.unauthorized_error', {'attempts': attempt})
                 raise AuthorizationError('You are not authorized')
-            self.login()
+            self.refresh()
             return self._do_request(data, attempt=attempt + 1)
         self._check_response_errors(result)
         return result

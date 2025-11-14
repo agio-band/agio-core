@@ -28,6 +28,8 @@ class ApiSettings(_BaseSettings):
     # git repository connectio attempts
     MAX_REQUEST_ATTEMPTS: int = 5
     MAX_LOGIN_ATTEMPTS: int = 2
+    # binary file
+    LOGIN_BINARY: str|None = None
 
 
 class WorkspaceSettings(_BaseSettings):
