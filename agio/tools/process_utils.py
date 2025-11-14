@@ -151,6 +151,7 @@ def start_process(
             errors="replace",
             )
         )
+    process_timeout = kwargs.pop('timeout', None)
     process = subprocess.Popen(
         command,
         env=new_env,
@@ -172,7 +173,7 @@ def start_process(
     if wait_for_process:
         try:
             if get_output:
-                output, error = process.communicate()
+                output, error = process.communicate(timeout=process_timeout)
                 logging.debug(f'Exit Code: {process.returncode}')
                 if process.returncode != 0:
                     if isinstance(error, bytes):
@@ -182,7 +183,7 @@ def start_process(
                     output = output.decode()
                 return output
             elif use_custom_pipe:
-                output, error = process.communicate()
+                output, error = process.communicate(timeout=process_timeout)
                 if error:
                     if isinstance(error, bytes):
                         error = error.decode()
