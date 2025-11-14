@@ -1,11 +1,11 @@
 import inspect
 import json
 import logging
-import os
 from abc import ABC
 import click
 
 from agio.core.events import emit
+from agio.core.config import config
 from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.workspaces import APackageManager
@@ -31,7 +31,7 @@ class AbstractCommandPlugin(ABC):
     # execute root command before sub command
     execute_root_command_before_subcommand = False
     # allow to write output to custom pipe
-    allow_write_output_to_custom_pipe = bool(os.getenv(env_names.ALLOW_COMMAND_OUTPUT_TO_CUSTOM_PIPE))
+    allow_write_output_to_custom_pipe = not config.CLI.DISABLE_CUSTOM_PIPE_RESULT
 
     def __init__(self, parent_group=None):
         self._init_click(parent_group)

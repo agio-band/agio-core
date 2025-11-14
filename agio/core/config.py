@@ -41,10 +41,15 @@ class PackagesConfig(_BaseSettings):
     STORE_URL: str = "https://store.agio.services"  # TODO
 
 
+class CLIConfig(_BaseSettings):
+    DISABLE_CUSTOM_PIPE_RESULT: bool = False
+
+
 class CoreConfig(BaseConfig):
     API: ApiSettings = ApiSettings()
     WS: WorkspaceSettings = WorkspaceSettings()
     PKG: PackagesConfig = PackagesConfig()
+    CLI: CLIConfig = CLIConfig()
 
 
 config = CoreConfig()
