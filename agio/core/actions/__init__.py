@@ -1,5 +1,6 @@
+import itertools
 from functools import lru_cache
-from typing import Callable
+from typing import Callable, Iterator
 
 from ..plugins import plugin_hub
 from .action_item import ActionGroupItem, ActionItem
@@ -11,22 +12,23 @@ def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
 
     app_name = app_name or context.app_name
     grp = ActionGroupItem(menu_name, None)
-    for plugin in plugin_hub.APluginHub.instance().iter_plugins('service'):
-        for action_data in plugin.collect_actions():
-            action = ActionItem(**action_data)
-            if not action.is_match(menu_name, app_name):
-                continue
-            action.name = f"{plugin.package.package_name}.{action.name}"
-            grp.add_items(action)
-            # TODO add divider
+    for action in iter_actions():
+        if not action.is_match(menu_name, app_name):
+            continue
+        grp.add_items(action)
+        # TODO add divider
     return grp
 
 
-def get_all_actions():
+def get_all_actions(hidden: bool = True) -> list[ActionItem]:
+    return list(iter_actions(hidden))
+
+
+def iter_actions(hidden: bool = True) -> Iterator[ActionItem]:
     for plugin in plugin_hub.APluginHub.instance().iter_plugins('service'):
-        for action_data in plugin.collect_actions(hidden=True):
-            action = ActionItem(**action_data)
-            action.name = f"{plugin.package.package_name}.{action.name}"
+        for action_data in plugin.collect_actions(hidden=hidden):
+            action = ActionItem(package_name=plugin.package.package_name, **action_data)
+            action.name = f"{plugin.name}.{action.name}"
             yield action
 
 

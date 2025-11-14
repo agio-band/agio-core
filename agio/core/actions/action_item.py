@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ActionItem:
+    """Do not create ActionItem directly! Use agio.core.actions.get_all_actions()"""
     action: str
     name: str
     label: str
@@ -18,6 +19,7 @@ class ActionItem:
     group: str|None
     menu_name: list[str]|None
     app_name: list[str]|None
+    package_name: str|None
     args: tuple|list|None
     kwargs: dict|None
     is_visible_callback: Callable|None = None
@@ -32,6 +34,7 @@ class ActionItem:
             'order': self.order,
             'group': self.group or '',
             'app_name': self.app_name,
+            'package_name': self.package_name,
             'args': self.args or [],
             'kwargs': self.kwargs or dict(),
         }
@@ -59,9 +62,9 @@ class ActionItem:
         else:
             current_app_name = self.app_name
         return (
-            any([fnmatch(name, menu_name) for name in current_menu_name])
+            (current_menu_name and any([fnmatch(name, menu_name) for name in current_menu_name]))
             and
-            any([fnmatch(name, app_name) for name in current_app_name])
+            (current_app_name and any([fnmatch(name, app_name) for name in current_app_name]))
         )
 
     def __lt__(self, other):
