@@ -228,7 +228,21 @@ def get_revision_by_project_id(project_id: str) -> dict:
 
 
 def get_revision_by_workspace_id(workspace_id: str) -> dict:
-    return find_revision(workspace_id, is_current=True)
+    try:
+        return find_revision(workspace_id, is_current=True)
+    except RevisionNotExists:
+        raise RevisionNotExists('No current revision for workspace {}'.format(workspace_id))
+
+
+def find_workspace_or_revision_by_id(entity_id: UUID|str) -> dict:
+    resp = client.make_query(
+        'ws/workspace/findWorkspaceOrRevisionById.graphql',
+        id=str(entity_id),
+    )
+    return {
+        'revision': resp['data'].get('workspaceRevision'),
+        'workspace': resp['data'].get('workspace'),
+    }
 
 
 def delete_revision(revision_id: UUID|str) -> bool:

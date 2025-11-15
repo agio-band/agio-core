@@ -1,0 +1,35 @@
+query GetSingleWorkspaceRevisionById($id: ID!) {
+    workspaceRevision(id: $id) {
+        id
+        workspaceId
+        isCurrent
+        createdAt
+        updatedAt
+        comment
+        packageReleases {
+            id
+            name
+            label
+            description
+            assets
+            metadata
+            package{
+              id
+              name
+            }
+        }
+    }
+  workspace(id: $id) {
+        id
+        name
+        description
+        createdAt
+        updatedAt
+        company {
+            id
+            name
+            code
+        }
+        deletedAt
+    }
+}

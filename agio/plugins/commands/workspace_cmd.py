@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import click
 
+from agio.core.exceptions import WorkspaceNotExists
 from agio.tools import env_names
 from agio.core.workspaces import AWorkspaceManager
 from agio.core.workspaces.workspace import AWorkspace
@@ -20,7 +21,8 @@ class InstallWorkspaceCommand(ASubCommand):
     help = 'Install workspace by ID'
 
     def execute(self, workspace_id: str, clean: bool = False, no_cache=False):
-        AWorkspace(workspace_id).get_manager().install(clean=clean, no_cache=no_cache)
+        manager = AWorkspaceManager.create_from_id(workspace_id)
+        manager.install(clean=clean, no_cache=no_cache)
 
 
 class UninstallWorkspaceCommand(ASubCommand):

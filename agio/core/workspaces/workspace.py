@@ -80,11 +80,15 @@ class AWorkspaceManager:
     # creation
 
     @classmethod
-    def from_workspace(cls, workspace: AWorkspace|str, **kwargs) -> 'AWorkspaceManager':
+    def from_workspace(cls, workspace: AWorkspace|dict|str, **kwargs) -> 'AWorkspaceManager':
         if isinstance(workspace, str):
             data = api.workspace.get_revision_by_workspace_id(workspace)
             revision = AWorkspaceRevision(data)
             return cls(revision, **kwargs)
+        elif isinstance(workspace, dict):
+            workspace = AWorkspace(workspace)
+            current_revision = workspace.get_current_revision()
+            return cls(current_revision, **kwargs)
         elif isinstance(workspace, AWorkspace):
             current_revision = workspace.get_current_revision()
             return cls(current_revision, **kwargs)
@@ -393,3 +397,14 @@ class AWorkspaceManager:
         except NotExistsError:
             pass
         raise WorkspaceNotExists
+
+    @classmethod
+    def from_id(cls, entity_id: str, **kwargs) -> 'AWorkspaceManager':
+        resp = api.workspace.find_workspace_or_revision_by_id(entity_id)
+        if resp['workspace']:
+            return cls.from_workspace(resp['workspace'])
+        elif resp['revision']:
+            revision = AWorkspaceRevision(resp['revision'])
+            return cls(revision, **kwargs)
+        else:
+            raise WorkspaceNotExists(detail='Workspace or revision not found')
