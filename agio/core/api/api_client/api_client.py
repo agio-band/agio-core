@@ -116,7 +116,11 @@ class ApiClient:
     def _do_request(self, data, attempt: int = 0):
         response = self.session.post(self.base_api_url, json=data)
         if not response.ok:
-            logger.error(f"Request failed with status code: {response.status_code}")
+            if response.status_code == 401:
+                self.refresh()
+            response = self.session.post(self.base_api_url, json=data)
+            if not response.ok:
+                logger.error(f"Request failed with status code: {response.status_code}")
 
         try:
             response.raise_for_status()
