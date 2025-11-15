@@ -26,10 +26,10 @@ class ApiClient:
         self._debug_query = bool(os.getenv(env_names.DEBUG_QUERY))
         self._load_session()
 
-    def login(self, refresh=False):
+    def login(self, refresh=False, force=False):
         # long time blocking command !
         emit('core.auth.before_login')
-        auth_data = auth_services.get_token(refresh_only=refresh)
+        auth_data = auth_services.get_token(refresh_only=refresh, force=force)
         if auth_data:
             auth_services.write_cache_file(auth_data)
             self._set_token(auth_data)

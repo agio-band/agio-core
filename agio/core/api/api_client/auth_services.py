@@ -3,8 +3,6 @@ import json
 import logging
 import os
 import shutil
-import time
-from functools import cache
 from pathlib import Path
 
 from agio.core.config import config
@@ -16,16 +14,15 @@ logger = logging.getLogger(__name__)
 
 def get_token(platform_url: str = None, client_id: str = None,
               auth_local_port: int = None, token_only: bool = False,
-              cache_dir: str = None, refresh_only: bool = False) -> str|dict:
+              cache_dir: str = None, refresh_only: bool = False, force: bool = False) -> str|dict:
 
     timeout = 2 if refresh_only else 180
     locker = thread_tools.locker('agio-login', expire=timeout)
     if locker.locked():
-        # wait if locked ???
-        time.sleep(2.5)
-        if locker.locked():
+        if force:
+            thread_tools.reset_locker(locker)
+        else:
             raise AuthorizationError('Authorization processing is already in progress')
-
     platform_url = platform_url or config.API.PLATFORM_URL.rstrip('/')
 
     client_id = client_id or config.API.CLIENT_ID

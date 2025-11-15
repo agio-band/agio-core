@@ -1,3 +1,5 @@
+import shutil
+
 from diskcache import Cache, Lock
 
 from agio.tools import app_dirs
@@ -9,3 +11,7 @@ def locker(name, expire=60):
     if expire == 0:
         raise RuntimeError('Locker does not work if the expiration time is zero.')
     return Lock(__cache_locker, name, expire=expire)
+
+
+def reset_locker(existing_locker):
+    shutil.rmtree(existing_locker._cache.directory)
