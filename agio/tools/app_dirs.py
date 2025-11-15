@@ -43,7 +43,7 @@ def config_dir(*inner_parts: str) -> Path:
 
 
 def projects_settings_dir(*inner_parts: str) -> Path:
-    return config_dir('projects', *inner_parts)
+    return config_dir('project-settings', *inner_parts)
 
 
 def cache_dir(*inner_parts) -> Path:

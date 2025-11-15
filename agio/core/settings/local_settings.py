@@ -30,7 +30,7 @@ def get_project_dir_name(project: str | pd.AProject = None):
 def load_default_settings():
     settings_file = Path(get_settings_dir(get_project_dir_name(None)), _settings_file_name)
     if not settings_file.is_file():
-        emit('core.settings.default_not_exists')
+        emit('core.settings.default_not_exists', {'file_path': str(settings_file)})
         return {}
     default_settings = json.loads(settings_file.read_text(encoding='utf-8'))
     emit('core.settings.default_settings_loaded', {'settings': default_settings})

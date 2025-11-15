@@ -8,6 +8,7 @@ from agio.core.entities import domain
 from agio.core.entities import workspace as ws
 from agio.core.entities import company as company_entity
 from agio.core.settings import settings_hub
+from agio.core.settings.settings_hub import LocalSettingsHub
 
 
 class AProject(domain.DomainBase):
@@ -83,6 +84,14 @@ class AProject(domain.DomainBase):
     def workspace_id(self):
         return self._data['workspace']['id'] if self._data['workspace'] else None
 
+    @property
+    def revision_id(self):
+        return self._data['workspaceRevision']['id'] if self._data['workspaceRevision'] else None
+
+    @property
+    def workspace_launching_id(self):
+        return self.revision_id or self.workspace_id
+
     def set_workspace(self, workspace: ws.AWorkspace|str|None) -> bool:
         if workspace is None:
             return self.unset_workspace()
@@ -96,26 +105,37 @@ class AProject(domain.DomainBase):
         self.reload()
         return resp
 
-    def get_roots(self):
-        # TODO move to different tool
-        from agio.core.settings import get_local_settings
+    def set_revision(self, revision: str|None) -> bool:
+        raise NotImplementedError()
 
-        project_settings = get_local_settings(project=self)
+    def unset_revision(self) -> bool:
+        raise NotImplementedError()
+
+    def get_roots(self):
+        project_settings = self.get_local_settings()
         return {k.name: k.path for k in project_settings.get('agio_pipe.local_roots')}
 
     @property
     def mount_root(self):
         roots = self.get_roots()
         if 'projects' not in roots: # todo: is static root name?
-            raise ValueError('Local settings has no "projects" root parameter')
+            raise ValueError(f'Local settings has no "projects" root parameter for project {self.name} ({self.id})')
         local_storage_root = roots['projects']
         company_root = f'{local_storage_root}/{self.get_company().code}'
         return company_root
 
-    def get_local_settings(self):
+    # settings
+    def get_settings(self):
+        """Return remote pipeline settings for current project"""
+        return self.get_workspace().get_settings(self.revision_id)
+
+    def get_local_settings(self) -> LocalSettingsHub:
+        """Return local settings for current project"""
         return settings.get_local_settings(self)
 
     def set_local_settings(self, settings_data: settings_hub.LocalSettingsHub | dict):
+        """Save local settings for current project"""
         if isinstance(settings_data, dict):
             settings_data = settings_hub.LocalSettingsHub(settings_data)
         return settings.save_local_settings(settings_data, self)
+
