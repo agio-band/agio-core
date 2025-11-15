@@ -1,7 +1,7 @@
 name: agio_core
 label: agio Core
 description: |
-  Main agio-pipe package
+  Main core package for agio pipeline
 icon: 'core/agio-logo.png'
 tags:
 urls:
