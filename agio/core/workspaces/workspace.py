@@ -113,10 +113,10 @@ class AWorkspaceManager:
     # define
     @classmethod
     def current(cls) -> 'AWorkspaceManager':
-        if ws_id := os.getenv(env_names.WORKSPACE_ID):
-            return cls.from_workspace(ws_id)
-        elif rev_id := os.getenv(env_names.REVISION_ID):
+        if rev_id := os.getenv(env_names.REVISION_ID):
             return cls(rev_id)
+        elif ws_id := os.getenv(env_names.WORKSPACE_ID):
+            return cls.from_workspace(ws_id)
 
     @classmethod
     def default(cls):

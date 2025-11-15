@@ -232,13 +232,18 @@ class InfoCommand(ACommandPlugin):
             user = f' {e}'
             user_ok = False
         # platform url
-        click.echo(f'URL: {client.platform_url}')
+        click.echo(f'  URL: {client.platform_url}')
         # user name
-        click.echo(f'User:', nl=False)
+        click.echo(f' User: ', nl=False)
         if user_ok:
             click.secho(user)
         else:
             click.secho(user, fg='red')
         # install path
-        click.echo(f'Path: {app_dirs.install_dir()}')
+        ws = AWorkspaceManager.current()
+        if ws:
+            click.echo(f' Path: {ws.install_root}')
+        else:
+            click.echo(f' Path: {app_dirs.install_dir()}')
+
 
