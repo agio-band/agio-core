@@ -133,7 +133,12 @@ def collect_packages_to_install(packages: list[p.APackage|r.APackageRelease|str]
             raise Exception(f'Dependency package "{name}" not found')
         release = pkg.get_release(version)
         if not release:
-            raise Exception(f'Dependency release "{name} v{version}" not found')
+            _, version_with_constraint = _split_name_constrain(release_name)
+            all_versions = [rel.get_version() for rel in pkg.iter_releases()]
+            version_to_install = find_best_available_version(None, version_with_constraint, all_versions)
+            release = pkg.get_release(version_to_install)
+            if not release:
+                raise Exception(f'Dependency release "{name} v{version}" not found')
         releases_to_install.append(release)
     # filter duplicates with max version
     filtered = dict()
@@ -148,9 +153,11 @@ def collect_packages_to_install(packages: list[p.APackage|r.APackageRelease|str]
 
 
 
-def find_best_available_version(current_version_str: str|None,
-                                requirements_str: str,
-                                available_versions_str: list[str] | Callable[[], list[str]]) -> str |None:
+def find_best_available_version(
+        current_version_str: str|None,
+        requirements_str: str,
+        available_versions_str: list[str] | Callable[[], list[str]]) \
+        -> str |None:
     try:
         specifier_set = SpecifierSet(requirements_str)
         if current_version_str:
