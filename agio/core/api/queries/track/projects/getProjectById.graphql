@@ -13,5 +13,8 @@ query GetProjectById($id: ID!) {
       id
       name
     }
+    workspaceRevision{
+      id
+    }
   }
 }

@@ -18,6 +18,9 @@ query FindProject($filter: ProjectFilter){
           id
           name
         }
+        workspaceRevision{
+          id
+        }
       }
     }
   }

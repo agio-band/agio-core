@@ -19,6 +19,9 @@ query projectsList($first: Int!, $filter: ProjectFilter) {
           id
           name
         }
+        workspaceRevision {
+          id
+        }
       }
     }
      pageInfo {
