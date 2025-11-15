@@ -1,8 +1,8 @@
 import click
 
 import agio.core.actions
+from agio.core.actions import get_actions
 from agio.core.plugins.base_command import ACommandPlugin
-from agio.core.actions import action_item, get_actions
 
 
 class ActionCommand(ACommandPlugin):
@@ -20,6 +20,7 @@ class ActionCommand(ACommandPlugin):
         action_args, action_kwargs = self.parse_extra_args(kwargs)
         action_func = agio.core.actions.get_action_func(action)
         result = action_func(*action_args, **action_kwargs)
+        print(result, flush=True)
         return result
 
 
