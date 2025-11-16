@@ -15,6 +15,7 @@ def _get_site_packages_path(venv_python_path: str) -> str | None: # OLD VERSION
             capture_output=True,
             text=True,
             check=True,
+            encoding="utf-8",
         )
         site_packages_list = json.loads(result.stdout.strip())
         return site_packages_list[0]
@@ -29,6 +30,7 @@ def get_site_packages_path(venv_python_path: str) -> str | None:
             capture_output=True,
             text=True,
             check=True,
+            encoding="utf-8",
         )
         site_package = result.stdout.strip()
         return site_package
