@@ -116,14 +116,11 @@ def get_global_config() -> dict:
     add_main_menu_shortcut: bool
     """
     config_file = get_global_config_file_path()
+    logger.info('Config file path: %s', config_file)
     if not config_file.exists():
         return {}
-    try:
-        with open(config_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-    except Exception as e:
-        logger.error('Failed read info file', e)
-        return {}
+    with open(config_file, 'r', encoding='utf-8') as f:
+        data = json.load(f)
     return data
 
 
@@ -132,7 +129,7 @@ def save_global_config(data: dict):
     data = {k: v for k, v in data.items() if k in allowed_keys}
     config_file = get_global_config_file_path()
     config_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(config_file, 'w') as f:
+    with open(config_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
