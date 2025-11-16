@@ -150,6 +150,12 @@ class AWorkspaceManager:
         return self._revision
 
     @property
+    def launching_id(self):
+        if self._revision:
+            return self.revision_id
+        return self.workspace_id
+
+    @property
     def root(self):
         if self._install_root:
             return self._install_root
