@@ -18,7 +18,6 @@ dependencies = [
     "pydantic[email]>=2.11.9",
     "pyyaml>=6.0.2",
     "requests>=2.32.3",
-    "requests-oauthlib>=2.0.0",
     "unidecode>=1.4.0",
 ]
 classifiers = [
