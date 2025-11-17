@@ -8,8 +8,6 @@ from PySide6.QtCore import QTimer, QEvent
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from agio.core.events import on_exit
-from agio.core.workspaces import resources
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +21,8 @@ class QApp(QApplication):
     show_message_dialog_signal = Signal(dict)
 
     def __init__(self, app_name='agio', exit_on_widget_close: bool = True, argv=None):
+        from agio.core.workspaces import resources
+
         super().__init__(argv or [])
         self.show_message_dialog_signal.connect(self.show_message_dialog)
         self.setQuitOnLastWindowClosed(exit_on_widget_close)
@@ -129,6 +129,8 @@ def main_app(app_name: str = 'agio', dialog_mode: bool = True):
     Open main app
     dialog_mode: close app on dialog closed
     """
+    from agio.core.events import on_exit
+
     if QApplication.instance():
         QMessageBox.critical(None, "Error", f"Main Qt App already started")
         return
