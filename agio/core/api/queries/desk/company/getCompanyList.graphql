@@ -1,6 +1,7 @@
-query getCompabyById ($first: Int!) {
+query getCompabyById ($first: Int!, $afterCursor: String) {
   companies(
-    first: $first
+      first: $first,
+      after: $afterCursor
   )
   {
     edges{
