@@ -116,7 +116,7 @@ def get_global_config() -> dict:
     add_main_menu_shortcut: bool
     """
     config_file = get_global_config_file_path()
-    logger.info('Config file path: %s', config_file)
+    logger.debug('Load global config file: %s', config_file)
     if not config_file.exists():
         return {}
     with open(config_file, 'r', encoding='utf-8') as f:
