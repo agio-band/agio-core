@@ -27,7 +27,7 @@ def get_current_company() -> dict:
     return client.make_query('desk/company/currentCompany')['data']['currentCompany']
 
 def switch_company(company_id: str):
-    return client.make_query('desk/company/switchCompany', {'id': company_id})
+    return client.make_query('desk/company/switchCompany', id=company_id)
 
 
 def get_company(company_id: str|UUID) -> dict:
