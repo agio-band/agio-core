@@ -1,4 +1,4 @@
-query getCompabyById ($first: Int!, $afterCursor: String) {
+query getCompanyList($first: Int!, $afterCursor: String) {
   companies(
       first: $first,
       after: $afterCursor
@@ -9,7 +9,11 @@ query getCompabyById ($first: Int!, $afterCursor: String) {
         id
         name
         code
-        logo(params: {type: "fit", width: 480, height: 480})
+        hostUser{
+          name
+          id
+        }
+#        logo(params: {type: "fit", width: 480, height: 480})
       }
     }
     pageInfo {

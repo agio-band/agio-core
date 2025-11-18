@@ -4,5 +4,9 @@ query getCompanyById ($id:ID!) {
     name
     email
     code
+    hostUser{
+      name
+      id
+    }
   }
 }
