@@ -33,7 +33,7 @@ class AProfile(DomainBase):
     def current(cls, **kwargs) -> 'AProfile':
         data = api.profile.get_current_user()
         if not data:
-            raise Exception('Not found')
+            raise Exception('Current user not authenticated')
         return cls(data)
 
     @property
