@@ -62,6 +62,8 @@ class AbstractCommandPlugin(ABC):
                 write_to_pipe(json.dumps(result).encode('utf-8'))
             except json.decoder.JSONDecodeError:
                 write_to_pipe(str(result).encode('utf-8'))
+            except OSError:
+                logger.error('Failed to write to pipe')
 
     def _init_click(self, parent_group=None):
         if not self.command_name:
