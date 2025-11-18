@@ -55,7 +55,7 @@ class ASettingsHub:
         package_name, param_name = param_name.split(".")
         package_settings: package_settings_class.APackageSettings = self._package_settings.get(package_name)
         if not package_settings:
-            if isinstance(default, NOTSET):
+            if default is NOTSET:
                 raise KeyError(f"Package {package_name} not found in workspace settings")
             return default
         try:
