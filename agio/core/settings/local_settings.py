@@ -53,16 +53,16 @@ def load(project: str | pd.AProject = None) -> settings_hub.LocalSettingsHub:
 
 def save(settings: settings_hub.LocalSettingsHub, project: str | pd.AProject=None) -> str:
     settings_file = Path(get_settings_dir(get_project_dir_name(project)), _settings_file_name)
-    settings_file.parent.mkdir(parents=True, exist_ok=True)
-    emit('core.settings.before_project_settings_save', {'settings': settings, 'project': project})
+    emit('core.settings.before_project_settings_save', {'settings': settings, 'project': project, 'settings_file': settings_file})
     data = settings.dump(skip_default=True)
     if data:
+        settings_file.parent.mkdir(parents=True, exist_ok=True)
         settings_file.write_text(json.dumps(data, indent=2, cls=JsonSerializer))
-        emit('core.settings.project_settings_saved', {'settings': settings, 'project': project, 'file': settings_file})
+        emit('core.settings.project_settings_saved', {'settings': settings, 'project': project, 'settings_file': settings_file})
         logger.info(f'Saved local settings for {project!r}: {settings_file}')
     else:
         settings_file.unlink(missing_ok=True)
-        emit('core.settings.project_settings_empty', {'settings': None, 'project': project, 'file': settings_file})
+        emit('core.settings.project_settings_empty', {'settings': None, 'project': project, 'settings_file': settings_file})
         logger.info(f'Removed local settings for: {project!r}')
     return settings_file.as_posix()
 
