@@ -1,5 +1,4 @@
 name: {{py_name}}
-version: 0.0.0
 label: {{nice_name}}
 description: |
   {{nice_name}} package
