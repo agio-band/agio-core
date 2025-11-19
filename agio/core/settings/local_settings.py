@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from agio.core.entities import project as pd
+from agio.core.entities.project import AProject
 from agio.core.events import emit
 from agio.tools import app_dirs, env_names
 from agio.tools.json_serializer import JsonSerializer
@@ -20,15 +21,21 @@ def get_settings_dir(project_id: str = None):
     return _settings_dir.joinpath(project_id)
 
 
+def get_project_settings_file(project: AProject|str = None) -> Path:
+    return Path(get_settings_dir(get_project_dir_name(project)), _settings_file_name)
+
+
 def get_project_dir_name(project: str | pd.AProject = None):
     if isinstance(project, pd.AProject):
         return str(project.id)
+    elif isinstance(project, str):
+        return project
     else:
         return 'default'
 
 
 def load_default_settings():
-    settings_file = Path(get_settings_dir(get_project_dir_name(None)), _settings_file_name)
+    settings_file = get_project_settings_file()
     if not settings_file.is_file():
         emit('core.settings.default_not_exists', {'file_path': str(settings_file)})
         return {}
@@ -42,7 +49,7 @@ def load(project: str | pd.AProject = None) -> settings_hub.LocalSettingsHub:
         settings_data = load_default_settings()
     else:
         settings_data = {}
-    settings_file = Path(get_settings_dir(get_project_dir_name(project)), _settings_file_name)
+    settings_file = get_project_settings_file(project)
     if settings_file.exists():
         settings_data.update(json.loads(settings_file.read_text(encoding='utf-8')))
     settings = settings_hub.LocalSettingsHub(settings_data)
@@ -51,13 +58,14 @@ def load(project: str | pd.AProject = None) -> settings_hub.LocalSettingsHub:
     return settings
 
 
-def save(settings: settings_hub.LocalSettingsHub, project: str | pd.AProject=None) -> str:
+def save(settings: settings_hub.LocalSettingsHub|dict, project: str | pd.AProject=None) -> str:
     settings_file = Path(get_settings_dir(get_project_dir_name(project)), _settings_file_name)
     emit('core.settings.before_project_settings_save', {'settings': settings, 'project': project, 'settings_file': settings_file})
-    data = settings.dump(skip_default=True)
-    if data:
+    if not isinstance(settings, dict):
+        settings = settings.dump(skip_default=True)
+    if settings:
         settings_file.parent.mkdir(parents=True, exist_ok=True)
-        settings_file.write_text(json.dumps(data, indent=2, cls=JsonSerializer))
+        settings_file.write_text(json.dumps(settings, indent=2, cls=JsonSerializer))
         emit('core.settings.project_settings_saved', {'settings': settings, 'project': project, 'settings_file': settings_file})
         logger.info(f'Saved local settings for {project!r}: {settings_file}')
     else:
