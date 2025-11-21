@@ -4,7 +4,7 @@ from uuid import UUID
 
 from agio.core import api
 from agio.core import settings
-from agio.core.entities import domain
+from agio.core.entities import domain, workspace_revision
 from agio.core.entities import workspace as ws
 from agio.core.entities import company as company_entity
 from agio.core.settings import settings_hub
@@ -76,9 +76,20 @@ class AProject(domain.DomainBase):
     def get_workspace(self) -> ws.AWorkspace|None:
         workspace_dict = self._data['workspace']
         if workspace_dict is None:
+            if self.revision_id:
+                revision = workspace_revision.AWorkspaceRevision(self.revision_id)
+                return revision.get_workspace()
             return None
         else:
             return ws.AWorkspace(workspace_dict['id'])
+
+    def get_revision(self) -> workspace_revision.AWorkspaceRevision:
+        if self.revision_id:
+            return workspace_revision.AWorkspaceRevision(self.revision_id)
+        else:
+            workspace = self.get_workspace()
+            if workspace:
+                return workspace.get_current_revision()
 
     @property
     def workspace_id(self):
@@ -105,11 +116,18 @@ class AProject(domain.DomainBase):
         self.reload()
         return resp
 
-    def set_revision(self, revision: str|None) -> bool:
-        raise NotImplementedError()
+    def set_revision(self, revision: str|workspace_revision.AWorkspaceRevision|None) -> bool:
+        if revision is None:
+            return self.unset_revision()
+        ws_id = revision.id if isinstance(revision, workspace_revision.AWorkspaceRevision) else revision
+        resp = api.track.update_project(self.id, revision_id=ws_id)
+        self.reload()
+        return resp
 
     def unset_revision(self) -> bool:
-        raise NotImplementedError()
+        resp = api.track.update_project(self.id, revision_id=None)
+        self.reload()
+        return resp
 
     def get_roots(self):
         project_settings = self.get_local_settings()
@@ -127,7 +145,7 @@ class AProject(domain.DomainBase):
     # settings
     def get_settings(self):
         """Return remote pipeline settings for current project"""
-        return self.get_workspace().get_settings(self.revision_id)
+        return self.get_revision().get_settings()
 
     def get_local_settings(self) -> LocalSettingsHub:
         """Return local settings for current project"""

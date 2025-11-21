@@ -4,6 +4,7 @@ from typing import Iterator
 from agio.core import api
 from agio.core.api.utils import NOTSET
 from agio.core.entities import workspace
+from agio.core.settings import settings_hub
 from . import APackageRelease
 from .entity import DomainBase
 
@@ -104,6 +105,9 @@ class AWorkspaceRevision(DomainBase):
         if '_settings_data' not in self._data:
             self._data["_settings_data"] = api.workspace.get_settings_by_revision_id(self.id)['data']
         return self._data["_settings_data"]
+
+    def get_settings(self):
+        return settings_hub.WorkspaceSettingsHub(self.get_settings_data())
 
     def get_package_list(self):
         for pkg_data in self._data.get("packageReleases"):

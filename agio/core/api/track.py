@@ -39,12 +39,14 @@ def update_project(
         facility_ids: list[str] = NOTSET,
         fields: dict[str, Any] = NOTSET,
         workspace_id: str|UUID|None = NOTSET,
+        revision_id: str|None = NOTSET,
 ) -> bool:
     input_data = dict(
         state=state,
         facilityIds=facility_ids,
         fields=fields,
         workspaceId=workspace_id,
+        workspaceRevisionId=revision_id,
     )
     input_data = {k: v for k, v in input_data.items() if v is not NOTSET}
     if not input_data:
