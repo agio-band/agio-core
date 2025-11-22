@@ -31,6 +31,8 @@ class LaunchContext:
         self._args = None
         self._workdir = None
         self._inherit_system_envs = inherit_system_envs
+        system_envs = os.environ.copy() if self._inherit_system_envs else {}
+        self._envs = system_envs.copy()
         if executable is not None:
             self.set_executable(executable)
         if args is not None:
@@ -39,8 +41,6 @@ class LaunchContext:
             self.append_envs(**env)
         if workdir is not None:
             self.set_workdir(workdir)
-        system_envs = os.environ.copy() if self._inherit_system_envs else {}
-        self._envs = system_envs.copy()
 
     def __str__(self):
         return f"{self.executable} {' '.join(self.args or '')}".strip()
