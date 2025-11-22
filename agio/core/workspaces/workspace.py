@@ -16,7 +16,7 @@ from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotE
     PackageInstallationError
 from agio.core.config import config
 from agio.tools import pkg_manager, app_dirs, env_names
-from agio.tools.launching import LaunchContext
+from agio.tools import launching
 from agio.tools.packaging_tools import collect_packages_to_install
 from agio.tools.venv_helpers import check_current_python_version
 
@@ -353,7 +353,8 @@ class AWorkspaceManager:
             env_names.COMPANY_ID: self.get_workspace().company_id,
             env_names.WORKSPACE_ID: str(self.revision.workspace_id),
             env_names.REVISION_ID: str(self.revision.id),
-            'VIRTUAL_ENV': self.install_root.as_posix()
+            'VIRTUAL_ENV': self.install_root.as_posix(),
+            'PATH': self.bin_path.as_posix()
         }
         if self.settings_id:
             env[env_names.SETTINGS_REVISION_ID] = str(self.settings_id)
@@ -361,7 +362,7 @@ class AWorkspaceManager:
         return env
 
     def get_launch_context(self):
-        ctx = LaunchContext(
+        ctx = launching.LaunchContext(
             self.get_pyexecutable(),
             env=self.get_launch_envs()
         )

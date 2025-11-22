@@ -4,8 +4,8 @@ from agio.core.entities.project import AProject
 from agio.core.exceptions import WorkspaceInstallationLocked
 from agio.core.plugins.base_service import ServicePlugin, make_action
 from agio.core.actions import get_actions
-from agio.core.workspaces import AWorkspaceManager
-from agio.tools.launching import exec_agio_command
+# from agio.core.workspaces import AWorkspaceManager
+from agio.tools import launching
 
 
 class ActionsService(ServicePlugin):
@@ -35,7 +35,7 @@ class ActionsService(ServicePlugin):
                 '-m', menu_name,
                 '-a',app_name
             ]
-            output = exec_agio_command(cmd, workspace=workspace.id, use_custom_pipe=True)
+            output = launching.exec_agio_command(cmd, workspace=workspace.id, use_custom_pipe=True)
             if output.strip():
                 try:
                     return json.loads(output)

@@ -10,10 +10,10 @@ import sys
 from pathlib import Path
 
 from agio.core import workspaces
-from agio.core.exceptions import WorkspaceNotExists
+from agio.core import exceptions
 from agio.tools import app_dirs, env_names
 from agio.tools import process_utils
-from agio.tools.pkg_manager import get_package_manager_class
+from agio.tools import pkg_manager
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,6 @@ class LaunchContext:
                  workdir: str = None, inherit_system_envs: bool = True):
         self._executable = None
         self._args = None
-        self._envs = None
         self._workdir = None
         self._inherit_system_envs = inherit_system_envs
         if executable is not None:
@@ -40,6 +39,8 @@ class LaunchContext:
             self.append_envs(**env)
         if workdir is not None:
             self.set_workdir(workdir)
+        system_envs = os.environ.copy() if self._inherit_system_envs else {}
+        self._envs = system_envs.copy()
 
     def __str__(self):
         return f"{self.executable} {' '.join(self.args or '')}".strip()
@@ -83,16 +84,14 @@ class LaunchContext:
 
     @property
     def envs(self) -> dict[str, str]:
-        system_envs = os.environ.copy() if self._inherit_system_envs else {}
-        final_envs = system_envs.copy()
-        if self._envs:
-            final_envs.update(self._envs)
-        return final_envs
+        return self._envs
 
-    def append_env_path(self, env_name: str, value: str):
+    def append_env_path(self, env_name: str, value: str|list|tuple):
         """
         Append path to end of sys.path
         """
+        if isinstance(value, (list, tuple)):
+            value = os.pathsep.join(map(str, [os.path.expanduser(x) for x in value]))
         logger.debug(f"Appending path env {env_name}={value}")
         if env_name == 'PYTHONPATH':
             # specific append function for PYTHONPATH using sitecustomize hook
@@ -103,7 +102,7 @@ class LaunchContext:
             self.prepend_env_path('PYTHONPATH', _site_customize_dir.as_posix())
             return res
         else:
-            path_list = self._envs.get(env_name, '').split(os.pathsep)
+            path_list = [x for x in self._envs.get(env_name, '').split(os.pathsep) if x.strip()]
             if value not in path_list:
                 path_list.append(value)
                 self._envs[env_name] = os.pathsep.join(path_list).strip(os.pathsep)
@@ -135,11 +134,13 @@ class LaunchContext:
         """
         You can set multipath value as list or tuple
         """
-        self._envs = self._envs or {}
         for k, v in kwargs.items():
-            if isinstance(v, (list, tuple)):
-                v = os.pathsep.join(v)
-            self._envs[k] = v
+            if k == 'PATH':
+                self.append_env_path(k, v)
+            else:
+                if isinstance(v, (list, tuple)):
+                    v = os.pathsep.join(v)
+                self._envs[k] = v
 
     @property
     def workdir(self) -> str|None:
@@ -186,10 +187,10 @@ def get_default_env_executable():
     if default_exec:
         return default_exec
     default_venv = app_dirs.default_env_install_dir()
-    manager  = get_package_manager_class()
+    manager = pkg_manager.get_package_manager_class()
     default_exec = manager(default_venv).python_executable
     if not default_exec:
-        raise WorkspaceNotExists(f'Env variable {env_names.DEFAULT_WORKSPACE_PY_EXECUTABLE} not set')
+        raise exceptions.WorkspaceNotExists(f'Env variable {env_names.DEFAULT_WORKSPACE_PY_EXECUTABLE} not set')
     return default_exec
 
 
@@ -250,7 +251,7 @@ def start_in_workspace(
     else:
         py_exec = kwargs.get('python_executable') or  get_default_env_executable()
         if not py_exec:
-            raise WorkspaceNotExists('Executable not set')
+            raise exceptions.WorkspaceNotExists('Executable not set')
         ctx = LaunchContext(py_exec)
     if envs:
         ctx.append_envs(**envs)

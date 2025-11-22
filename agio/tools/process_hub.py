@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import subprocess
 import threading
@@ -6,14 +7,14 @@ from typing import Optional, Dict
 
 import psutil
 
-from agio.tools.launching import LaunchContext
+from agio.tools import launching
 from agio.tools.singleton import Singleton
 
 lock = threading.Lock()
 
 
 class ProcessWrapper:
-    def __init__(self, name: str, launch_context: LaunchContext, restart: bool = True):
+    def __init__(self, name: str, launch_context: launching.LaunchContext, restart: bool = True):
         self.name = name
         self.launch_context = launch_context
         self.process: Optional[subprocess.Popen] = None
@@ -155,7 +156,7 @@ class ProcessHub(metaclass=Singleton):
     def register_process(
             self,
             name: str,
-            launch_context: LaunchContext,
+            launch_context: launching.LaunchContext,
             restart: bool = False,
         ):
         with self._lock:
