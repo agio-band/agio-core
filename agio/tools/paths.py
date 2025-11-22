@@ -3,7 +3,7 @@ import webbrowser
 from pathlib import Path
 
 
-def expand_windows_path(path):
+def expand_windows_path(path: str|Path) -> str:
     """Expand windows 8.3 path to long"""
     if not os.name == 'nt':
         return path
@@ -16,14 +16,14 @@ def expand_windows_path(path):
     GetLongPathNameW.restype = wintypes.DWORD
 
     buf = ctypes.create_unicode_buffer(260)
-    result = GetLongPathNameW(path, buf, len(buf))
+    result = GetLongPathNameW(str(path), buf, len(buf))
     if result > 0:
         return buf.value
     else:
-        return path
+        return str(path)
 
 
-def open_path(path):
+def open_path(path: str|Path) -> None:
     path = Path(path)
     if path.is_dir():
         webbrowser.open(path.as_posix())
