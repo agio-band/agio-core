@@ -109,3 +109,13 @@ def copy_tree_with_ignore_file(source_dir: str, target_dir: str, ignore_file_pat
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(file_path, dest_path)
 
+
+def unpack_archive(filename, extract_dir="."):
+    base = filename.lower()
+    formats = shutil.get_unpack_formats()
+
+    for fmt_name, extensions, _ in formats:
+        for ext in extensions:
+            if base.endswith(ext):
+                return shutil.unpack_archive(filename, extract_dir, fmt_name)
+    return shutil.unpack_archive(filename, extract_dir)
