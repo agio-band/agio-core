@@ -1,9 +1,10 @@
-import itertools
 from functools import lru_cache
 from typing import Callable, Iterator
 
-from ..plugins import plugin_hub
+import requests
+
 from .action_item import ActionGroupItem, ActionItem
+from ..plugins import plugin_hub
 
 
 @lru_cache
@@ -47,3 +48,13 @@ def get_action_func(action_full_name: str) -> Callable:
 def execute_action(action_name, *args, **kwargs):
     action_func = get_action_func(action_name)
     return action_func(*args, **kwargs)
+
+
+def send_action(action_name, *args, **kwargs):
+    url = 'http://127.0.0.1:8877/action'
+    data = {
+        'action': action_name,
+        'kwargs': kwargs,
+        'args': args,
+    }
+    return requests.post(url, json=data, timeout=1).json()
