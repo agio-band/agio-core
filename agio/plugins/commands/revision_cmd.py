@@ -27,11 +27,19 @@ class RevisionInfoCommand(ASubCommand):
             click.secho(f'({rel.id})')
 
 
+class RevisionSyncCommand(ASubCommand):
+    command_name = "sync"
+
+    def execute(self, *args, **kwargs):
+        from agio.core.workspaces import sync_current_workspace
+        sync_current_workspace()
+
 
 class RevisionCommand(ACommandPlugin):
     name = 'revision_cmd'
     command_name = "revision"
     subcommands = [
         RevisionInfoCommand,
+        RevisionSyncCommand,
     ]
     help = 'Manage workspace revisions'
