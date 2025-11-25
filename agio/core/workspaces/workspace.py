@@ -36,6 +36,7 @@ class DefaultWorkspaceError(Exception):
 class AWorkspaceManager:
     """Manage workspaces on local host"""
     _meta_file_name = '__agio_ws__.json'
+    _local_layout_file_name = '__settings_layout__.json'
     workspaces_root = Path(config.WS.INSTALL_DIR).expanduser()
     default_python_version = '>=3.11,<3.12'
     __cache_locker = Cache(app_dirs.temp_dir('ws-locker').as_posix())
@@ -102,11 +103,21 @@ class AWorkspaceManager:
     def settings_id(self):
         return self._kwargs.get('settings_revision_id')
 
+    @ property
+    def local_layout_file(self) -> Path:
+        return self.install_root / self._local_layout_file_name
+
     def dump_local_settings(self):
-        local_settings = collector.collect_local_settings_layout()
-        save_path = self.install_root / '__settings_layout__.json'
-        with open(save_path, 'w') as f:
-            json.dump(local_settings, f, indent=2)
+        try:
+            local_layout = collector.collect_local_settings_layout()
+        except Exception:
+            logger.exception(f'Failed to collect local settings')
+            return
+        if local_layout:
+            self.local_layout_file.parent.mkdir(parents=True, exist_ok=True)
+            with self.local_layout_file.open('w') as f:
+                json.dump(local_layout, f, indent=2)
+            logger.info(f'Layout file dumped to {self.local_layout_file}')
 
     # meta file
 

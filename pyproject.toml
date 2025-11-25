@@ -1,6 +1,6 @@
 [project]
 name = "agio-core"
-version = "0.0.22"
+version = "0.0.23"
 description = "Core functionality for agio pipeline"
 authors = [
     { name = "paulwinex", email = "paulwinex@gmail.com" }
