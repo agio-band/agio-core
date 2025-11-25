@@ -23,6 +23,7 @@ from agio.core.settings import collector
 from agio.core.config import config
 from agio.tools import pkg_manager, app_dirs, env_names
 from agio.tools import launching
+from agio.tools.launching import exec_agio_command
 from agio.tools.packaging_tools import collect_packages_to_install
 from agio.tools.venv_helpers import check_current_python_version
 
@@ -118,6 +119,7 @@ class AWorkspaceManager:
             with self.local_layout_file.open('w') as f:
                 json.dump(local_layout, f, indent=2)
             logger.info(f'Layout file dumped to {self.local_layout_file}')
+            return self.local_layout_file
 
     # meta file
 
@@ -270,7 +272,8 @@ class AWorkspaceManager:
                   }
                  )
         logger.info(f'Workspace installation complete: {self.install_root}')
-        self.dump_local_settings()
+        if self._revision:
+            exec_agio_command(['revision', 'synclocal'], workspace=self.revision_id)
 
     def install_packages(self, *package_list: APackageRelease|str, **kwargs):
         package_list = collect_packages_to_install(package_list)

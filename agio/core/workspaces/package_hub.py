@@ -22,19 +22,19 @@ class APackageHub(metaclass=Singleton):
     def packages_count(self):
         return len(self._packages)
 
-    def get_package(self, name: str) -> package.APackage:
+    def get_package(self, name: str) -> package.APackageManager:
         return self._packages.get(name)
 
-    def get_packages(self) -> dict[str, package.APackage]:
+    def get_packages(self) -> dict[str, package.APackageManager]:
         return self._packages
 
     def get_package_names(self) -> list[str]:
         return list(self._packages.keys())
 
-    def get_package_by_name(self, name: str) -> package.APackage:
+    def get_package_by_name(self, name: str) -> package.APackageManager:
         return self._packages.get(name)
 
-    def get_package_list(self) -> list[package.APackage]:
+    def get_package_list(self) -> list[package.APackageManager]:
         return list(self._packages.values())
 
     def package_exists(self, name: str) -> bool:

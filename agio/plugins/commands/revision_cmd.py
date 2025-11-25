@@ -35,11 +35,22 @@ class RevisionSyncCommand(ASubCommand):
         sync_current_workspace()
 
 
+class RevisionSyncLocalCommand(ASubCommand):
+    command_name = "synclocal"
+
+    def execute(self, *args, **kwargs):
+        from agio.core.workspaces import AWorkspaceManager
+        manager = AWorkspaceManager.current()
+        file = manager.dump_local_settings()
+        click.echo(file)
+
+
 class RevisionCommand(ACommandPlugin):
     name = 'revision_cmd'
     command_name = "revision"
     subcommands = [
         RevisionInfoCommand,
         RevisionSyncCommand,
+        RevisionSyncLocalCommand,
     ]
     help = 'Manage workspace revisions'
