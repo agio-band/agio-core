@@ -16,7 +16,7 @@ def get_token(platform_url: str = None, client_id: str = None,
               auth_local_port: int = None, token_only: bool = False,
               cache_dir: str = None, refresh_only: bool = False, force: bool = False) -> str|dict:
 
-    timeout = 2 if refresh_only else 180
+    timeout = 15 if refresh_only else 180
     locker = thread_tools.locker('agio-login', expire=timeout)
     if locker.locked():
         if force:

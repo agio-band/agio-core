@@ -12,8 +12,14 @@ from pathlib import Path
 from agio.core import api
 from agio.core.entities import AWorkspaceRevision, AWorkspace, APackageRelease, APackage
 from agio.core.events import emit
-from agio.core.exceptions import WorkspaceNotInstalled, WorkspaceNotExists, NotExistsError, WorkspaceInstallationLocked, \
-    PackageInstallationError
+from agio.core.exceptions import (
+    WorkspaceNotInstalled,
+    WorkspaceNotExists,
+    NotExistsError,
+    WorkspaceInstallationLocked,
+    PackageInstallationError,
+)
+from agio.core.settings import collector
 from agio.core.config import config
 from agio.tools import pkg_manager, app_dirs, env_names
 from agio.tools import launching
@@ -33,7 +39,6 @@ class AWorkspaceManager:
     workspaces_root = Path(config.WS.INSTALL_DIR).expanduser()
     default_python_version = '>=3.11,<3.12'
     __cache_locker = Cache(app_dirs.temp_dir('ws-locker').as_posix())
-
 
     def __init__(self, revision: AWorkspaceRevision|str|dict = None, root: str|Path = None, **kwargs):
         self._install_root = root
@@ -97,6 +102,12 @@ class AWorkspaceManager:
     def settings_id(self):
         return self._kwargs.get('settings_revision_id')
 
+    def dump_local_settings(self):
+        local_settings = collector.collect_local_settings_layout()
+        save_path = self.install_root / '__settings_layout__.json'
+        with open(save_path, 'w') as f:
+            json.dump(local_settings, f, indent=2)
+
     # meta file
 
     @property
@@ -117,6 +128,17 @@ class AWorkspaceManager:
             return cls(rev_id)
         elif ws_id := os.getenv(env_names.WORKSPACE_ID):
             return cls.from_workspace(ws_id)
+
+    @classmethod
+    def from_id(cls, entity_id: str, **kwargs) -> 'AWorkspaceManager':
+        resp = api.workspace.find_workspace_or_revision_by_id(entity_id)
+        if resp['workspace']:
+            return cls.from_workspace(resp['workspace'])
+        elif resp['revision']:
+            revision = AWorkspaceRevision(resp['revision'])
+            return cls(revision, **kwargs)
+        else:
+            raise WorkspaceNotExists(detail='Workspace or revision not found')
 
     @classmethod
     def default(cls):
@@ -237,6 +259,7 @@ class AWorkspaceManager:
                   }
                  )
         logger.info(f'Workspace installation complete: {self.install_root}')
+        self.dump_local_settings()
 
     def install_packages(self, *package_list: APackageRelease|str, **kwargs):
         package_list = collect_packages_to_install(package_list)
@@ -404,14 +427,3 @@ class AWorkspaceManager:
         except NotExistsError:
             pass
         raise WorkspaceNotExists
-
-    @classmethod
-    def from_id(cls, entity_id: str, **kwargs) -> 'AWorkspaceManager':
-        resp = api.workspace.find_workspace_or_revision_by_id(entity_id)
-        if resp['workspace']:
-            return cls.from_workspace(resp['workspace'])
-        elif resp['revision']:
-            revision = AWorkspaceRevision(resp['revision'])
-            return cls(revision, **kwargs)
-        else:
-            raise WorkspaceNotExists(detail='Workspace or revision not found')

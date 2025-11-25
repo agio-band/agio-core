@@ -5,6 +5,7 @@ from agio.core.settings.generic_types import SettingsType
 from agio.tools.modules import import_object_by_dotted_path
 from agio.core.settings.package_settings import APackageSettings
 from agio.core.workspaces import package_hub
+from agio.tools import text_helpers
 
 logger = logging.getLogger(__name__)
 
