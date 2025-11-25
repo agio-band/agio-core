@@ -98,7 +98,7 @@ def _rextract_markdown(param: dict):
     file_path = Path(file_path)
     if not file_path.exists():
         raise Exception(f'File not found: {file_path}')
-    text = text_utils.render_markdown_from_file(file_path)
+    text = text_helpers.render_markdown_from_file(file_path)
     param['type'] = 'Html'
     param['text'] = text
 
