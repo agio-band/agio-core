@@ -215,7 +215,7 @@ def exec_agio_command(
     """
     ws_manager = None
     if not os.getenv(env_names.FORCE_DEFAULT_WORKSPACE):  # start in default env always (for beta version)
-        logger.info(f'Starting agio command in workspace: {workspace}')
+        logger.debug(f'Starting agio command in workspace: {workspace}')
         if isinstance(workspace, str):
             ws_manager = workspaces.AWorkspaceManager.from_id(workspace)
         elif isinstance(workspace, workspaces.AWorkspaceManager):
