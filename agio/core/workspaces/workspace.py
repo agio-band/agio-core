@@ -271,6 +271,8 @@ class AWorkspaceManager:
         #     print(pkg)
         # print('-'*100)
         logger.info(f'Packages to install: {len(package_list)}')
+        for p in package_list:
+            logger.info(f'{p.get_package_name()} v{p.get_version()}')
         status_code = self.venv_manager.install_packages(*install_args, **kwargs)
         if status_code:
             raise PackageInstallationError(f'Failed to install packages. Status code:{status_code}')

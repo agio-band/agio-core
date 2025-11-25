@@ -1,6 +1,6 @@
 [project]
 name = "agio-core"
-version = "0.0.21"
+version = "0.0.22"
 description = "Core functionality for agio pipeline"
 authors = [
     { name = "paulwinex", email = "paulwinex@gmail.com" }
@@ -42,6 +42,7 @@ include-package-data = true
 "agio" = [
     "__agio__.yml",
     "core/api/queries/**",
+    "package_settings/*.yml",
     "core/api/templates/*",
     "resources/**"
 ]

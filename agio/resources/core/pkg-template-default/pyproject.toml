@@ -24,6 +24,8 @@ include-package-data = true
 "{{py_name}}" = [
     "__agio__.yml",
     "resources/**",
+    "package_settings/*.yml",
+    "package_settings/*.yaml",
 ]
 
 [build-system]
