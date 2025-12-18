@@ -75,6 +75,11 @@ class AWorkspace(DomainBase):
         revision = api.workspace.get_revision_by_workspace_id(self.id)
         return AWorkspaceRevision(revision)
 
+    def get_current_revision_from_env(self):
+        revision_id = os.getenv(env_names.REVISION_ID)
+        if revision_id:
+            return AWorkspaceRevision(revision_id)
+
     def get_manager(self):
         from agio.core.workspaces import AWorkspaceManager
 
@@ -163,15 +168,15 @@ class AWorkspace(DomainBase):
         return AWorkspaceRevision(result)
 
     def get_settings(self, revision_id: str = None) -> settings_hub.WorkspaceSettingsHub:
-        try:
-            if revision_id:
-                revision = self._find_revision(revision_id)
-            else:
-                revision = self.get_current_revision()
-            settings_data = revision.get_settings_data()
-        except SettingsRevisionNotExists:
-            settings_data = {}
-            revision = None
+        # try:
+        if revision_id:
+            revision = self._find_revision(revision_id)
+        else:
+            revision = self.get_current_revision_from_env() or self.get_current_revision()
+        settings_data = revision.get_settings_data()
+        # except SettingsRevisionNotExists:
+        #     settings_data = {}
+        #     revision = None
         # create workspace settings instance with applied values
         settings = settings_hub.WorkspaceSettingsHub(settings_data)
         emit('core.settings.workspace_settings_loaded',
