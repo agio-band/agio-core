@@ -130,10 +130,12 @@ class RequiredValueNotSetError(SettingsInitError):
 class ValueTypeError(SettingsError):
     detail = "Value type error"
 
+
 class ParameterError(SettingsError):
     detail = "Parameter error"
 
-# cli
+class SettingsParameterNotExists(SettingsError):
+    detail = "Settings parameter not exists"
 
 # plugins
 class PluginError(AException):
