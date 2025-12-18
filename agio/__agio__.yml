@@ -52,6 +52,10 @@ plugins:
     implementations:
       - module: plugins/commands/revision_cmd.py
 
+  - label: Debug Shell
+    implementations:
+        - module: plugins/commands/shell_command.py
+
   # auth
   - label: Auth command
     implementations:
