@@ -173,3 +173,12 @@ class NotFoundError(AException):
 # context
 class WorkspaceNotDefined(AException):
     detail = "Workspace not defined"
+
+
+# apps
+class ApiNamespaceNotExists(AException):
+    detail = "Namespace not exists"
+
+
+class ApiNamespaceConflictError(AException):
+    detail = "Namespace conflict"

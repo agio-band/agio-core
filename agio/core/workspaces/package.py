@@ -18,7 +18,7 @@ except ModuleNotFoundError:
 from agio.core.entities import package
 from agio.core.events import emit
 from agio.core.exceptions import PackageMetadataError, PackageError
-from agio.core.plugins.base_plugin import APlugin
+from agio.core.plugins import base_plugin
 from agio.tools.modules import import_object_by_dotted_path, import_module_by_path
 from agio.core.workspaces import workspace
 
@@ -202,14 +202,17 @@ class APackageManager:
             instance = plugin_class(self, plugin_info)
             yield instance
 
-    def iterate_plugin_classes(self) -> Generator[tuple[dict, Type[APlugin]], None, None]:
+    def iterate_plugin_classes(self) -> Generator[tuple[dict, Type[base_plugin.APlugin]], None, None]:
         plugin_info: dict
         if not self.metadata_file.exists():
             raise PackageMetadataError(f"Package metafile file is not found")
         for plugin_info in self.iter_plugin_descriptions():
-            for plugin in APlugin.load_from_info(plugin_info, self.metadata_file.as_posix()):
+            for plugin in base_plugin.APlugin.load_from_info(plugin_info, self.metadata_file.as_posix()):
                 if plugin:
-                    yield plugin_info, plugin
+                    if not plugin.__name__.startswith('_'): # skip hidden plugin
+                        yield plugin_info, plugin
+                    else:
+                        logger.debug('Skip hidden plugin class %s', plugin.__name__)
 
     def iter_plugin_descriptions(self) -> Generator[list[dict[str, Any]], None, None]:
         plugins = self._metadata.get('plugins') or []

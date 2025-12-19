@@ -3,13 +3,12 @@ import re
 from fnmatch import fnmatch
 from pathlib import Path
 
-from agio.core.plugins.mixins import BasePluginClass
 from agio.core.plugins.base_plugin import APlugin
 
 logger = logging.getLogger(__name__)
 
 
-class RemoteRepositoryPlugin(BasePluginClass, APlugin):
+class RemoteRepositoryPlugin(APlugin):
     plugin_type = 'remote_repository'
     _default_file_ignore_list = ['.*', '__pycache__']
     check_url_pattern = None
