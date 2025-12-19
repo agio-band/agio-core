@@ -55,6 +55,8 @@ plugins:
   - label: Debug Shell
     implementations:
         - module: plugins/commands/shell_command.py
+          app_groups:
+            - standalone
 
   # auth
   - label: Auth command
@@ -73,6 +75,16 @@ plugins:
   - label: Gitea Release repository
     implementations:
       - module: plugins/release_repository/gitea_release_repository.py
+
+# apps
+
+  - label: Main standalone application api
+    implementations:
+      - module: plugins/application_api/standalone_main.py
+        app_groups:
+          - standalone
+
+
 
 settings:
   local:
