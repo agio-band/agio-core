@@ -56,8 +56,9 @@ class PackageManagerBase:
     def site_packages(self):
         if not self.venv_exists():
             raise FileNotFoundError(f'venv is not installed yet: {self.path}')
-        return self.run(['run', 'python', '-c', "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
-                        get_output=True).strip()
+        resp = self.run(['run', 'python', '-c', "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
+                        start_process_kwargs=dict(get_output=True))
+        return resp.strip()
 
     @property
     def pyproject_file_path(self):
@@ -138,7 +139,7 @@ class PackageManagerBase:
     def run_envs(self) -> dict|None:
         return
 
-    def run(self, cmd, workdir=None, **kwargs):
+    def run(self, cmd, workdir=None, start_process_kwargs: dict = None, **kwargs):
         if not self.venv_exists():
             caller_name = inspect.stack()[1].function
             if caller_name != 'create_venv':
@@ -151,9 +152,8 @@ class PackageManagerBase:
         kwargs.setdefault('get_output', True)
         envs = self.run_envs() or {}
         envs.update(kwargs.pop('envs', {}))
-        process_kwargs = kwargs.pop('process_kwargs', {})
-        resp = start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], env=envs, **process_kwargs)
-        return resp
+        start_process_kwargs = start_process_kwargs or {}
+        return start_process(cmd, workdir=workdir, clear_env=['VIRTUAL_ENV'], env=envs, **start_process_kwargs)
 
     @classmethod
     def get_package_manager_installation_path(cls):
