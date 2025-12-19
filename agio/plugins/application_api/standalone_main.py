@@ -1,5 +1,5 @@
 import sys
-from agio.core.plugins.application_main_api_base import MainAppAPIBase
+from agio.core.plugins.base_application_main_api import MainAppAPIBase
 
 
 class StandaloneMainAppAPI(MainAppAPIBase):

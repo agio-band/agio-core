@@ -203,8 +203,8 @@ class DiskInfoCommand(ASubCommand):
         click.secho('TODO', fg='yellow')
 
 
-class ContextAppInfoCommand(ASubCommand):
-    command_name = 'app'
+class CurrentAppInfoCommand(ASubCommand):
+    command_name = 'current-app'
 
     def execute(self, *args, **kwargs):
         from agio.tools import app
@@ -235,7 +235,7 @@ class InfoCommand(ACommandPlugin):
         ActionsInfoCommand,
         PythonInfoCommand,
         DiskInfoCommand,
-        ContextAppInfoCommand,
+        CurrentAppInfoCommand,
     )
 
     allow_empty_root_command = True
