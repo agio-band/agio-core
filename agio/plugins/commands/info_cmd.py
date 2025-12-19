@@ -203,6 +203,23 @@ class DiskInfoCommand(ASubCommand):
         click.secho('TODO', fg='yellow')
 
 
+class ContextAppInfoCommand(ASubCommand):
+    command_name = 'app'
+
+    def execute(self, *args, **kwargs):
+        from agio.tools import app
+
+        click.echo('App Name: ', nl=False)
+        click.secho(app.name, fg='yellow')
+        click.echo('  Groups: ', nl=False)
+        click.secho(', '.join(app.groups), fg='yellow')
+        click.echo(' Version: ', nl=False)
+        click.secho(app.version, fg='yellow')
+        click.echo(' Namespaces: ')
+        for ns in app.get_namespaces():
+            click.secho(f'   {ns}', fg='yellow')
+
+
 class InfoCommand(ACommandPlugin):
     name = 'info_cmd'
     command_name = 'info'
@@ -218,6 +235,7 @@ class InfoCommand(ACommandPlugin):
         ActionsInfoCommand,
         PythonInfoCommand,
         DiskInfoCommand,
+        ContextAppInfoCommand,
     )
 
     allow_empty_root_command = True
