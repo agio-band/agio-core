@@ -57,22 +57,8 @@ class APlugin(metaclass=PluginMeta):
         from agio.tools import app
 
         for imp in plugin_info.get('implementations', ()):
-            if supported_apps := imp.get('apps'):
-                if isinstance(supported_apps, str):
-                    supported_apps = (supported_apps,)
-                if not isinstance(supported_apps, (list, tuple, set)):
-                    raise PluginLoadingError(f"Supported apps must be a iterable [{info_file_path}]")
-                if app.name not in supported_apps:
-                    logger.debug(f'Skip implementation for {supported_apps}')
-                    continue
-            if supported_app_groups := imp.get('app_groups'):
-                if isinstance(supported_app_groups, str):
-                    supported_app_groups = {supported_app_groups}
-                if not isinstance(supported_app_groups, (list, tuple, set)):
-                    raise PluginLoadingError(f"Supported app groups must be a iterable [{info_file_path}]")
-                if not app.groups.intersection(supported_app_groups):
-                    logger.debug(f'Skip implementation for {supported_app_groups}')
-                    continue
+            if not app.filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
+                continue
             module = imp.get('module')
             if not module:
                 raise PluginLoadingError(f"Module is required")

@@ -35,10 +35,11 @@ class APluginHub(metaclass=Singleton):
             return
         for pkg in packages:
             for plugin in pkg.collect_plugins():
-                if not plugin.name:
-                    raise PluginLoadingError(f"Plugin name must be defined: {plugin}")
+                if not plugin.__class__.__dict__.get('name'):
+                    raise PluginLoadingError(f"Plugin name must be defined: {plugin.__class__.__name__}")
                 if plugin.name in self.plugins[plugin.plugin_type]:
                     if plugin in self.plugins[plugin.plugin_type].values():
+                        logger.debug(f"Plugin {plugin.plugin_type}.{plugin.name} already loaded.")
                         continue
                     existing_plugin = self.plugins[plugin.plugin_type][plugin.name]
                     m1 = sys.modules.get(plugin.__class__.__module__)

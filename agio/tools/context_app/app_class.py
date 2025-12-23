@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from functools import cached_property
+from typing import Iterable
 
 from agio.core.exceptions import ApiNamespaceConflictError, ApiNamespaceNotExists
 from agio.core.plugins import base_app_api
@@ -82,3 +83,29 @@ class ContextApp:
     def is_namespace_registered(self, namespace: str) -> None:
         if namespace not in self.__namespaces:
             raise NameError(f"Namespace '{namespace}' not registered")
+
+    def filter_by_name_and_group(
+            self,
+            app_names: str|Iterable[str] = None,
+            app_groups: str|Iterable[str] = None,
+            ) -> bool:
+        """Check allowed module by app name and app groups"""
+        name_match = grp_match = not any((app_names, app_groups))
+        if app_names:
+            if isinstance(app_names, (list, tuple)):
+                app_names = set(app_names)
+            elif isinstance(app_names, str):
+                app_names = {app_names}
+            if not isinstance(app_names, set):
+                raise TypeError("app_names must be a set or a str")
+            name_match =  self.name in app_names
+        if app_groups:
+            if isinstance(app_groups, (list, tuple)):
+                app_groups = set(app_groups)
+            elif isinstance(app_groups, str):
+                app_groups = {app_groups}
+            if not isinstance(app_groups, set):
+                raise TypeError(f"app_groups must be a set, list or tuple")
+            grp_match = bool(self.groups.intersection(app_groups))
+        return any([name_match, grp_match])
+
