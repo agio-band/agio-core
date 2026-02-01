@@ -22,7 +22,7 @@ def get_token(platform_url: str = None, client_id: str = None,
         if force:
             thread_tools.reset_locker(locker)
         else:
-            raise AuthorizationError('Authorization processing is already in progress')
+            raise AuthorizationError(f'Authorization processing is already in progress: {locker}')
     platform_url = platform_url or config.API.PLATFORM_URL.rstrip('/')
 
     client_id = client_id or config.API.CLIENT_ID

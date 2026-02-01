@@ -98,6 +98,6 @@ class DomainBase(ABC):
     def find(cls, **kwargs):
         raise NotImplementedError()
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return self._data
 

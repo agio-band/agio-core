@@ -81,10 +81,11 @@ class AEntity(DomainBase):
         return api.track.delete_entity(self.id)
 
     @classmethod
-    def find(cls, project_id: str, entity_class: str, entity_name: str) -> T_Entity:
+    def find(cls, project_id: str, entity_class: str, entity_name: str) -> T_Entity|None:
         data = api.track.get_entity_by_name(project_id, entity_class, entity_name)
         if data:
             return cls.from_data(data)
+        return None
 
     @classmethod
     def from_data(cls, entity_data) -> T_Entity: # TODO merge from_data and from ID
@@ -101,7 +102,7 @@ class AEntity(DomainBase):
         return cls_(entity_data)
 
     @classmethod
-    def from_id(cls, entity_id: str) -> T_Entity:
+    def from_id(cls, entity_id: str) -> type[T_Entity]:
         entity_data = api.track.get_entity(entity_id)
         entity_class = entity_data.get('class', {}).get('name')
         cls_ = cls.find_entity_class(entity_class)
@@ -136,13 +137,14 @@ class AEntity(DomainBase):
         return AProject(self.project_id)
 
     @classmethod
-    def find_entity_class(cls, class_name: str) -> T_Entity:
+    def find_entity_class(cls, class_name: str) -> type[T_Entity]|None:
         for cls_ in AEntity.iter_entity_classes():
             if cls_.entity_class == class_name:
                 return cls_
+        return None
 
     @classmethod
-    def iter_entity_classes(cls) -> Iterator[T_Entity]:
+    def iter_entity_classes(cls) -> Iterator[type[T_Entity]]:
         for _cls in cls.__subclasses__():
             yield _cls
 
@@ -172,6 +174,7 @@ class AEntity(DomainBase):
     def parent(self) -> AEntity|None:
         if self._data.get('parent'):
             return AEntity.from_id(self._data['parent']['id'])
+        return None
 
     @property
     def parent_id(self) -> str|None:
