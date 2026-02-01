@@ -18,7 +18,6 @@ def init_plugins(pkg_hub: package_hub.APackageHub = None):
     plg_hub = plugin_hub.APluginHub(pkg_hub)
     # collect plugins
     plg_hub.collect_plugins()
-    for plg in plg_hub.iter_plugins():
-        emit('core.app.plugin_loaded', {'plugin': plg})
+    plg_hub.collect_chips()
     logger.debug(f'Loaded plugins: {plg_hub.plugins_count}')
     return plg_hub
