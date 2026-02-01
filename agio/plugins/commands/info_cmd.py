@@ -136,6 +136,20 @@ class PluginsInfoCommand(ASubCommand):
             print()
 
 
+class ChipsInfoCommand(ASubCommand):
+    command_name = "chips"
+    arguments = []
+
+    def execute(self):
+        from agio.core.chips import chips_hub
+
+
+        for collection in chips_hub.collections:
+            click.secho(collection, fg='yellow')
+            for chip in chips_hub.get_collection(collection):
+                print('  ', chips_hub.get_chip_name(chip))
+
+
 class CallbacksInfoCommand(ASubCommand):
     command_name = 'callbacks'
 
@@ -232,6 +246,7 @@ class InfoCommand(ACommandPlugin):
         SettingsInfoCommand,
         PluginsInfoCommand,
         CallbacksInfoCommand,
+        ChipsInfoCommand,
         ActionsInfoCommand,
         PythonInfoCommand,
         DiskInfoCommand,
