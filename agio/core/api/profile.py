@@ -14,6 +14,7 @@ def get_user_by_id(user_id: str):
         id=user_id
     )['data']['user']
 
+
 def is_logged_in():
     try:
         get_current_user()

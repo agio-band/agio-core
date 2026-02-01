@@ -1,7 +1,23 @@
-query getCompanyList($first: Int!, $afterCursor: String) {
+query getCompanyList($first: Int!, $userId: ID!, $afterCursor: String) {
   companies(
       first: $first,
-      after: $afterCursor
+      after: $afterCursor,
+	  filter: {
+        where: {
+          members: {
+            id: {
+              equalTo: $userId
+            }
+          }
+          or: {
+            hostUser: {
+              id: {
+                equalTo: $userId
+              }
+            }
+          }
+        }
+      }
   )
   {
     edges{
@@ -13,7 +29,6 @@ query getCompanyList($first: Int!, $afterCursor: String) {
           name
           id
         }
-#        logo(params: {type: "fit", width: 480, height: 480})
       }
     }
     pageInfo {
