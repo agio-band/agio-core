@@ -20,7 +20,7 @@ class ContextApp:
 
     @cached_property
     def name(self) -> str:
-        return os.getenv(env_names.APP_NAME, 'core')
+        return os.getenv(env_names.APP_NAME, 'standalone')
 
     @cached_property
     def groups(self) -> set[str]:
