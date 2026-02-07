@@ -58,6 +58,11 @@ plugins:
           app_groups:
             - standalone
 
+  # parameter dependencies
+  - label: Expression Dependency
+    implementations:
+      - module: plugins/dependency_solvers/expression.py
+
   # auth
   - label: Auth command
     implementations:

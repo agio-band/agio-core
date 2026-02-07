@@ -131,6 +131,9 @@ class ValueTypeError(SettingsError):
     detail = "Value type error"
 
 
+class DependencyError(SettingsError):
+    detail = "Dependency error"
+
 class ParameterError(SettingsError):
     detail = "Parameter error"
 

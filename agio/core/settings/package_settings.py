@@ -262,6 +262,7 @@ class APackageSettings(metaclass=_SettingsMeta):
         self._name = ''
         self._fields_data = {}
         self._get_other_parm_func = class_kwargs.pop('_get_other_parm_func', None)
+        self._solve_dependency_func = class_kwargs.pop('_solve_dependency_func', None)
         self._class_kwargs = class_kwargs
         # initialize fields from class
         package_name = kwargs.pop('_package_name', '')
@@ -269,7 +270,8 @@ class APackageSettings(metaclass=_SettingsMeta):
             self.set_name(package_name)
         for name, field in self._get_fields().items():
             field.set_name(name)
-            self._fields_data[name] = copy.deepcopy(field)
+            field._dependency_callback = self._dependency_solver_requested
+            self._fields_data[name] = field     #copy.deepcopy(field)
             setattr(self, name, self._fields_data[name])
         if self._class_kwargs.get('_init_only'):
             # quite loading class only
@@ -337,6 +339,11 @@ class APackageSettings(metaclass=_SettingsMeta):
 
     def iter_fields(self):
         yield from self._fields_data.items()
+
+    def _dependency_solver_requested(self, field: BaseField, **kwargs) -> Any:
+        if not self._solve_dependency_func:
+            raise ValueError('Function for solve dependency not provided')
+        return self._solve_dependency_func(field, self, **kwargs)
 
     def _check_missing_values(self):
         # check required fields first
