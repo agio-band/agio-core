@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import os
+import site
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -31,15 +32,19 @@ class EnvInfoCommand(ASubCommand):
 
     def execute(self, py_envs, *args, **kwargs):
         keys = [k for k in os.environ.keys() if k.startswith('AGIO_')]
+        extra_values = {}
         if py_envs:
             keys.extend([k for k in os.environ.keys() if k.startswith('PYTHON_')])
             keys.append('PATH')
+            site_paths = ':'.join([site.getusersitepackages()] + site.getsitepackages())
+            keys.append('SITE-PACKAGES')
+            extra_values['SITE-PACKAGES'] = site_paths
         if not keys:
             print('No AGIO env found')
             return
         max_length = max(len(k) for k in keys)
         for k in keys:
-            value = os.environ[k]
+            value = os.environ.get(k) or extra_values.get(k)
             if self.is_multipath(value):
                 parts = value.split(':')
                 click.secho(f"{k:>{max_length + 2}} = {parts[0]}", fg='green')
