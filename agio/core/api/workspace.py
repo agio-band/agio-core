@@ -141,7 +141,7 @@ def get_revision(revision_id: UUID|str) -> dict:
     if response:
         return response
     else:
-        raise RevisionNotExists
+        raise RevisionNotExists(detail=f'Workspace revision not found {revision_id}')
 
 
 def update_revision(

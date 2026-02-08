@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Iterator
 
 from agio.core import api
@@ -7,7 +8,6 @@ from agio.core.entities import workspace
 from agio.core.settings import settings_hub
 from . import APackageRelease
 from .entity import DomainBase
-
 
 
 class AWorkspaceRevision(DomainBase):
@@ -109,6 +109,12 @@ class AWorkspaceRevision(DomainBase):
     def get_settings(self):
         return settings_hub.WorkspaceSettingsHub(self.get_settings_data())
 
+    def copy_settings_from(self, source: str|AWorkspaceRevision):
+        if isinstance(source, str):
+            source = AWorkspaceRevision(source)
+        settings = source.get_settings()
+        return self.set_settings(settings.dump(skip_default=True), False)
+
     def get_package_list(self):
         for pkg_data in self._data.get("packageReleases"):
             yield APackageRelease(pkg_data)
@@ -124,7 +130,9 @@ class AWorkspaceRevision(DomainBase):
             layout=layout
         )
 
-    def set_settings_data(self, settings_data: dict, set_current: bool = True) -> str:
+    def set_settings(self, settings_data: dict|settings_hub.WorkspaceSettingsHub, set_current: bool = True) -> str:
+        if not isinstance(settings_data, dict):
+            settings_data = settings_data.dump()
         return api.workspace.create_revision_settings(
             self.id,
             settings_data,

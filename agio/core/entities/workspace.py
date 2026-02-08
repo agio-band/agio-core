@@ -58,24 +58,29 @@ class AWorkspace(DomainBase):
         return bool(self._data['deletedAt'])
 
     @classmethod
-    def find(cls, company_id: str = None, name: str = NOTSET) -> 'AWorkspace':
+    def find(cls, company_id: str = None, name: str = NOTSET) -> 'AWorkspace|None':
         company_id = company_id or api.desk.get_current_company()['id']
         data = api.workspace.find_workspace(company_id=company_id, name=name)
         if data:
             return cls(data)
+        return None
 
     @classmethod
     def current(cls):
         ws_id = os.getenv(env_names.WORKSPACE_ID)
-        if not ws_id:
-            raise WorkspaceNotDefined
-        return cls(ws_id)
+        if ws_id:
+            return cls(ws_id)
+        rev = cls.get_current_revision_from_env()
+        if rev:
+            return rev.get_workspace()
+        raise WorkspaceNotDefined
 
     def get_current_revision(self):
         revision = api.workspace.get_revision_by_workspace_id(self.id)
         return AWorkspaceRevision(revision)
 
-    def get_current_revision_from_env(self):
+    @classmethod
+    def get_current_revision_from_env(cls):
         revision_id = os.getenv(env_names.REVISION_ID)
         if revision_id:
             return AWorkspaceRevision(revision_id)
@@ -189,6 +194,6 @@ class AWorkspace(DomainBase):
             settings = settings.dump()
         emit('core.settings.before_workspace_settings_save',
              {'settings': settings, 'workspace': self, 'revision': rev})
-        rev.set_settings_data(settings, set_current=set_current)
+        rev.set_settings(settings, set_current=set_current)
         emit('core.settings.workspace_settings_saved',
              {'settings': settings, 'workspace': self, 'revision': rev})
