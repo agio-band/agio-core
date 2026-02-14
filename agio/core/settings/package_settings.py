@@ -301,7 +301,7 @@ class APackageSettings(metaclass=_SettingsMeta):
 
     def set(self, param_name: str, value: Any, **kwargs) -> None:
         if param_name not in self._fields_data:
-            raise ValueError(f"Parameter '{param_name}' not found")
+            raise ValueError(f"Parameter '{param_name}' not found in {repr(self)}")
         self._fields_data[param_name].set(value, **kwargs)
 
     def get_parameter(self, param_name: str) -> Type[BaseField]:
@@ -351,7 +351,10 @@ class APackageSettings(metaclass=_SettingsMeta):
         missing = [name for name in required_fields if not self._fields_data[name].has_value()]
         if missing:
             err_params = [f'{self.name}.{parm}' for parm in missing]
-            raise RequiredValueNotSetError(f"Missing required fields in package settings: {', '.join(err_params)}")
+            raise RequiredValueNotSetError(
+                f"Missing required fields in package settings: {', '.join(err_params)}"
+                f"class: {inspect.getfile(self.__class__)}"
+            )
 
     def __dump_values__(self, serialized:bool = False) -> dict:
         self._check_missing_values()
