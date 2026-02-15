@@ -52,6 +52,9 @@ class ASettingsHub:
     def iter_package_settings(self):
         yield from self._package_settings.items()
 
+    def get_package_settings(self, package_name: str) -> APackageSettings|None:
+        return self._package_settings.get(package_name)
+
     def _check_parm_name(self, param_name: str):
         if param_name.count('.') != 1:
             raise NameError(f"Invalid parameter name: {param_name}")
@@ -158,7 +161,9 @@ class LocalSettingsHub(ASettingsHub):
 class WorkspaceSettingsHub(ASettingsHub):
     settings_type: str = 'ws'
 
-    # def save(self):
+    # def save(self, workspace: AWorkspace):
     #     """
     #     Current user must have permissions to save workspace settings
     #     """
+    #     rev = self.get_current_revision()
+    #     rev.set_settings(self.dump())
