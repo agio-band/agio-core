@@ -3,6 +3,7 @@ import importlib.util
 import sys
 from fnmatch import fnmatch
 from pathlib import Path
+from typing import Any
 
 
 def import_module_by_path(path: str, name: str = None):
@@ -13,11 +14,27 @@ def import_module_by_path(path: str, name: str = None):
     return module
 
 
-def import_object_by_dotted_path(dotted_path: str, object_name: str) -> type:
+def get_object_dot_path(obj: Any) -> str:
+    """Return full dotted path of an object."""
+    module_name = getattr(obj, '__module__', None)
+    if hasattr(obj, '__qualname__'):
+        obj_name = obj.__qualname__
+    elif hasattr(obj, '__name__'):
+        obj_name = obj.__name__
+    else:
+        raise TypeError(f"Object {type(obj)} is not a named element of module.")
+    if module_name == 'builtins' or module_name is None:
+        return obj_name
+    return f"{module_name}.{obj_name}"
+
+
+def import_object_by_dotted_path(dotted_path: str, object_name: str = None) -> type:
     """
     Import and return object inside module by dotted path.
     Path example: "my_module.my_submodule.MyClass"
     """
+    if not object_name:
+        dotted_path, object_name = dotted_path.rsplit('.', 1)
     module = importlib.import_module(dotted_path)
     return getattr(module, object_name)
 
@@ -76,3 +93,4 @@ def iter_subclasses(cls):
     for subclass in cls.__subclasses__():
         yield subclass
         yield from iter_subclasses(subclass)
+
