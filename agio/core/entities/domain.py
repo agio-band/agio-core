@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 import json
 from abc import ABC, abstractmethod
 from typing import Iterator
 from uuid import UUID
+
+from agio.tools import modules
 
 
 class DomainBase(ABC):
@@ -101,3 +104,13 @@ class DomainBase(ABC):
     def to_dict(self) -> dict:
         return self._data
 
+    def serialize(self) -> dict:
+        data = self.to_dict()
+        data['_'] = modules.get_object_dot_path(self.__class__)
+        return data
+
+    @classmethod
+    def deserialize(cls, entity_data: dict):
+        class_dotted_path = entity_data.pop('_')
+        _cls = modules.import_object_by_dotted_path(class_dotted_path)
+        return _cls(entity_data)

@@ -102,7 +102,7 @@ class AEntity(DomainBase):
         return cls_(entity_data)
 
     @classmethod
-    def from_id(cls, entity_id: str) -> type[T_Entity]:
+    def from_id(cls, entity_id: str) -> T_Entity:
         entity_data = api.track.get_entity(entity_id)
         entity_class = entity_data.get('class', {}).get('name')
         cls_ = cls.find_entity_class(entity_class)
@@ -185,7 +185,6 @@ class AEntity(DomainBase):
 
     def _entity_can_be_child(self, entity: T_Entity) -> bool:
         ...
-
 
 
 T_Entity = TypeVar("T_Entity", bound=AEntity)
