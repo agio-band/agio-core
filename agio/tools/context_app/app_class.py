@@ -90,22 +90,25 @@ class ContextApp:
             app_groups: str|Iterable[str] = None,
             ) -> bool:
         """Check allowed module by app name and app groups"""
+
+        def match_lists(to_check: set, match_with: set) -> bool:
+            neg_match = {item for item in to_check if item.startswith('!')}
+            pos_match = to_check.difference(neg_match)
+            neg_match = {item.strip('!') for item in neg_match}
+            return bool(pos_match.intersection(match_with) and not neg_match.intersection(match_with))
+
+        def fix_type(value):
+            if isinstance(value, (list, tuple)):
+                value = set(value)
+            elif isinstance(value, str):
+                value = {value}
+            if not isinstance(value, set):
+                raise TypeError(f"value must be a set or a str, not {type(value)}")
+            return value
+
         name_match = grp_match = not any((app_names, app_groups))
         if app_names:
-            if isinstance(app_names, (list, tuple)):
-                app_names = set(app_names)
-            elif isinstance(app_names, str):
-                app_names = {app_names}
-            if not isinstance(app_names, set):
-                raise TypeError("app_names must be a set or a str")
-            name_match =  self.name in app_names
+            name_match = match_lists(fix_type(app_names), {self.name})
         if app_groups:
-            if isinstance(app_groups, (list, tuple)):
-                app_groups = set(app_groups)
-            elif isinstance(app_groups, str):
-                app_groups = {app_groups}
-            if not isinstance(app_groups, set):
-                raise TypeError(f"app_groups must be a set, list or tuple")
-            grp_match = bool(self.groups.intersection(app_groups))
+            grp_match = match_lists(fix_type(app_groups), self.groups)
         return any([name_match, grp_match])
-
