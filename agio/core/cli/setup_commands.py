@@ -48,6 +48,7 @@ class CustomGroup(click.Group):
     help="Enable DEBUG mode")
 @click.option(
     "-w", "--workspace",
+    envvar='AGIO_WORKSPACE',
     help='Execute in workspace (Workspace ID, Revision ID, Settings ID, Project ID)',
     required=False
 )
@@ -57,6 +58,7 @@ def agio_group(ctx, workspace, debug, **kwargs):
         cmd_name = ctx.obj.get('cmd_name')
         cmd_args = ctx.obj.get('cmd_args', [])
         is_unknown = ctx.obj.get('is_unknown_command', False)
+        # TODO detect and redefine new env
         if not AWorkspaceManager.is_defined() and workspace is not None:
             ws: AWorkspaceManager | None = AWorkspaceManager.create_from_id(workspace)
             if ws:

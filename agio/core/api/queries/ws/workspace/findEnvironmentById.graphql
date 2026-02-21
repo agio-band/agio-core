@@ -1,0 +1,114 @@
+query findWorkspace($id: ID!){
+  # by workspace is
+    by_workspace_id: workspaces (
+    first:1,
+    filter:{
+      where:{
+        id: {equalTo: $id}
+      }
+    }
+  ){
+    edges{
+      node{
+        id
+        name
+      }
+    }
+  }
+
+
+  revision_by_ws_id: workspaceRevisions(
+    first: 1,
+    filter:{
+      where:{
+        workspaceId: {equalTo: $id}
+        isCurrent: {equalTo: true}
+      }
+    }
+  ){
+    edges{
+      node{
+        id
+        workspaceId
+      }
+    }
+  }
+
+  # by rew id
+
+  revision_by_id: workspaceRevisions(
+    first: 1,
+    filter:{
+      where:{
+        id: {equalTo: $id}
+      }
+    }
+  ){
+    edges{
+      node{
+        id
+        workspaceId
+      }
+    }
+  }
+  settings_by_rev_id: workspaceSettingses(
+    first: 1,
+    filter:{
+      where:{
+        workspaceRevision: {
+          id: {equalTo: $id}
+        }
+        isCurrent: {equalTo: true}
+      }
+    }
+  ){
+    edges{
+      node{
+        id
+      }
+    }
+  }
+  # by settings id
+  by_settings_id: workspaceSettingses(
+    first: 1,
+    filter:{
+      where:{
+        id: {equalTo: $id}
+      }
+    }
+  ){
+    edges{
+      node{
+        id
+        workspaceRevision{
+          id
+          isCurrent
+          workspaceId
+        }
+      }
+    }
+  }
+
+  # by project id
+  projects(
+    first: 1,
+    filter:{
+      where:{
+        id: {equalTo: $id}
+      }
+    }
+  ){
+    edges{
+      node{
+        name
+        code
+        id
+        workspaceId
+        workspaceRevision{
+          id
+          workspaceId
+        }
+      }
+    }
+  }
+}
