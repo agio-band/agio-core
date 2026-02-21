@@ -168,7 +168,7 @@ class AWorkspaceManager:
         data = api.workspace.find_environment_by_id(entity_id)
         if not data:
             raise WorkspaceNotExists(detail='Workspace or revision not found')
-        logger.info('Workspace environment found from %s', data['entity'])
+        logger.debug('Workspace environment found from %s', data['entity'])
         manager = cls(
             revision=data['revision_id'],
             workspace_id=data['workspace_id'],
