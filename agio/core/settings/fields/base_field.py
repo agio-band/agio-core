@@ -177,11 +177,11 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
 
     def get(self, **kwargs) -> Any:
         if self.is_depended():
-            return self._solve_dependency(**kwargs)
+            return self.type_adapter.validate_python(self._solve_dependency(**kwargs))
         if self._data['value'] != NOT_SET:
-            return self._data['value']
+            return self.type_adapter.validate_python(self._data['value'])
         if not self._data['required']:
-            return self._data['default']
+            return self.type_adapter.validate_python(self._data['default'])
         raise ValueError("Field is required but value is not set")
 
     def _get_save_values_list(self):
