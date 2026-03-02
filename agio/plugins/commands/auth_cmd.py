@@ -1,12 +1,17 @@
+import click
+
 from agio.core.api import client
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 
 
 class LoginCommand(ASubCommand):
     command_name = "login"
+    arguments = [
+        click.option('-f', '--force', is_flag=True, help='Reset locker and restart login process'),
+    ]
 
-    def execute(self):
-        client.login()
+    def execute(self, force: bool):
+        client.login(force=force)
 
 
 class LogoutCommand(ASubCommand):
