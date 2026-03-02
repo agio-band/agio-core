@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from functools import cached_property
+from pathlib import Path
 from typing import Iterator
 from uuid import UUID
 
@@ -65,11 +68,11 @@ class AProject(domain.DomainBase):
     def get_company(self):
         return company_entity.ACompany(self._data['company']['id'])
 
-    @property
+    @cached_property
     def company(self):
         return self.get_company()
 
-    @property
+    @cached_property
     def workspace(self):
         return self.get_workspace()
 
@@ -133,13 +136,16 @@ class AProject(domain.DomainBase):
         project_settings = self.get_local_settings()
         return {k.name: k.path for k in project_settings.get('agio_pipe.local_roots')}
 
-    @property
+    @cached_property
     def mount_root(self):
         roots = self.get_roots()
         if 'projects' not in roots: # todo: is static root name?
             raise ValueError(f'Local settings has no "projects" root parameter for project {self.name} ({self.id})')
-        local_storage_root = roots['projects']
-        company_root = f'{local_storage_root}/{self.get_company().code}'
+        return roots['projects']
+
+    @cached_property
+    def company_root(self):
+        company_root = Path(self.mount_root, self.company.code)
         return company_root
 
     # settings
