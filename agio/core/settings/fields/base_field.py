@@ -8,7 +8,9 @@ from weakref import ref
 from pydantic import TypeAdapter, BaseModel
 from pydantic_core import ValidationError
 
-from agio.core.exceptions import ValueTypeError, ParameterError
+from agio.core.exceptions import ValueTypeError, ParameterError, DependencyError
+from agio.core.plugins import plugin_hub
+from agio.core.settings.dependency import DependencyConfig
 from agio.core.settings.fields.js_types import to_js_type
 from agio.core.settings.generic_types import REQUIRED, NOT_SET
 from agio.core.settings.validators import ValidatorBase
@@ -33,6 +35,7 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
     default_validators: list[ValidatorBase, ...] = []
     default_widget = None
     __name_pattern = re.compile(r'^[a-zA-Z](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$')
+    __dep_plugins_cache = {}
 
     def __init__(
         self,
@@ -48,6 +51,7 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
         hint: str = None,
         **kwargs
     ):
+        self._dependency_callback = None
         if self.field_type is None:
             raise ValueError(f'Field type not set for {self.__class__.__name__}')
         if default is Ellipsis:
@@ -59,8 +63,8 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
             'value': NOT_SET,
             'locked': locked,
             'dependency': {
-                'type': None,  # dependency type:  ref (reference)|exp (expression)|pdg
-                'value': None,
+                'type': None,  # dependency type:  ref (reference)|exp (expression)|pdg, ...
+                'value': None, # any json data
                 'options': None,
                 'enabled': False, # for disable in overrides
             },
@@ -167,13 +171,17 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
     def set(self, value: Any) -> None:
         if self.is_locked():
             raise ParameterError('Parameter is locked')
+        if self.is_depended():
+            raise ParameterError('Parameter has dependency and cant be changed directly')
         self._data['value'] = self._validate(value)
 
-    def get(self) -> Any:
+    def get(self, **kwargs) -> Any:
+        if self.is_depended():
+            return self.type_adapter.validate_python(self._solve_dependency(**kwargs))
         if self._data['value'] != NOT_SET:
-            return self._data['value']
+            return self.type_adapter.validate_python(self._data['value'])
         if not self._data['required']:
-            return self._data['default']
+            return self.type_adapter.validate_python(self._data['default'])
         raise ValueError("Field is required but value is not set")
 
     def _get_save_values_list(self):
@@ -196,23 +204,53 @@ class BaseField(ABC, Generic[FieldType], metaclass=BaseFieldMeta):
         return data
 
     def set_settings(self, saved_settings: dict) -> None:
+        if self.is_locked():
+            raise ParameterError('Parameter is locked')
         self._data.update(saved_settings)
 
-    def get_dependency(self):
-        return self._data['dependency']
+    def get_dependency(self) -> DependencyConfig|None:
+        dep = self._data.get('dependency')
+        return DependencyConfig(**dep) if dep else None
 
-    def set_dependency(self, dependency_value: dict) -> None:
+    def set_dependency(self, dependency_config: DependencyConfig) -> None:
         if self.is_locked():
             raise ParameterError('Parameter is locked')
-        self._data['dependency'] = dependency_value
+        self._data['dependency'] = dependency_config.as_dict()
 
-    def set_reference_to(self, parm: Type['BaseField']) -> None:
-        if self.is_locked():
-            raise ParameterError('Parameter is locked')
-        if not parm.name:
-            raise ValueError("Reference field must have a name")
-        self._data['dependency']['type'] = 'ref'
-        self._data['dependency']['value'] = parm.name
+    def has_dependency(self) -> bool:
+        return bool(self.get_dependency())
+
+    def is_depended(self) -> bool:
+        dep = self.get_dependency()
+        if not dep:
+            return False
+        return dep.enabled
+
+    def clear_dependency(self) -> bool:
+        if self.is_depended():
+            self._data['dependency'] = None
+            return True
+        return False
+
+    def set_dependency_enabled(self, value: bool) -> bool:
+        if self._data.get('dependency'):
+            if self._data['dependency'].get('enabled') != value:
+                self._data['dependency']['enabled'] = value
+                return True
+        return False
+
+    def _solve_dependency(self, **kwargs):
+        dep = self.get_dependency()
+        if not dep:
+            raise DependencyError('Dependency not enabled')
+        if not dep.enabled:
+            raise DependencyError('Dependency not enabled')
+        if not self._dependency_callback:
+            raise DependencyError('Dependency callback not provided')
+        return self._dependency_callback(self, **kwargs)
+
+    def _get_dependency_plugin_name(self):
+        return (self._data.get('dependency') or {}).get('type')
 
     def set_comment(self, value: str) -> None:
         self._data['comment'] = TypeAdapter(str).validate_python(value)

@@ -31,3 +31,9 @@ def open_path(path: str|Path) -> None:
         webbrowser.open(path.as_posix())
     else:
         raise FileNotFoundError(path)
+
+
+def system_executable_extension() -> str:
+    if os.name == 'nt':
+        return '.exe'
+    return ''

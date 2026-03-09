@@ -10,10 +10,10 @@ class SettingsCommand(ACommandPlugin):
     help = 'Settings info'
 
     def execute(self):
-        from agio import local_settings, workspace_settings
+        from agio.core.settings import local_settings
 
-        self._print_settings_from_hub(local_settings, 'LOCAL SETTINGS')
-        self._print_settings_from_hub(workspace_settings, 'WORKSPACE SETTINGS')
+        self._print_settings_from_hub(local_settings.load(), 'LOCAL SETTINGS')
+        # self._print_settings_from_hub(workspace_settings, 'WORKSPACE SETTINGS')
 
     def _print_settings_from_hub(self, hub, title: str):
         line = lambda: print("=" * 50)

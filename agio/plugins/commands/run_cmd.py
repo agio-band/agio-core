@@ -1,4 +1,6 @@
+import os
 import sys
+from pathlib import Path
 
 from agio.core.cli import Env
 import click
@@ -30,4 +32,14 @@ class RunCommand(ACommandPlugin):
             raise Exception('Command is required')
         if env:
             env = dict(env)
+        else:
+            env = {}
+        env = self._expand_envs(env)
         start_process(command, env=env, workdir=cwd, replace=True)
+
+    def _expand_envs(self, envs: dict) -> dict:
+        python_dir = str(Path(sys.executable).parent)
+        current_path = [x.strip() for x in os.environ.get('PATH', '').split(os.pathsep) if x.strip()]
+        current_path.insert(0, python_dir)
+        envs['PATH'] = os.pathsep.join(current_path)
+        return envs

@@ -1,22 +1,22 @@
 import inspect
 import json
 import logging
-from abc import ABC
+
 import click
 
-from agio.core.events import emit
 from agio.core.config import config
-from agio.core.plugins.mixins import BasePluginClass
+from agio.core.events import emit
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.workspaces import APackageManager
-from agio.tools import context, env_names
 from agio.tools import args_helper
+from agio.tools import env_names
+from agio.tools import app
 from agio.tools.process_utils import restart_with_env, pipe_is_allowed, write_to_pipe
 
 logger = logging.getLogger(__name__)
 
 
-class AbstractCommandPlugin(ABC):
+class AbstractCommandPlugin:
     plugin_type = 'command'
     command_name = None
     arguments = []
@@ -113,7 +113,7 @@ class AbstractCommandPlugin(ABC):
         pass
 
 
-class ACommandPlugin(BasePluginClass, AbstractCommandPlugin, APlugin):
+class ACommandPlugin(AbstractCommandPlugin, APlugin):
 
     def __init__(self, package: APackageManager, plugin_info: dict, parent_group=None):
         APlugin.__init__(self, package, plugin_info)
@@ -129,7 +129,7 @@ class ACommandPlugin(BasePluginClass, AbstractCommandPlugin, APlugin):
         return (), {}
 
 
-class ASubCommand(ABC):
+class ASubCommand:
     command_name = None
     arguments = []
     help = None
@@ -158,7 +158,7 @@ class AStartAppCommand(ACommandPlugin):
     def before_start(self, **kwargs):
         if not self.app_name:
             raise ValueError(f"{self.__class__.__name__}: app_name must be defined.")
-        if context.app_name != self.app_name:
+        if app.name != self.app_name:
             logger.debug(f'Restart as application "{self.app_name}"')
             restart_with_env({env_names.APP_NAME: self.app_name})
             # TODO env_names.APP_VERSION

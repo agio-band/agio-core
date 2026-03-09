@@ -8,8 +8,8 @@ __cache_locker = Cache(app_dirs.temp_dir('locker').as_posix())
 
 
 def locker(name, expire=60):
-    if expire == 0:
-        raise RuntimeError('Locker does not work if the expiration time is zero.')
+    if expire <= 0:
+        raise RuntimeError('The lock will not work if the expiration time is zero or less.')
     return Lock(__cache_locker, name, expire=expire)
 
 

@@ -84,7 +84,7 @@ def start_process(
             except OSError as e:
                 print(f"Error changing directory: {e}")
                 exit(1)
-        command = [shlex.quote(x).replace("'", '"') for x in command]   # fix quotes for Windows os
+        # command = [shlex.quote(x).replace("'", '"') for x in command]  # TODO fix quotes for Windows os ?
         if os.path.isabs(executable):
             os.execve(executable, command, new_env)
         else:
@@ -196,6 +196,8 @@ def start_process(
                     num = _read_pipe.value
                 return custom_pipe.read_pipe(num)
             else:
+                sys.stdout.flush()
+                sys.stderr.flush()
                 process.wait()
                 logging.debug(f'Exit Code: {process.returncode}')
 

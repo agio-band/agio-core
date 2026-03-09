@@ -131,6 +131,9 @@ class ValueTypeError(SettingsError):
     detail = "Value type error"
 
 
+class DependencyError(SettingsError):
+    detail = "Dependency error"
+
 class ParameterError(SettingsError):
     detail = "Parameter error"
 
@@ -173,3 +176,12 @@ class NotFoundError(AException):
 # context
 class WorkspaceNotDefined(AException):
     detail = "Workspace not defined"
+
+
+# apps
+class ApiNamespaceNotExists(AException):
+    detail = "Namespace not exists"
+
+
+class ApiNamespaceConflictError(AException):
+    detail = "Namespace conflict"
