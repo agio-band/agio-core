@@ -141,7 +141,7 @@ def get_revision(revision_id: UUID|str) -> dict:
     if response:
         return response
     else:
-        raise RevisionNotExists
+        raise RevisionNotExists(detail=f'Workspace revision not found {revision_id}')
 
 
 def update_revision(
@@ -313,3 +313,68 @@ def get_revision_by_settings_id(settings_id: UUID|str) -> dict:
         return get_revision(revision_id)
     else:
         raise RevisionNotExists
+
+# find environment
+def find_environment_by_id(id: str | UUID) -> dict:
+    """
+    Return list of ids:
+    - Workspace id
+    - Revision id
+    - Settings id
+    Return
+    - Workspace ID
+    - Revision ID|None
+    - Settings ID|None
+    """
+    resp = client.make_query(
+        'ws/workspace/findEnvironmentById.graphql',
+        id=str(id)
+    )
+    workspace_id = revision_id = settings_id = None
+    entity = None
+
+    # by workspace id
+    if resp['data']['revision_by_ws_id']['edges']:
+        entity_data = resp['data']['revision_by_ws_id']['edges'][0]['node']
+        workspace_id = entity_data['workspaceId']
+        revision_id = entity_data['id']
+        # settings_id = get_settings_by_revision_id(revision_id)['id']
+        entity = 'workspace'
+
+    # by revision id
+    elif resp['data']['revision_by_id']['edges']:
+        entity_data = resp['data']['revision_by_id']['edges'][0]['node']
+        workspace_id = entity_data['workspaceId']
+        revision_id = entity_data['id']
+        # settings_id = get_settings_by_revision_id(revision_id)['id']
+        entity = 'revision'
+
+    # is settings id
+    elif resp['data']['by_settings_id']['edges']:
+        entity_data = resp['data']['by_settings_id']['edges'][0]['node']
+        settings_id = entity_data['id']
+        revision_id = entity_data['workspaceRevision']['id']
+        workspace_id = entity_data['workspaceRevision']['workspaceId']
+        entity = 'settings'
+
+    # py project id
+    elif resp['data']['projects']['edges']:
+        entity_data = resp['data']['projects']['edges'][0]['node']
+        if entity_data['workspaceId']:
+            workspace_id = entity_data['workspaceId']
+            # revision_id = get_revision_by_workspace_id(workspace_id)['id']
+        else:
+            revision_id = entity_data['workspaceRevision']['id']
+            workspace_id = entity_data['workspaceRevision']['workspaceId']
+            # settings_id = get_settings_by_revision_id(revision_id)['id']
+        entity = 'project'
+    else:
+        if resp['data']['by_workspace_id']['edges']:
+            raise RevisionNotExists(detail=f'Workspace {id} has no current revision')
+        raise WorkspaceNotExists(detail=f'Can not define workspace with provided ID "{id}"')
+    return dict(
+        workspace_id=workspace_id,
+        revision_id=revision_id,
+        settings_id=settings_id,
+        entity=entity,
+    )

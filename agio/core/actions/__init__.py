@@ -9,9 +9,9 @@ from ..plugins import plugin_hub
 
 @lru_cache
 def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
-    from agio.tools import context
+    from agio.tools import app
 
-    app_name = app_name or context.app_name
+    app_name = app_name or app.name
     grp = ActionGroupItem(menu_name, None)
     for action in iter_actions():
         if not action.is_match(menu_name, app_name):

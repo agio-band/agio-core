@@ -6,11 +6,10 @@ from functools import lru_cache, wraps
 from threading import Thread, Event
 from typing import Iterable, Any, Callable
 
-from agio.core.events import emit
 from agio.core.actions import action_item
-from agio.core.plugins.base_plugin import APlugin
-from agio.core.plugins.mixins import BasePluginClass
+from agio.core.events import emit
 from agio.core.plugins import plugin_hub
+from agio.core.plugins.base_plugin import APlugin
 from agio.core.workspaces import package_hub
 from agio.tools import text_helpers, process_hub
 
@@ -80,21 +79,11 @@ def make_action(
     return decorator
 
 
-class _UpdateActions(type):
-    def __new__(cls, class_name, bases, attrs):
-        if 'name' in attrs:
-            service_name = attrs['name']
-            for name, func in attrs.items():
-                if hasattr(func, '_action_data'):
-                    action_full_name = f"{service_name}.{func._action_data['name']}"
-                    func._action_data['action'] = action_full_name
-        return super().__new__(cls, class_name, bases, attrs)
-
-
-class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
+class ServicePlugin(APlugin):
     plugin_type = 'service'
     menu_name = None
     app_name = None
+    __is_base_plugin__ = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -104,6 +93,15 @@ class ServicePlugin(BasePluginClass, APlugin, metaclass=_UpdateActions):
         if self.app_name is not None:
             if isinstance(self.app_name, str):
                 self.app_name = [self.app_name]
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        service_name = getattr(cls, 'name', None)
+        if service_name:
+            for name, func in cls.__dict__.items():
+                if hasattr(func, '_action_data'):
+                    action_full_name = f"{service_name}.{func._action_data['name']}"
+                    func._action_data['action'] = action_full_name
 
     @property
     def plugin_hub(self):

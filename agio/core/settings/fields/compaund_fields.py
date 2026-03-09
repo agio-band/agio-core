@@ -1,6 +1,6 @@
 from typing import Generic, Any, Type, Iterable, Collection, Union, Sized, TypeVar
 
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, BaseModel
 from pydantic_core import ValidationError
 
 from agio.core.settings.fields.base_field import BaseField
@@ -43,6 +43,9 @@ class CollectionField(BaseField[list[T]]):
     def _validate_element(self, element: Any) -> T:
         if self.element_type is None:
             return element
+        # Use model_validate for Pydantic BaseModel to properly convert dicts to model instances
+        if isinstance(self.element_type, type) and issubclass(self.element_type, BaseModel):
+            return self.element_type.model_validate(element)
         return TypeAdapter(self.element_type).validate_python(element)
 
     def _validate(self, value: Any) -> Iterable[T]:
@@ -59,6 +62,10 @@ class CollectionField(BaseField[list[T]]):
         info['element_type_schema'] = compound_info.get('type_schema')
         info['element_widget'] = self._data['kwargs'].get('element_widget')
         return info
+
+    def __getitem__(self, index):
+        return self._data['value'][index]
+
 
 class ListField(CollectionField[T]):
     field_type = list[T]

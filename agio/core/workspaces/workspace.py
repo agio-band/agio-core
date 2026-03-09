@@ -87,7 +87,7 @@ class AWorkspaceManager:
     # creation
 
     @classmethod
-    def from_workspace(cls, workspace: AWorkspace|dict|str, **kwargs) -> 'AWorkspaceManager':
+    def from_workspace(cls, workspace: AWorkspace|dict|str, **kwargs) -> 'AWorkspaceManager|None':
         if isinstance(workspace, str):
             data = api.workspace.get_revision_by_workspace_id(workspace)
             revision = AWorkspaceRevision(data)
@@ -99,6 +99,7 @@ class AWorkspaceManager:
         elif isinstance(workspace, AWorkspace):
             current_revision = workspace.get_current_revision()
             return cls(current_revision, **kwargs)
+        return None
 
     @property
     def settings_id(self):
@@ -108,18 +109,19 @@ class AWorkspaceManager:
     def local_layout_file(self) -> Path:
         return self.install_root / self._local_layout_file_name
 
-    def dump_local_settings(self):
+    def dump_local_settings(self) -> Path|None:
         try:
             local_layout = collector.collect_local_settings_layout()
         except Exception:
             logger.exception(f'Failed to collect local settings')
-            return
+            return None
         if local_layout:
             self.local_layout_file.parent.mkdir(parents=True, exist_ok=True)
             with self.local_layout_file.open('w') as f:
                 json.dump(local_layout, f, indent=2)
             logger.info(f'Layout file dumped to {self.local_layout_file}')
             return self.local_layout_file
+        return None
 
     # meta file
 
@@ -136,22 +138,45 @@ class AWorkspaceManager:
 
     # define
     @classmethod
-    def current(cls) -> 'AWorkspaceManager':
+    def current(cls) -> 'AWorkspaceManager|None':
         if rev_id := os.getenv(env_names.REVISION_ID):
             return cls(rev_id)
         elif ws_id := os.getenv(env_names.WORKSPACE_ID):
             return cls.from_workspace(ws_id)
+        return None
 
-    @classmethod
-    def from_id(cls, entity_id: str, **kwargs) -> 'AWorkspaceManager':
-        resp = api.workspace.find_workspace_or_revision_by_id(entity_id)
-        if resp['workspace']:
-            return cls.from_workspace(resp['workspace'])
-        elif resp['revision']:
-            revision = AWorkspaceRevision(resp['revision'])
-            return cls(revision, **kwargs)
-        else:
+    # @classmethod
+    # def from_id(cls, entity_id: str, **kwargs) -> 'AWorkspaceManager':
+    #     resp = api.workspace.find_workspace_or_revision_by_id(entity_id)
+    #     if resp['workspace']:
+    #         return cls.from_workspace(resp['workspace'])
+    #     elif resp['revision']:
+    #         revision = AWorkspaceRevision(resp['revision'])
+    #         return cls(revision, **kwargs)
+    #     else:
+    #         raise WorkspaceNotExists(detail='Workspace or revision not found')
+
+    @classmethod # TODO cache it
+    def create_from_id(cls, entity_id: str) -> 'AWorkspaceManager':
+        """
+        Get WorkspaceManager from various of IDs
+        - workspace id (+current revision id +current settings id)
+        - revision id -> workspace id (+current settings id)
+        - settings id -> revision id -> workspace id
+        - project id -> revision id -> workspace id (+current settings id)
+        """
+        data = api.workspace.find_environment_by_id(entity_id)
+        if not data:
             raise WorkspaceNotExists(detail='Workspace or revision not found')
+        logger.debug('Workspace environment found from %s', data['entity'])
+        manager = cls(
+            revision=data['revision_id'],
+            workspace_id=data['workspace_id'],
+            settings_revision_id=data['settings_id']
+        )
+        if data['entity'] == 'project':
+            manager.add_launch_envs({env_names.PROJECT_ID: entity_id})
+        return manager
 
     @classmethod
     def default(cls):
@@ -159,7 +184,11 @@ class AWorkspaceManager:
 
     @classmethod
     def is_defined(cls):
-        return bool(os.getenv(env_names.WORKSPACE_ID)) or bool(os.getenv(env_names.REVISION_ID))
+        return bool(os.getenv(env_names.WORKSPACE_ID))# or bool(os.getenv(env_names.REVISION_ID))
+
+    @classmethod
+    def is_current_workspace(cls):
+        return bool(os.getenv(env_names.WORKSPACE_ID))
 
     # props
 
@@ -175,14 +204,14 @@ class AWorkspaceManager:
         return self.revision.workspace_id
 
     @property
+    def revision(self):
+        return self._revision
+
+    @property
     def revision_id(self):
         if not self._revision:
             raise DefaultWorkspaceError('No ID for default workspace')
         return self._revision.id
-
-    @property
-    def revision(self):
-        return self._revision
 
     @property
     def launching_id(self):
@@ -386,6 +415,9 @@ class AWorkspaceManager:
     def add_launch_envs(self, launch_envs: dict):
         self._extra_launch_envs.update(launch_envs)
 
+    def get_env_hash(self):
+        return hash(f'{self.workspace_id}:{self.revision_id}:{self.settings_id}')
+
     def get_launch_envs(self):
         env = {
             **self._extra_launch_envs,
@@ -412,34 +444,34 @@ class AWorkspaceManager:
         if not self.is_installed():
             self.install()
 
-    @classmethod # TODO cache it
-    def create_from_id(cls, entity_id: str) -> 'AWorkspaceManager':
-        # is workspace id
-        try:
-            revision = api.workspace.get_revision_by_workspace_id(entity_id)
-            return cls(revision)
-        except NotExistsError:
-            pass
-        # is workspace name
-        # TODO api.workspace.get_revision_by_workspace_label
-        # is revision id
-        try:
-            revision = api.workspace.get_revision(entity_id)
-            return cls(revision)
-        except NotExistsError:
-            pass
-        # is settings id
-        try:
-            revision = api.workspace.get_revision_by_settings_id(entity_id)
-            return cls(revision, settings_revision_id=entity_id)
-        except NotExistsError:
-            pass
-        # is project id
-        try:
-            revision = api.workspace.get_revision_by_project_id(entity_id)
-            manager = cls(revision)
-            manager.add_launch_envs({env_names.PROJECT_ID: entity_id})
-            return manager
-        except NotExistsError:
-            pass
-        raise WorkspaceNotExists
+    # @classmethod # TODO cache it
+    # def create_from_id_old(cls, entity_id: str) -> 'AWorkspaceManager':
+    #     # is workspace id
+    #     try:
+    #         revision = api.workspace.get_revision_by_workspace_id(entity_id)
+    #         return cls(revision)
+    #     except NotExistsError:
+    #         pass
+    #     # is workspace name
+    #     # TODO api.workspace.get_revision_by_workspace_label
+    #     # is revision id
+    #     try:
+    #         revision = api.workspace.get_revision(entity_id)
+    #         return cls(revision)
+    #     except NotExistsError:
+    #         pass
+    #     # is settings id
+    #     try:
+    #         revision = api.workspace.get_revision_by_settings_id(entity_id)
+    #         return cls(revision, settings_revision_id=entity_id)
+    #     except NotExistsError:
+    #         pass
+    #     # is project id
+    #     try:
+    #         revision = api.workspace.get_revision_by_project_id(entity_id)
+    #         manager = cls(revision)
+    #         manager.add_launch_envs({env_names.PROJECT_ID: entity_id})
+    #         return manager
+    #     except NotExistsError:
+    #         pass
+    #     raise WorkspaceNotExists

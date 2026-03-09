@@ -3,11 +3,12 @@ from __future__ import annotations
 import inspect
 import logging
 import os
+from abc import ABCMeta
 from pathlib import Path
 from typing import TYPE_CHECKING, Generator
 
 from agio.core.exceptions import PluginLoadingError
-from agio.tools import context
+
 from agio.tools.modules import import_module_by_path
 from agio.tools.text_helpers import unslugify
 if TYPE_CHECKING:
@@ -15,14 +16,19 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-class _APluginBase:
+
+class PluginMeta(ABCMeta):
+    def __call__(cls, *args, **kwargs):
+        if cls.__dict__.get("__is_base_plugin__", False):
+            raise TypeError(f"Creating instance of base plugin class ins not allowed {cls.__name__}")
+        return super().__call__(*args, **kwargs)
+
+
+class APlugin(metaclass=PluginMeta):
     plugin_type = None
     name = None
-    is_abstract = True
-
-
-class APlugin(_APluginBase):
     required_attrs = None
+    __is_base_plugin__ = True
 
     def __init__(self, package: APackageManager, plugin_info: dict):
         self._plugin_info = plugin_info
@@ -48,23 +54,11 @@ class APlugin(_APluginBase):
 
     @classmethod
     def load_from_info(cls, plugin_info: dict, info_file_path: str) -> Generator[APlugin, None, None]:
+        from agio.tools import app
+
         for imp in plugin_info.get('implementations', ()):
-            if supported_apps := imp.get('apps'):
-                if isinstance(supported_apps, str):
-                    supported_apps = (supported_apps,)
-                if not isinstance(supported_apps, (list, tuple, set)):
-                    raise PluginLoadingError(f"Supported apps must be a iterable [{info_file_path}]")
-                if context.app_name not in supported_apps:
-                    logger.debug(f'Skip implementation for {supported_apps}')
-                    continue
-            if supported_app_groups := plugin_info.get('app_groups'):
-                if isinstance(supported_app_groups, str):
-                    supported_app_groups = (supported_app_groups,)
-                if not isinstance(supported_app_groups, (list, tuple, set)):
-                    raise PluginLoadingError(f"Supported app groups must be a iterable [{info_file_path}]")
-                if context.app_group not in supported_app_groups:
-                    logger.debug(f'Skip implementation for {supported_app_groups}')
-                    continue
+            if not app.filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
+                continue
             module = imp.get('module')
             if not module:
                 raise PluginLoadingError(f"Module is required")
@@ -78,13 +72,14 @@ class APlugin(_APluginBase):
                 plugin_module = import_module_by_path(full_path, module_name)
             except Exception as e:
                 raise PluginLoadingError(f"Error loading plugin: {full_path} [{e}]") from e
+
             for obj in plugin_module.__dict__.values():
                 if inspect.isclass(obj):
                     if issubclass(obj, APlugin) and not obj.__name__ == APlugin.__name__:
-                        if not getattr(obj, 'is_base_class', True):
+                        if not obj.__dict__.get("__is_base_plugin__"):
                             if obj.__module__ == plugin_module.__name__:
                                 if not obj.name:
-                                    raise PluginLoadingError(f'Plugin name is required: {full_path}')
+                                    raise PluginLoadingError(f'{obj.__name__}: plugin name is required ({full_path})')
                                 yield obj
 
     @property

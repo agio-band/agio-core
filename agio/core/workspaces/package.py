@@ -18,7 +18,7 @@ except ModuleNotFoundError:
 from agio.core.entities import package
 from agio.core.events import emit
 from agio.core.exceptions import PackageMetadataError, PackageError
-from agio.core.plugins.base_plugin import APlugin
+from agio.core.plugins import base_plugin
 from agio.tools.modules import import_object_by_dotted_path, import_module_by_path
 from agio.core.workspaces import workspace
 
@@ -122,10 +122,11 @@ class APackageManager:
             return
 
     @classmethod
-    def find_package(cls, path: str|Path) -> 'APackageManager' or None:
+    def find_package(cls, path: str|Path) -> APackageManager | None:
         pkg_root = cls.find_package_root(path)
         if pkg_root:
             return cls(pkg_root)
+        return None
 
     @classmethod
     def is_package_root(cls, path: str) -> bool:
@@ -202,20 +203,42 @@ class APackageManager:
             instance = plugin_class(self, plugin_info)
             yield instance
 
-    def iterate_plugin_classes(self) -> Generator[tuple[dict, Type[APlugin]], None, None]:
+    def iterate_plugin_classes(self) -> Generator[tuple[dict, Type[base_plugin.APlugin]], None, None]:
         plugin_info: dict
         if not self.metadata_file.exists():
             raise PackageMetadataError(f"Package metafile file is not found")
         for plugin_info in self.iter_plugin_descriptions():
-            for plugin in APlugin.load_from_info(plugin_info, self.metadata_file.as_posix()):
+            for plugin in base_plugin.APlugin.load_from_info(plugin_info, self.metadata_file.as_posix()):
                 if plugin:
-                    yield plugin_info, plugin
+                    if not plugin.__name__.startswith('_'): # skip hidden plugin
+                        yield plugin_info, plugin
+                    else:
+                        logger.debug('Skip hidden plugin class %s', plugin.__name__)
 
     def iter_plugin_descriptions(self) -> Generator[list[dict[str, Any]], None, None]:
         plugins = self._metadata.get('plugins') or []
         if not isinstance(plugins, list):
             raise PackageMetadataError(f"Plugins must be a list")
         yield from plugins
+
+    def collect_chips(self):
+        from agio.tools import app
+        from agio.core import chips
+
+        chips_info = self._metadata.get('chips') or []
+        for chip_info in chips_info:
+            for imp in chip_info.get('implementations', ()):
+                if not app.filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
+                    continue
+                module = imp.get('module', ())
+                if isinstance(module, str):
+                    module = [module]
+                for module_glob in module:
+                    for path in self.root.rglob(module_glob):
+                        mod = import_module_by_path(path.as_posix())
+                        for obj in mod.__dict__.values():
+                            if chips.chips_hub.is_chip(obj):
+                                emit("core.app.chip_registered", {'pacakge': self, 'chip': obj})
 
     def get_workspace_settings_class(self):
         return self.get_settings_class('workspace')
