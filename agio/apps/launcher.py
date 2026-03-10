@@ -10,8 +10,8 @@ from pydantic import BaseModel
 from agio.core.events import emit
 from agio.tools import launching, env_names
 from agio.tools.process_utils import start_process
-from agio_apps.base_classes import base_app_launcher_plugin as bp
-from agio_apps.exceptions import ApplicationError, ApplicationNotFoundError
+from agio.apps.base_classes import base_app_launcher_plugin as bp
+from agio.apps.exceptions import ApplicationError, ApplicationNotFoundError
 
 
 class AApplicationLauncher:
@@ -20,7 +20,7 @@ class AApplicationLauncher:
 
     def __init__(
             self,
-            app_plugin: bp.ApplicationLauncherPlugin,
+            app_plugin: bp.AppLauncherPlugin,
             version: str,
             config: dict[str, str],
         ) -> None:
@@ -86,7 +86,7 @@ class AApplicationLauncher:
         return self._app_plugin.get_executable(self)
 
     def get_python_version(self) -> str|None:
-        from agio_apps.utils import app_hub
+        from agio.apps import app_hub
 
         # from config
         version = self.config.get('python_version')

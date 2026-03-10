@@ -11,7 +11,7 @@ from pathlib import Path
 
 from agio.core import workspaces
 from agio.core import exceptions
-from agio.tools import app_dirs, env_names
+from agio.tools import local_dirs, env_names
 from agio.tools import process_utils
 from agio.tools import pkg_manager
 
@@ -186,7 +186,7 @@ def get_default_env_executable():
     default_exec = os.getenv(env_names.DEFAULT_WORKSPACE_PY_EXECUTABLE)
     if default_exec:
         return default_exec
-    default_venv = app_dirs.default_env_install_dir()
+    default_venv = local_dirs.default_env_install_dir()
     manager = pkg_manager.get_package_manager_class()
     default_exec = manager(default_venv).python_executable
     if not default_exec:

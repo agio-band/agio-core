@@ -4,7 +4,7 @@ import time
 from typing import Optional, Callable, Any
 
 import requests
-from .app_dirs import cache_dir
+from .local_dirs import cache_dir
 from .file_utils import unpack_archive
 import socket
 import logging

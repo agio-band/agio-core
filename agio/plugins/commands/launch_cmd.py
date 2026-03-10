@@ -1,10 +1,8 @@
-from email.policy import default
-
 import click
 
 from agio.core.events import emit
 from agio.core.plugins.base_command import ACommandPlugin
-from agio_apps.utils import app_hub
+from agio.apps import app_hub
 
 
 class LauncherCommand(ACommandPlugin):

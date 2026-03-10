@@ -2,9 +2,9 @@ import shutil
 
 from diskcache import Cache, Lock
 
-from agio.tools import app_dirs
+from agio.tools import local_dirs
 
-__cache_locker = Cache(app_dirs.temp_dir('locker').as_posix())
+__cache_locker = Cache(local_dirs.temp_dir('locker').as_posix())
 
 
 def locker(name, expire=60):

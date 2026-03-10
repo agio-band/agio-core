@@ -1,20 +1,24 @@
 import logging
 
+from agio.apps.launcher import AApplicationLauncher
 from agio.core.entities import AWorkspace
 from agio.core.events import subscribe, AEvent
+from agio.core.exceptions import WorkspaceNotDefined
 from agio.core.workspaces import AWorkspaceManager
 
 logger = logging.getLogger(__name__)
+
 
 @subscribe('agio_apps.start_app.app_created', raise_error=True)
 def create_app_workspace(event: AEvent):
     """
     Create personal venv for application. Interpreter is not used, only libs loaded from this venv.
     """
-    app: AApplication = event.payload['app']
+    app: AApplicationLauncher = event.payload['app']
     # create workspace libs dir
-    ws = AWorkspace.current()
-    if not ws:
+    try:
+        ws = AWorkspace.current()
+    except WorkspaceNotDefined:
         return
     # create custom workspace
     required_version = app.get_python_version()
@@ -26,5 +30,3 @@ def create_app_workspace(event: AEvent):
     logger.debug("Adding site packages path from workspace: %s", site_packages)
     app.ctx.append_env_path('PYTHONPATH', site_packages)
     app.ctx.append_envs(**ws_man.get_launch_envs())
-
-

@@ -23,6 +23,10 @@ plugins:
     implementations:
       - module: plugins/services/actions_service.py
 
+  - label: Apps Service
+    implementations:
+      - module: plugins/services/apps_service.py
+
   # commands
   - label: Info Command
     implementations:
@@ -39,6 +43,14 @@ plugins:
   - label: Run Action Command
     implementations:
       - module: plugins/commands/action_cmd.py
+
+  - label: Apps Command
+    implementations:
+      - module: plugins/commands/apps_cmd.py
+
+  - label: Launch Command
+    implementations:
+      - module: plugins/commands/launch_cmd.py
 
   - label: Manage agio packages command
     implementations:
@@ -96,4 +108,8 @@ settings:
     layout: package_settings/local_layout.yml
     model: package_settings.local_settings.CoreSettings
 
-package_callbacks: plugins/callbacks/package_callbacks.py
+callbacks:
+  - plugins/callbacks/launcher_processing.py
+
+package_callbacks:
+  - plugins/callbacks/package_callbacks.py

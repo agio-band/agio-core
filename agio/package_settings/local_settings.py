@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
 from agio.core.settings import APackageSettings
-from agio.tools import app_dirs
+from agio.tools import local_dirs
 
 
-class Application(BaseModel):
+class ApplicationSettings(BaseModel):
     name: str
     version: str
     install_dir: str
@@ -12,6 +12,6 @@ class Application(BaseModel):
 
 
 class CoreSettings(APackageSettings):
-    applications: list[Application] = ()
-    workspaces_root: str = lambda: app_dirs.default_env_install_dir().as_posix()  # TODO add supporting annotation str|Path
+    applications: list[ApplicationSettings] = ()
+    workspaces_root: str = lambda: local_dirs.default_env_install_dir().as_posix()  # TODO add supporting annotation str|Path
 

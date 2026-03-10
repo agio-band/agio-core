@@ -21,7 +21,7 @@ from agio.core.exceptions import (
 )
 from agio.core.settings import collector
 from agio.core.config import config
-from agio.tools import pkg_manager, app_dirs, env_names
+from agio.tools import pkg_manager, local_dirs, env_names
 from agio.tools import launching
 from agio.tools.launching import exec_agio_command
 from agio.tools.packaging_tools import collect_packages_to_install
@@ -40,7 +40,7 @@ class AWorkspaceManager:
     _local_layout_file_name = '__settings_layout__.json'
     workspaces_root = Path(config.WS.INSTALL_DIR).expanduser()
     default_python_version = '>=3.11,<3.12'
-    __cache_locker = Cache(app_dirs.temp_dir('ws-locker').as_posix())
+    __cache_locker = Cache(local_dirs.temp_dir('ws-locker').as_posix())
 
     def __init__(self, revision: AWorkspaceRevision|str|dict = None, root: str|Path = None, **kwargs):
         self._install_root = root
@@ -180,7 +180,7 @@ class AWorkspaceManager:
 
     @classmethod
     def default(cls):
-        return cls(root=app_dirs.default_env_install_dir())
+        return cls(root=local_dirs.default_env_install_dir())
 
     @classmethod
     def is_defined(cls):

@@ -3,11 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from agio.core.plugins.base_plugin import APlugin
-from agio_apps.utils import app_launcher as bapp
-from agio_apps.exceptions import ApplicationError
+from agio.apps import launcher as bapp
+from agio.apps.exceptions import ApplicationError
 
 
-class ApplicationLauncherPlugin(APlugin):
+class AppLauncherPlugin(APlugin):
     plugin_type = 'app_launcher'
     app_group: str = None
     app_name: str = None # required
@@ -26,7 +26,7 @@ class ApplicationLauncherPlugin(APlugin):
         return f"<{self.__class__.__name__} {self}>"
 
     def get_label(self):
-        return self.label or self.app_name.title()
+        return self.label or self.app_name.title().replace('_', ' ')
 
     def get_launch_args(self, app: bapp.AApplicationLauncher, config_args: list = None) -> tuple|list|None:
         """

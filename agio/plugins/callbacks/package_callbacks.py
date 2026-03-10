@@ -7,7 +7,7 @@ from pathlib import Path
 import requests
 
 from agio.core.workspaces import AWorkspaceManager, APackageManager
-from agio.tools import network as net, app_dirs
+from agio.tools import network as net, local_dirs
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def on_installed(package: APackageManager, ws_manager: AWorkspaceManager):
 
 
 def download_to_global():
-    save_path = app_dirs.binary_files_dir()
+    save_path = local_dirs.binary_files_dir()
     if check_is_need_to_download(save_path):
         path = download_binary(save_path)
         save_local_etag(get_remote_etag())
@@ -63,13 +63,13 @@ def find_local_file(path: Path):
 
 
 def get_local_etag():
-    file = app_dirs.cache_dir('agio-login-etag')
+    file = local_dirs.cache_dir('agio-login-etag')
     if file.exists():
         return file.read_text()
 
 
 def save_local_etag(etag: str):
-    file = app_dirs.cache_dir('agio-login-etag')
+    file = local_dirs.cache_dir('agio-login-etag')
     file.parent.mkdir(parents=True, exist_ok=True)
     file.touch()
     file.write_text(etag)

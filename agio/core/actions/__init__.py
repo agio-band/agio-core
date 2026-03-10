@@ -9,7 +9,7 @@ from ..plugins import plugin_hub
 
 @lru_cache
 def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
-    from agio.tools import app
+    from agio.apps import app
 
     app_name = app_name or app.name
     grp = ActionGroupItem(menu_name, None)

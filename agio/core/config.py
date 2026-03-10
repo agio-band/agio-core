@@ -1,8 +1,8 @@
 from pydantic_settings import BaseSettings as BaseConfig, SettingsConfigDict
 
-from agio.tools import app_dirs
+from agio.tools import local_dirs
 
-env_file_path = app_dirs.config_dir() / 'core_config.env'
+env_file_path = local_dirs.config_dir() / 'core_config.env'
 
 
 class _BaseSettings(BaseConfig):
@@ -35,8 +35,8 @@ class ApiSettings(_BaseSettings):
 class WorkspaceSettings(_BaseSettings):
     # additional resources dir
     RESOURCES_DIR: str = ""
-    CACHE_ROOT: str = app_dirs.cache_dir().as_posix()
-    INSTALL_DIR: str = app_dirs.workspaces_install_dir().as_posix()
+    CACHE_ROOT: str = local_dirs.cache_dir().as_posix()
+    INSTALL_DIR: str = local_dirs.workspaces_install_dir().as_posix()
 
 
 class PackagesConfig(_BaseSettings):

@@ -222,7 +222,7 @@ class APackageManager:
         yield from plugins
 
     def collect_chips(self):
-        from agio.tools import app
+        from agio.apps import app
         from agio.core import chips
 
         chips_info = self._metadata.get('chips') or []

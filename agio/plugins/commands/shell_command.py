@@ -4,7 +4,7 @@ import os
 import readline
 
 from agio.core.plugins.base_command import ACommandPlugin
-from agio.tools import app_dirs
+from agio.tools import local_dirs
 import click
 
 class ShellCommand(ACommandPlugin):
@@ -22,7 +22,7 @@ class ShellCommand(ACommandPlugin):
 
 
 def console(namespace: dict = None):
-    py_history_path = app_dirs.config_dir(".pyhistory").as_posix()
+    py_history_path = local_dirs.config_dir(".pyhistory").as_posix()
 
     def save_py_session(path=py_history_path):
         readline.write_history_file(path)

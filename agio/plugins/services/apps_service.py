@@ -1,9 +1,11 @@
 import logging
 
+from agio.core.events import emit
 from agio.core.plugins.base_service import ServicePlugin, make_action
 from agio.tools import launching, env_names
-from agio_apps.utils import get_app_list, AApplicationLauncher
-from agio_pipe.entities.task import ATask
+from agio.apps import get_app_list
+from agio.apps.launcher import AApplicationLauncher
+# from agio_pipe.entities.task import ATask
 
 logger = logging.getLogger(__name__)
 
@@ -12,11 +14,11 @@ class AppLauncherService(ServicePlugin):
     name = 'app_launcher'
 
     @make_action()
-    def launch(self, *args, task_id: str, app_name: str, app_version: str, app_mode: str = None, **kwargs):
-        task = ATask(task_id)
-        workspace_id = kwargs.get('workspace_id') or task.project.workspace_launching_id
-        if not workspace_id:
-            raise ValueError(f'Workspace not set for project {task.project.name}')
+    def launch(self, *args, app_name: str, app_version: str, app_mode: str = None, **kwargs):
+        # TODO move task logic to event
+        # task = ATask(task_id)
+        workspace_id = kwargs.get('workspace_id')# or task.project.workspace_launching_id
+
         envs = {}
         cmd_args = [
             'launch',
@@ -28,8 +30,19 @@ class AppLauncherService(ServicePlugin):
         if args:
             cmd_args.append('--')
             cmd_args.extend(args)
-        if task_id:
-            envs[env_names.TASK_ID] = task_id
+        context = {
+            'cmd': cmd_args,
+            'workspace_id': workspace_id,
+            'envs': envs,
+        }
+        emit('core.apps.before_launch_service', {'context': context, 'kwargs': kwargs})
+        cmd_args = context['cmd_args']
+        workspace_id = context['workspace_id']
+        envs = context['envs']
+        if not workspace_id:
+            raise ValueError(f'Workspace ID not provided')
+        # if task_id:
+        #     envs[env_names.TASK_ID] = task_id
         launching.exec_agio_command(
             args=cmd_args,
             workspace=workspace_id,

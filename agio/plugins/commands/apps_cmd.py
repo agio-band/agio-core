@@ -1,8 +1,9 @@
+from agio.apps.launcher import AApplicationLauncher
 from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 import click
 
-from agio_apps.exceptions import ApplicationError
-from agio_apps.utils import get_app_list
+from agio.apps.exceptions import ApplicationError
+from agio.apps import get_registered_apps, get_app_config
 
 
 class ListAppCommand(ASubCommand):
@@ -12,19 +13,36 @@ class ListAppCommand(ASubCommand):
     ]
 
     def execute(self, as_args: bool):
-        apps = list(get_app_list())
-
-        if not apps:
+        registered = get_registered_apps()
+        if registered:
+            click.secho('Registered apps:', fg='yellow')
+            for app in registered:
+                click.secho(f'  {app.name}')
+        else:
             click.secho('No app plugins found', fg='red')
-        for app in apps:
-            if as_args:
-                click.echo('--app-name {} --app-version {} --app-mode {}'.format(app.name, app.version, app.mode))
+        configs = get_app_config()
+        if configs:
+            configured = []
+            for app_plg in registered:
+                conf_list = [x for x in configs if x.name == app_plg.app_name]
+                for c in conf_list:
+                    app =  AApplicationLauncher(app_plg, c.version, c)
+                    try:
+                        install_dir = app.get_install_dir()
+                    except ApplicationError:
+                        install_dir = None
+                    configured.append((app, install_dir))
+            if configured:
+                click.secho('Configs:', fg='yellow')
+
+                for app, install_dir in configured:
+                    if as_args:
+                        click.echo(f'  --app-name {app.name} --app-version {app.version} --app-mode {app.mode}')
+                    else:
+                        click.echo(f'  {app.name} v{app.version} [{install_dir or "NOT-SET"}]') # TODO make beauty
             else:
-                try:
-                    install_dir = app.get_install_dir()
-                except ApplicationError:
-                    install_dir = None
-                click.echo(f'{app}, install dir: {install_dir or "NOT-SET"}') # TODO make beauty
+                click.secho('No configured app found', fg='red')
+
 
 
 class AddAppCommand(ASubCommand):
@@ -41,7 +59,7 @@ class AddAppCommand(ASubCommand):
     ]
 
     def execute(self, app_name, app_version, installation_dir):
-        print('Adding app: "{}" v{}'.format(app_name, app_version))
+        print('TODO: Adding app: "{}" v{}'.format(app_name, app_version))
 
 
 class DelAppCommand(ASubCommand):
@@ -55,7 +73,7 @@ class DelAppCommand(ASubCommand):
     ]
 
     def execute(self, app_name, app_version, installation_dir):
-        print('Delete app: "{}" v{}'.format(app_name, app_version))
+        print('TODO: Delete app: "{}" v{}'.format(app_name, app_version))
 
 
 class LauncherToolsCommand(ACommandPlugin):

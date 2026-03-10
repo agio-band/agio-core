@@ -10,7 +10,7 @@ from agio.core.plugins.base_plugin import APlugin
 from agio.core.workspaces import APackageManager
 from agio.tools import args_helper
 from agio.tools import env_names
-from agio.tools import app
+from agio.apps import app
 from agio.tools.process_utils import restart_with_env, pipe_is_allowed, write_to_pipe
 
 logger = logging.getLogger(__name__)

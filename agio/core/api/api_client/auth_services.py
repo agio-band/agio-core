@@ -7,7 +7,7 @@ from pathlib import Path
 
 from agio.core.config import config
 from agio.core.exceptions import AuthorizationError
-from agio.tools import app_dirs, process_utils, thread_tools
+from agio.tools import local_dirs, process_utils, thread_tools
 
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ def _get_session_cache_dir():
 def _cache_file_path(base_url=None):
     platform_url = base_url or config.API.PLATFORM_URL.rstrip('/')
     key = hashlib.md5(platform_url.encode('utf-8')).hexdigest()
-    cache_file = app_dirs.cache_dir(f'session-{key}.json')
+    cache_file = local_dirs.cache_dir(f'session-{key}.json')
     return cache_file
 
 
@@ -104,7 +104,7 @@ def _get_agio_login_binary() -> str:
             raise FileNotFoundError(f'File {config.API.LOGIN_BINARY} does not exist')
         return config.API.LOGIN_BINARY
     # downloaded
-    path = next(app_dirs.binary_files_dir().glob('agio-login*'), None)
+    path = next(local_dirs.binary_files_dir().glob('agio-login*'), None)
     if path:
         return str(path)
     # global

@@ -17,7 +17,7 @@ from agio.core.workspaces.workspace import AWorkspaceManager
 from agio.core.plugins import plugin_hub
 from agio.core.workspaces import package_hub
 from agio.core.api import client, profile
-from agio.tools import app_dirs
+from agio.tools import local_dirs
 if TYPE_CHECKING:
     from agio.core.settings.settings_hub import LocalSettingsHub
 
@@ -226,7 +226,7 @@ class CurrentAppInfoCommand(ASubCommand):
     command_name = 'current-app'
 
     def execute(self, *args, **kwargs):
-        from agio.tools import app
+        from agio.apps import app
 
         click.echo('App Name: ', nl=False)
         click.secho(app.name, fg='yellow')
@@ -282,6 +282,6 @@ class InfoCommand(ACommandPlugin):
         if ws:
             click.echo(f' Path: {ws.install_root}')
         else:
-            click.echo(f' Path: {app_dirs.install_dir()}')
+            click.echo(f' Path: {local_dirs.install_dir()}')
 
 
