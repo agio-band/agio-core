@@ -127,6 +127,8 @@ def start_process(
         if detached:
             start_new_session = True
             stdin = open(os.devnull, "r")
+        elif not get_output and not use_custom_pipe:
+            stdin = open(os.devnull, "r")
         if new_console:
             terminal = os.environ.get("TERMINAL", "x-terminal-emulator")
             if terminal in ["gnome-terminal", "konsole", "xfce4-terminal"]:
@@ -198,7 +200,27 @@ def start_process(
             else:
                 sys.stdout.flush()
                 sys.stderr.flush()
+                
+                # Сохраняем настройки терминала до запуска процесса (для Unix)
+                if not IS_WIN32:
+                    try:
+                        import termios
+                        _saved_tty_attrs = termios.tcgetattr(sys.stdin.fileno())
+                    except (termios.error, AttributeError, OSError):
+                        _saved_tty_attrs = None
+                else:
+                    _saved_tty_attrs = None
+                
                 process.wait()
+                
+                # Восстанавливаем настройки терминала после завершения
+                if not IS_WIN32 and _saved_tty_attrs is not None:
+                    try:
+                        import termios
+                        termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, _saved_tty_attrs)
+                    except (termios.error, AttributeError, OSError):
+                        pass
+                
                 logging.debug(f'Exit Code: {process.returncode}')
 
                 if exit_on_done:

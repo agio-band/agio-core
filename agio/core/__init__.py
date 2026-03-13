@@ -1,13 +1,21 @@
 import atexit
 import logging
+import os
 import signal
+import sys
 import threading
 
-from agio.tools import setup_logger # noqa: F401
+from agio.tools import setup_logger, env_names  # noqa: F401
 from agio.core.events import emit as _emit, subscribe as _subscribe
 from agio.core.init.init_packages import init_packages
 from agio.core.init.init_plugins import init_plugins
 from agio.tools import process_hub
+
+# add extra paths before initialize packages
+extra_packages_env = os.getenv(env_names.EXTRA_PACKAGES)
+if extra_packages_env:
+    for _pth in extra_packages_env.split(os.pathsep):
+        sys.path.append(_pth)
 
 
 logger = logging.getLogger(__name__)

@@ -19,7 +19,7 @@ class ApplicationHub(metaclass=Singleton):
         local_settings = get_local_settings()
         self.apps_config = local_settings.get('agio_core.applications', [])
 
-    def get_app(self, name: str, version: str, mode: str = None) -> AApplicationLauncher:
+    def get_app(self, name: str, version: str, mode: str = 'default') -> AApplicationLauncher:
         plugin = self.find_plugin(name, mode)
         if not plugin:
             raise ApplicationNotFoundError(f"Plugin '{name}/{mode}' not found")
@@ -33,7 +33,7 @@ class ApplicationHub(metaclass=Singleton):
         raise Exception('Application settings for {} v{} not found'.format(name, version))
 
     @classmethod
-    def find_plugin(cls, name: str, mode: str = None) -> bp.AppLauncherPlugin | None:
+    def find_plugin(cls, name: str, mode: str = 'default') -> bp.AppLauncherPlugin | None:
         for plg in cls.find_app_plugins(name):
             if plg.app_mode == mode:
                 return plg

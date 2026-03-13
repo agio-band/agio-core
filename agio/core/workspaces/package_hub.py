@@ -42,8 +42,8 @@ class APackageHub(metaclass=Singleton):
 
     def collect_packages(self) -> None:
         self._packages.clear()
-        for package in self.iter_packages():
-            self.add_package(package)
+        for pkg in self.iter_packages():
+            self.add_package(pkg)
 
     @classmethod
     def iter_packages(cls) -> Generator[package.APackageManager, None, None]:

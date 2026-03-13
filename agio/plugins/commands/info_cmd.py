@@ -43,7 +43,7 @@ class EnvInfoCommand(ASubCommand):
             print('No AGIO env found')
             return
         max_length = max(len(k) for k in keys)
-        for k in keys:
+        for k in sorted(keys):
             value = os.environ.get(k) or extra_values.get(k)
             if self.is_multipath(value):
                 parts = value.split(':')
@@ -64,8 +64,12 @@ class EnvInfoCommand(ASubCommand):
 
 class PackagesInfoCommand(ASubCommand):
     command_name = 'packages'
+    help = 'Show pacakge list'
+    arguments = [
+        click.option('-p', '--paths', is_flag=False, help='Show Package roots'),
+    ]
 
-    def execute(self, *args, **kwargs):
+    def execute(self, paths=False, *args, **kwargs):
         pkg_hub = package_hub.APackageHub.instance()
         ws_manager = AWorkspaceManager.current()
 
@@ -83,7 +87,7 @@ class PackagesInfoCommand(ASubCommand):
 
         for package in pkg_hub.get_package_list():
             package: APackageManager
-            print(f"  {package.package_name:<{max_len+2}} {package.package_version:<8}")# | {strip_path(package.root)}")
+            print(f"  {package.package_name:<{max_len+2}} {package.package_version or '---':<8} {'[{}]'.format(package.root) if paths else ''}")# | {strip_path(package.root)}")
 
 
 class WorkspacesInfoCommand(ASubCommand):

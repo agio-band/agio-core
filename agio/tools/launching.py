@@ -245,8 +245,8 @@ def start_in_workspace(
     if isinstance(ws_manager, str):
         ws_manager = workspaces.AWorkspaceManager.create_from_id(ws_manager)
     if ws_manager:
-        ctx: LaunchContext = ws_manager.get_launch_context()
         ws_manager.install_or_update_if_needed()
+        ctx: LaunchContext = ws_manager.get_launch_context()
         ws_manager.touch()
     else:
         py_exec = kwargs.get('python_executable') or  get_default_env_executable()
@@ -262,6 +262,17 @@ def start_in_workspace(
     if not Path(ctx.executable).exists():
         raise FileNotFoundError(f'Executable not found {ctx.executable}')
     logger.debug('Launching command: %s', ' '.join(ctx.command))
+    # print('='*100)
+    # print('CONTEXT', ctx)
+    # print('='*100)
+    # for k, v in ctx.envs.items():
+    #     if k.startswith('AGIO_'):
+    #         print(f'{k}={v}')
+    # print('='*100)
+    # print('Launching command:', ' '.join(ctx.command))
+    # print('launch args', kwargs)
+    # print('='*100)
+    # print('>'*100)
     return process_utils.start_process(
         ctx.command,
         env=ctx.envs,

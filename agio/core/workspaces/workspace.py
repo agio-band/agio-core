@@ -1,9 +1,12 @@
+from __future__ import annotations
 import copy
 import json
 import logging
 import os
 import shutil
 import sys
+from typing import TYPE_CHECKING
+
 from diskcache import Cache, Lock
 from datetime import datetime
 from functools import cached_property, cache
@@ -26,6 +29,8 @@ from agio.tools import launching
 from agio.tools.launching import exec_agio_command
 from agio.tools.packaging_tools import collect_packages_to_install
 from agio.tools.venv_helpers import check_current_python_version
+if TYPE_CHECKING:
+    from agio.apps.launcher import AApplicationLauncher
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +47,11 @@ class AWorkspaceManager:
     default_python_version = '>=3.11,<3.12'
     __cache_locker = Cache(local_dirs.temp_dir('ws-locker').as_posix())
 
-    def __init__(self, revision: AWorkspaceRevision|str|dict = None, root: str|Path = None, **kwargs):
+    def __init__(self,
+                 revision: AWorkspaceRevision|str|dict = None,
+                 app: AApplicationLauncher|None = None,
+                 root: str|Path = None,
+                 **kwargs):
         self._install_root = root
         self._revision = None
         if revision is not None:
@@ -56,10 +65,15 @@ class AWorkspaceManager:
             raise TypeError('Root directory or revision must be specified')
         self._kwargs = kwargs
         self._extra_launch_envs = {}
+        self.app: AApplicationLauncher|None = None
         if self._revision:
             self.install_lock = Lock(self.__cache_locker, f'ws-locker-{self.revision_id}-{self.root_suffix}')
         else:
             self.install_lock = Lock(self.__cache_locker, f'ws-locker-default')
+        if app:
+            self.set_app(app)
+        else:
+            self.load_app()
 
     def __repr__(self):
         if self._revision:
@@ -75,14 +89,45 @@ class AWorkspaceManager:
     def root_suffix(self) -> str:
         return str(self._kwargs.get('root_suffix', '')) or os.getenv(env_names.WORKSPACE_SUFFIX) or ''
 
-    def set_suffix(self, suffix: str):
+    def set_suffix(self, suffix: str|None):
         """Customize pyproject location folder name"""
-        self._kwargs['root_suffix'] = suffix
-        self._extra_launch_envs[env_names.WORKSPACE_SUFFIX] = suffix
+        if suffix:
+            self._kwargs['root_suffix'] = suffix
+            self._extra_launch_envs[env_names.WORKSPACE_SUFFIX] = suffix
+        else:
+            self._kwargs.pop('root_suffix', None)
+            self._extra_launch_envs.pop(env_names.WORKSPACE_SUFFIX, None)
+
+    def set_app(self, app: AApplicationLauncher|None):
+        if app:
+            required_version = app.get_python_version()
+            self._kwargs['python_version'] = required_version
+            suffix = f"{app.name}-{app.version}-py{required_version}"
+            self.set_suffix(suffix)
+            self.app = app
+        else:
+            self._kwargs.pop('python_version', None)
+            self.set_suffix(None)
+            self.app = None
+
+    def load_app(self):
+        ...
 
     @property
-    def custom_py_executable(self) -> str:
-        return str(self._kwargs.get('py_executable', ''))
+    def key(self):
+        """Full key: workspace id + revision id + app suffix"""
+        if self._revision:
+            return '/'.join([self.workspace_id, self.revision.id, self._kwargs.get('root_suffix', '')]).strip('/')
+        else:
+            return 'root'
+
+    @property
+    def short_key(self):
+        """Short key: only workspace id + revision id"""
+        if self._revision:
+            return '/'.join([self.workspace_id, self.revision.id]).strip('/')
+        else:
+            return 'root'
 
     # creation
 
@@ -139,22 +184,15 @@ class AWorkspaceManager:
     # define
     @classmethod
     def current(cls) -> 'AWorkspaceManager|None':
+        from agio.apps import app
+        current_app = None
+        if app.name != app.default_name:
+            current_app = app.get_current_app()
         if rev_id := os.getenv(env_names.REVISION_ID):
-            return cls(rev_id)
+            return cls(rev_id, app=current_app)
         elif ws_id := os.getenv(env_names.WORKSPACE_ID):
-            return cls.from_workspace(ws_id)
+            return cls.from_workspace(ws_id, app=current_app)
         return None
-
-    # @classmethod
-    # def from_id(cls, entity_id: str, **kwargs) -> 'AWorkspaceManager':
-    #     resp = api.workspace.find_workspace_or_revision_by_id(entity_id)
-    #     if resp['workspace']:
-    #         return cls.from_workspace(resp['workspace'])
-    #     elif resp['revision']:
-    #         revision = AWorkspaceRevision(resp['revision'])
-    #         return cls(revision, **kwargs)
-    #     else:
-    #         raise WorkspaceNotExists(detail='Workspace or revision not found')
 
     @classmethod # TODO cache it
     def create_from_id(cls, entity_id: str) -> 'AWorkspaceManager':
@@ -307,12 +345,15 @@ class AWorkspaceManager:
     def install_packages(self, *package_list: APackageRelease|str, **kwargs):
         package_list = collect_packages_to_install(package_list)
         install_args = [pkg.get_installation_command() for pkg in package_list]
-        # print('-'*100)
-        # print('Python version:', self.venv_manager.get_python_version())
-        # print('-'*100)
-        # for pkg in install_args:
-        #     print(pkg)
-        # print('-'*100)
+        event = emit('agio_core.workspace.packages_to_install', {'packages': install_args})
+        install_args = event.payload['packages']
+        print('='*100)
+        print('Venv python version:', self.venv_manager.get_python_version())
+        print('Install path:', self.install_root)
+        print('--- Packages', '-'*87)
+        for pkg in install_args:
+            print(pkg)
+        print('=' * 100)
         logger.info(f'Packages to install: {len(package_list)}')
         for p in package_list:
             logger.info(f'{p.get_package_name()} v{p.get_version()}')
@@ -408,7 +449,14 @@ class AWorkspaceManager:
             self.__dict__.pop('venv_manager')
         self._kwargs['py_executable'] = py_executable
 
+    @property
+    def custom_py_executable(self) -> str:
+        if self.app:
+            return self.app.get_executable()
+        return str(self._kwargs.get('py_executable', ''))
+
     def get_pyexecutable(self) -> str:
+        # self.custom_py_executable
         self.install_or_update_if_needed()
         return self.venv_manager.python_executable
 
@@ -429,14 +477,23 @@ class AWorkspaceManager:
         }
         if self.settings_id:
             env[env_names.SETTINGS_REVISION_ID] = str(self.settings_id)
+        if self.app:
+            env.update(self.app.get_default_launch_envs())
         emit('core.workspace.get_launch_envs', {'envs': env, 'revision': self._revision})
         return env
 
+    def get_launch_executable(self):
+        if self.app and self.app.mode == 'python':
+            return self.app.get_executable()
+        else:
+            return self.get_pyexecutable()
+
     def get_launch_context(self):
         ctx = launching.LaunchContext(
-            self.get_pyexecutable(),
+            self.get_launch_executable(),
             env=self.get_launch_envs()
         )
+        ctx.prepend_env_path('PYTHONPATH', self.get_site_packages_path())
         return ctx
 
     def install_or_update_if_needed(self):

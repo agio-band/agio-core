@@ -50,6 +50,19 @@ class AApplicationLauncher:
         )
         return ctx
 
+    def create_launch_context(self) -> launching.LaunchContext:
+        executable = self.get_executable()
+        if not executable:
+            raise ApplicationError(f'{self.name} must define a executable')
+        if not Path(executable).is_file():
+            raise ApplicationError(f'Executable {self.name}/{executable} is not a file or not exists')
+        ctx = launching.LaunchContext(
+            executable,
+            args=self.get_default_launch_args(),
+            env=self.get_default_launch_envs(),
+        )
+        return ctx
+
     @property
     def label(self):
         return self._app_plugin.get_label()
@@ -140,6 +153,7 @@ class AApplicationLauncher:
         """
         PID equal None is app is started as detached
         """
+        context = self.create_launch_context()
         if not self.silent_echo():
             ### DEBUG INFO ###########################################################
             # click.secho("Not Implemented", fg='red')
@@ -147,20 +161,19 @@ class AApplicationLauncher:
             print('Name:', end=' ')
             click.secho(str(self), fg='green')
             print('CMD:', end=' ')
-            click.secho(' '.join(self.ctx.command), fg='green')
+            click.secho(' '.join(context.command), fg='green')
 
             envs = self.get_default_launch_envs()
             if envs:
                 for k, v in sorted(envs.items()):
                     print(f"{k}={v}")
             click.secho('=========================================', fg='yellow')
-
             ##########################################################################
 
-        emit('agio_apps.application.before_start', payload={'app': self})
+        emit('agio_core.application.before_start', payload={'app': self})
         self._app_plugin.on_before_startup(self)
-        kwargs['new_console'] = kwargs.get('new_console', False)
-        kwargs['detached'] = kwargs.get('detached', False)
+        kwargs.setdefault('new_console', False)
+        kwargs.setdefault('detached', False)
         kwargs['replace'] = not kwargs['detached']
-        start_process(self.ctx.command, env=self.ctx.envs, **kwargs)
+        start_process(context.command, env=context.envs, **kwargs)
         self._app_plugin.on_after_startup(self)

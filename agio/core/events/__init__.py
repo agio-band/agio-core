@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 event_hub = EventHub()
 
 
-def emit(event_name: str, payload: Any = None) -> None:
+def emit(event_name: str, payload: Any = None) -> AEvent:
     if payload is not None:
         if not isinstance(payload, dict):
             raise TypeError("payload must be a dict")

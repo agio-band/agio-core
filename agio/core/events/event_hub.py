@@ -65,7 +65,7 @@ class EventHub(metaclass=Singleton):
                     self._callbacks.pop(event_name)
         return bool(removed_count)
 
-    def emit(self, event_name: str, payload: dict):
+    def emit(self, event_name: str, payload: dict) -> AEvent:
         callbacks_to_remove = []
 
         sender = None
@@ -97,6 +97,7 @@ class EventHub(metaclass=Singleton):
 
         for callback_func, event_pattern in callbacks_to_remove:
             self.remove_callback(callback_func, event_pattern)
+        return event_obj
 
     def clear(self):
         self._callbacks.clear()

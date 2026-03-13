@@ -316,13 +316,16 @@ class APackageManager:
             yield self.root.joinpath(path).with_suffix('.py').as_posix()
 
     def execute_package_callback(self, callback_name: str, workspace_manager: workspace.AWorkspaceManager):
-        file_name = self.get_meta_data_field('package_callbacks') or 'callbacks/package_callbacks.py'
-        full_path = self.root.joinpath(file_name)
-        if full_path.exists():
-            mod = import_module_by_path(full_path.as_posix())
-            callback = getattr(mod, callback_name, None)
-            if callable(callback):
-                try:
-                    callback(self, workspace_manager)
-                except Exception as e:
-                    raise Exception(f'Error executing callback {callback_name} from {full_path}: {e}') from e
+        file_names = self.get_meta_data_field('package_callbacks') or 'callbacks/package_callbacks.py'
+        if isinstance(file_names, str):
+            file_names = [file_names]
+        for file_name in file_names:
+            full_path = self.root.joinpath(file_name)
+            if full_path.exists():
+                mod = import_module_by_path(full_path.as_posix())
+                callback = getattr(mod, callback_name, None)
+                if callable(callback):
+                    try:
+                        callback(self, workspace_manager)
+                    except Exception as e:
+                        raise Exception(f'Error executing callback {callback_name} from {full_path}: {e}') from e

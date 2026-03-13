@@ -1,7 +1,7 @@
 import code
 import atexit
 import os
-import readline
+# import readline
 
 from agio.core.plugins.base_command import ACommandPlugin
 from agio.tools import local_dirs

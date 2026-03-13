@@ -14,13 +14,15 @@ class ContextApp:
     """
     This class provide API of current application
     """
+    default_name = 'standalone'
+
     def __init__(self):
         self.__is_initialized = False
         self.__namespaces = {}
 
     @cached_property
     def name(self) -> str:
-        return os.getenv(env_names.APP_NAME, 'standalone')
+        return os.getenv(env_names.APP_NAME, self.default_name)
 
     @cached_property
     def groups(self) -> set[str]:
@@ -33,6 +35,10 @@ class ContextApp:
     @cached_property
     def version(self):
         return os.getenv(env_names.APP_VERSION, '---') # TODO: fix it
+
+    @cached_property
+    def mode(self):
+        return os.getenv(env_names.APP_MODE)
 
     def __collect_namespaces(self):
         plg_hub: plugin_hub.APluginHub = plugin_hub.APluginHub.instance()
@@ -113,22 +119,8 @@ class ContextApp:
             grp_match = match_lists(fix_type(app_groups), self.groups)
         return any([name_match, grp_match])
 
-# class AppContext:
-#     """
-#     Load context inside app TODO Move to launcher
-#     """
-#     @property
-#     def app_name(self):
-#         return os.getenv(env_names.APP_NAME, 'standalone')
-#
-#     @property
-#     def app_groups(self):
-#         return os.getenv(env_names.APP_GROUPS, None)
-#
-#     @property
-#     def app_version(self):
-#         return os.getenv(env_names.APP_VERSION)
-#
-#
-# def show_context():
-#     print('TODO: print agio context')
+    def get_current_app(self):
+        from agio.apps import app_hub
+        if self.name and self.version:
+            return app_hub.get_app(self.name, self.version, self.mode)
+        return None
