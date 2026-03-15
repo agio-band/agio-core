@@ -47,7 +47,7 @@ class APlugin(metaclass=PluginMeta):
         return os.path.abspath(class_file)
 
     def __repr__(self):
-        return f"{self.package.package_name}.{self.name}"
+        return f'<{self.__class__.__name__} "{self.package.package_name}.{self.name}">'
 
     def __str__(self):
         return self.name
