@@ -60,6 +60,12 @@ class DomainBase(ABC):
     def fields(self):
         return self._data.get('fields', {})
 
+    def set_fields(self, **kwargs) -> None:
+        fields = self.fields.copy()
+        fields.update(kwargs)
+        self.update(fields=kwargs)
+        self.reload()
+
     def __str__(self):
         return str(self.id)
 
