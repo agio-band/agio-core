@@ -233,7 +233,7 @@ def exec_agio_command(
     )
 
 
-def start_in_workspace(
+def create_workspace_launch_context(
         ws_manager: workspaces.AWorkspaceManager | str | None,
         args: list = None,
         envs: dict = None,
@@ -261,18 +261,18 @@ def start_in_workspace(
         ctx.add_args(*args)
     if not Path(ctx.executable).exists():
         raise FileNotFoundError(f'Executable not found {ctx.executable}')
+    return ctx
+
+
+def start_in_workspace(
+        ws_manager: workspaces.AWorkspaceManager | str | None,
+        args: list = None,
+        envs: dict = None,
+        workdir: str = None,
+        **kwargs
+    ):
+    ctx = create_workspace_launch_context(ws_manager, args, envs, workdir, **kwargs)
     logger.debug('Launching command: %s', ' '.join(ctx.command))
-    # print('='*100)
-    # print('CONTEXT', ctx)
-    # print('='*100)
-    # for k, v in ctx.envs.items():
-    #     if k.startswith('AGIO_'):
-    #         print(f'{k}={v}')
-    # print('='*100)
-    # print('Launching command:', ' '.join(ctx.command))
-    # print('launch args', kwargs)
-    # print('='*100)
-    # print('>'*100)
     return process_utils.start_process(
         ctx.command,
         env=ctx.envs,
