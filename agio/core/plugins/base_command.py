@@ -156,16 +156,16 @@ class AStartAppCommand(ACommandPlugin):
     app_name = None
 
     def before_start(self, **kwargs):
-        if not self.app_name:
-            raise ValueError(f"{self.__class__.__name__}: app_name must be defined.")
-        if app.name != self.app_name:
-            logger.debug(f'Restart as application "{self.app_name}"')
-            restart_with_env({env_names.APP_NAME: self.app_name})
-            # TODO env_names.APP_VERSION
+        pass
+        # if not self.app_name:
+        #     raise ValueError(f"{self.__class__.__name__}: app_name must be defined.")
+        # if app.name != self.app_name:
+        #     logger.debug(f'Restart as application "{self.app_name}"')
+        #     restart_with_env({env_names.APP_NAME: self.app_name, env_names.APP_VERSION: 'default'})
+        #     # TODO env_names.APP_VERSION
 
     def start(self, **kwargs):
         raise NotImplementedError(f'Not implemented in {self.__class__.__name__}')
-
 
     def execute(self, **kwargs):
         self.before_start(**kwargs)
