@@ -18,6 +18,8 @@ from agio.core.plugins import plugin_hub
 from agio.core.workspaces import package_hub
 from agio.core.api import client, profile
 from agio.tools import local_dirs
+from agio.tools.envs import get_agio_envs
+
 if TYPE_CHECKING:
     from agio.core.settings.settings_hub import LocalSettingsHub
 
@@ -31,35 +33,7 @@ class EnvInfoCommand(ASubCommand):
     ]
 
     def execute(self, py_envs, *args, **kwargs):
-        keys = [k for k in os.environ.keys() if k.startswith('AGIO_')]
-        extra_values = {}
-        if py_envs:
-            keys.extend([k for k in os.environ.keys() if k.startswith('PYTHON_')])
-            keys.append('PATH')
-            site_paths = ':'.join([site.getusersitepackages()] + site.getsitepackages())
-            keys.append('SITE-PACKAGES')
-            extra_values['SITE-PACKAGES'] = site_paths
-        if not keys:
-            print('No AGIO env found')
-            return
-        max_length = max(len(k) for k in keys)
-        for k in sorted(keys):
-            value = os.environ.get(k) or extra_values.get(k)
-            if self.is_multipath(value):
-                parts = value.split(':')
-                click.secho(f"{k:>{max_length + 2}} = {parts[0]}", fg='green')
-                for part in parts[1:]:
-                    click.secho(f"{' ':>{max_length + 5}}{part}", fg='green')
-            else:
-                click.secho(f"{k:>{max_length+2}} = {value}", fg='green')
-
-    def is_multipath(self, value: str) -> bool:
-        if os.pathsep not in value:
-            return False
-        else:
-            if value.startswith('http'):
-                return False
-            return True
+        return get_agio_envs(py_envs=py_envs, to_output=True)
 
 
 class PackagesInfoCommand(ASubCommand):
