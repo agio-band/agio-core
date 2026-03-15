@@ -17,7 +17,7 @@ def get_workspace(workspace_id: UUID|str, full: bool = False) -> dict:
     resp = client.make_query(query_file, id=workspace_id)
     ws = resp['data']['workspace']
     if not ws:
-        raise WorkspaceNotExists
+        raise WorkspaceNotExists(detail=f'Workspace Not Found or Deleted {workspace_id}')
     return ws
 
 

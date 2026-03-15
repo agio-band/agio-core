@@ -56,6 +56,24 @@ def create_product(
     )['data']['createPublish']['publishId']
 
 
+def update_product(product_id: str,
+                   name: str|None = None,
+                   variant: str|None = None,
+                   fields: dict|None = None):
+    input_data = deep_dict()
+    if name:
+        input_data['name'] = name
+    if variant:
+        input_data['variant'] = variant
+    if fields:
+        input_data['fields'] = fields
+    return client.make_query(
+        'pipe/products/updatePublish',
+        id=product_id,
+        input=input_data,
+    )['data']['updatePublish']['ok']
+
+
 def find_product(entity_id: str|UUID, name: str, variant: str):
     filters = deep_dict()
     filters['where']['entity']['id']['equalTo'] = entity_id
@@ -109,7 +127,11 @@ def create_product_type(name, description, config: dict = None, data_type: str =
     )['data']['createPublishType']['publishTypeId']
 
 
-def update_product_type(publish_type_id: str, config: dict = None, data_type: str = None):
+def update_product_type(
+        publish_type_id: str,
+        config: dict = None,
+        data_type: str = None,
+):
     input_data = deep_dict()
     if config:
         input_data['config'] = config
@@ -190,6 +212,13 @@ def update_version(version_id: str|UUID, fields: dict, dependencies: list[str]):
         id=version_id,
         input=update_data
     )
+
+
+def delete_version(version_id: str|UUID) -> bool:
+    return client.make_query(
+        'pipe/versions/deleteVersion',
+        id=version_id
+    )['data']['deletePublishVersion']['ok']
 
 
 def get_next_version_number(product_id: str|UUID) -> int:

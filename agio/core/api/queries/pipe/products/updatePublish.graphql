@@ -1,0 +1,8 @@
+mutation UpdatePublish($id: ID!, $input: PublishUpdateInput!){
+  updatePublish(
+    id: $id,
+    input: $input
+  ){
+    ok
+  }
+}

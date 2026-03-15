@@ -1,0 +1,5 @@
+mutation DeleteExistingVersion($id: ID!) {
+  deletePublishVersion(id: $id) {
+    ok
+  }
+}
