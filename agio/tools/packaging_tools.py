@@ -15,10 +15,23 @@ class DependencyConflictError(Exception):
 
 def _specifiers_conflict(spec1: SpecifierSet, spec2: SpecifierSet) -> bool:
     """Checks if there is at least one version that satisfies both conditions."""
+    # Extract all == constraints from both specifiers
+    eq_versions = []
+    for spec in list(spec1) + list(spec2):
+        if spec.operator in ("==", "==="):
+            eq_versions.append(Version(spec.version))
+
+    # If there are exact version constraints, check if they satisfy the other specifier
+    if eq_versions:
+        for eq_ver in eq_versions:
+            if eq_ver in spec1 and eq_ver in spec2:
+                return False  # Found an exact version that satisfies both
+
+    # Generate a wider range of test versions for other cases
     test_versions = [Version(f"{major}.{minor}.{patch}")
-                     for major in range(0, 10)
-                     for minor in range(0, 10)
-                     for patch in range(0, 10)]
+                     for major in range(0, 100)
+                     for minor in range(0, 100)
+                     for patch in range(0, 100)]
 
     for v in reversed(test_versions):  # check from new to old
         if v in spec1 and v in spec2:
@@ -66,7 +79,7 @@ def _simplify_specifiers(spec: SpecifierSet) -> SpecifierSet:
 def _merge_specifiers(spec1: SpecifierSet, spec2: SpecifierSet) -> SpecifierSet:
     """combines two sets of specifiers, checking for conflict."""
     if _specifiers_conflict(spec1, spec2):
-        raise DependencyConflictError(f"Version conflict: {spec1} и {spec2}")
+        raise DependencyConflictError(f"Version conflict: {spec1} and {spec2}")
     combined = SpecifierSet(str(spec1) + "," + str(spec2))
     return _simplify_specifiers(combined)
 
