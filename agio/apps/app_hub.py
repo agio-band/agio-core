@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Generator
 
 from agio.apps.base_classes import base_app_launcher_plugin as bp
-from agio.apps.exceptions import ApplicationNotFoundError
+from agio.apps.exceptions import ApplicationNotFoundError, AppLocalSettingsNotFoundError
 from agio.apps.launcher import AApplicationLauncher
 from agio.core.plugins import plugin_hub
 from agio.core.settings import get_local_settings
@@ -19,18 +19,23 @@ class ApplicationHub(metaclass=Singleton):
         local_settings = get_local_settings()
         self.apps_config = local_settings.get('agio_core.applications', [])
 
-    def get_app(self, name: str, version: str, mode: str = 'default') -> AApplicationLauncher:
+    def get_app(self, name: str, version: str = None, mode: str = 'default') -> AApplicationLauncher:
         plugin = self.find_plugin(name, mode)
         if not plugin:
             raise ApplicationNotFoundError(f"Plugin '{name}/{mode}' not found")
-        app_config = self.get_app_settings(name, version) or {} # TODO error if empty
+        app_config = None
+        try:
+            app_config = self.get_app_settings(name, version) or {} # TODO error if empty
+        except ApplicationNotFoundError:
+            if plugin.local_settings_required:
+                raise
         return AApplicationLauncher(plugin, version, app_config)
 
     def get_app_settings(self, name: str, version: str) -> dict:
         for app in self.apps_config:
             if app.name == name and app.version == version:
                 return app.model_dump()
-        raise Exception('Application settings for {} v{} not found'.format(name, version))
+        raise AppLocalSettingsNotFoundError('Application settings for {} v{} not found'.format(name, version))
 
     @classmethod
     def find_plugin(cls, name: str, mode: str = 'default') -> bp.AppLauncherPlugin | None:

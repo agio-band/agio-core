@@ -103,7 +103,7 @@ class UVPackageManager(PackageManagerBase):
             self.run(['init', '--bare', '--python', python_version], workdir=self.path.as_posix())
         else:
             logger.info(f'venv already exists {self.path}')
-        resp = self.run(['venv', '--python', python_version], workdir=self.path.as_posix())
+        resp = self.run(['venv', '--python', python_version, '--clear'], workdir=self.path.as_posix())
         if resp:
             raise RuntimeError('Process finished with exit code: %s', resp)
         logger.info('Create venv with version %s: %s', python_version, self.path)

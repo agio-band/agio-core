@@ -7,3 +7,7 @@ class ApplicationError(AException):
 
 class ApplicationNotFoundError(AException):
     pass
+
+
+class AppLocalSettingsNotFoundError(AException):
+    pass

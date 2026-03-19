@@ -13,10 +13,11 @@ class AppLauncherPlugin(APlugin):
     app_name: str = None # required
     app_mode: str = None # required
     app_mode_label: str = None # required
+    local_settings_required: bool = False
     icon: str = None
     label: str = None
     bin_path: str = None
-    required_attrs = {'app_name', 'app_group', 'app_mode', 'bin_path'}
+    required_attrs = {'app_name', 'app_group'}
     __is_base_plugin__ = True
 
     def __str__(self):
@@ -67,3 +68,6 @@ class AppLauncherPlugin(APlugin):
         pass
 
 
+class DccLauncherPlugin(AppLauncherPlugin):
+    local_settings_required = True
+    required_attrs = {'app_name', 'app_group', 'app_mode', 'bin_path'}

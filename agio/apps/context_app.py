@@ -34,7 +34,7 @@ class ContextApp:
 
     @cached_property
     def version(self):
-        return os.getenv(env_names.APP_VERSION, '---') # TODO: fix it
+        return os.getenv(env_names.APP_VERSION, '') # TODO: fix it
 
     @cached_property
     def mode(self):

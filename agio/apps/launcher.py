@@ -21,34 +21,20 @@ class AApplicationLauncher:
     def __init__(
             self,
             app_plugin: bp.AppLauncherPlugin,
-            version: str,
-            config: dict[str, str],
+            version: str|None = None,
+            config: dict[str, str]|None = None,
         ) -> None:
         self._app_plugin = app_plugin
         self._version = version
         if isinstance(config, BaseModel):
             config = config.model_dump()
         self._config = config
-        self.ctx = self._create_launch_context()
 
     def __str__(self):
         return f'{self.label} v{self._version} [{self._app_plugin.app_mode}]'
 
     def __repr__(self):
         return f"<ApplicationLauncher({self.name!r} v{self._version!r}, [{self._app_plugin.app_mode!r}])"
-
-    def _create_launch_context(self) -> launching.LaunchContext:
-        executable = self.get_executable()
-        if not executable:
-            raise ApplicationError(f'{self.name} must define a executable')
-        if not Path(executable).is_file():
-            raise ApplicationError(f'Executable {self.name}/{executable} is not a file or not exists')
-        ctx = launching.LaunchContext(
-            executable,
-            args=self.get_default_launch_args(),
-            env=self.get_default_launch_envs(),
-        )
-        return ctx
 
     def create_launch_context(self) -> launching.LaunchContext:
         executable = self.get_executable()
