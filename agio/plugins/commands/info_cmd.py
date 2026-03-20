@@ -261,5 +261,6 @@ class InfoCommand(ACommandPlugin):
             click.echo(f' Path: {ws.install_root}')
         else:
             click.echo(f' Path: {local_dirs.install_dir()}')
+        click.echo(f' Exec: {sys.executable}')
 
 

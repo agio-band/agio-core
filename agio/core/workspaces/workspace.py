@@ -20,7 +20,7 @@ from agio.core.exceptions import (
     WorkspaceNotExists,
     NotExistsError,
     WorkspaceInstallationLocked,
-    PackageInstallationError,
+    PackageInstallationError, AException,
 )
 from agio.core.settings import collector
 from agio.core.config import config
@@ -35,8 +35,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class DefaultWorkspaceError(Exception):
+class DefaultWorkspaceError(AException):
     pass
+
+
+class WorkspaceManagerError(AException):
+    detail = 'Workspace manager error'
 
 
 class AWorkspaceManager:
@@ -98,8 +102,15 @@ class AWorkspaceManager:
             self._kwargs.pop('root_suffix', None)
             self._extra_launch_envs.pop(env_names.WORKSPACE_SUFFIX, None)
 
-    def set_app(self, app: AApplicationLauncher|None):
+    def set_app(self, app: str|AApplicationLauncher|None, version: str|None = None) -> None:
+        from agio.apps import app_hub
+
+        if isinstance(app, str):
+            app_name, app_version, app_mode  = app_hub.parse_key(app, version, mode='python')
+            app = app_hub.get_app(app_name, app_version, app_mode)
         if app:
+            if app.mode != 'python':
+                raise WorkspaceManagerError(detail='Only "python" mode of application is supported')
             required_version = app.get_python_version()
             self._kwargs['python_version'] = required_version
             suffix = f"{app.name}-{app.version}-py{required_version}"

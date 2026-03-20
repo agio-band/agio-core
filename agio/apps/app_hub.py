@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import re
 from typing import Generator
 
 from agio.apps.base_classes import base_app_launcher_plugin as bp
-from agio.apps.exceptions import ApplicationNotFoundError, AppLocalSettingsNotFoundError
+from agio.apps.exceptions import ApplicationNotFoundError, AppLocalSettingsNotFoundError, ApplicationError
 from agio.apps.launcher import AApplicationLauncher
 from agio.core.plugins import plugin_hub
 from agio.core.settings import get_local_settings
@@ -30,6 +31,14 @@ class ApplicationHub(metaclass=Singleton):
             if plugin.local_settings_required:
                 raise
         return AApplicationLauncher(plugin, version, app_config)
+
+    @classmethod
+    def parse_key(cls, app_key: str, version: str = None, mode: str = None) -> tuple[str, ...]:
+        match = re.match(r"([^/]+)/?([^/]+)?/?([^/]+)?", app_key)
+        if not match:
+            raise ApplicationNotFoundError(f"Invalid app key '{app_key}'")
+        app_name, app_version, app_mode = match.groups()
+        return app_name, version or app_version, mode or app_mode
 
     def get_app_settings(self, name: str, version: str) -> dict:
         for app in self.apps_config:

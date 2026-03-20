@@ -135,7 +135,7 @@ class AApplicationLauncher:
     def silent_echo(self):
         return bool(os.getenv('AGIO_SILENT_APP_STARTUP'))
 
-    def start(self, **kwargs):
+    def start(self, cmd_args: list[str], **kwargs):
         """
         PID equal None is app is started as detached
         """
@@ -155,9 +155,10 @@ class AApplicationLauncher:
                     print(f"{k}={v}")
             click.secho('=========================================', fg='yellow')
             ##########################################################################
-
-        emit('agio_core.application.before_start', payload={'app': self})
-        self._app_plugin.on_before_startup(self)
+        if cmd_args:
+            context.add_args(*cmd_args)
+        emit('agio_core.application.before_start', payload={'app': self, 'context': context})
+        self._app_plugin.on_before_startup(self, context)
         kwargs.setdefault('new_console', False)
         kwargs.setdefault('detached', False)
         kwargs['replace'] = not kwargs['detached']

@@ -5,6 +5,7 @@ from pathlib import Path
 from agio.core.plugins.base_plugin import APlugin
 from agio.apps import launcher as bapp
 from agio.apps.exceptions import ApplicationError
+from agio.tools.launching import LaunchContext
 
 
 class AppLauncherPlugin(APlugin):
@@ -58,7 +59,7 @@ class AppLauncherPlugin(APlugin):
         """
         return app.get_install_dir()
 
-    def on_before_startup(self, app: bapp.AApplicationLauncher) -> None:
+    def on_before_startup(self, app: bapp.AApplicationLauncher, context: LaunchContext) -> None:
         pass
 
     def on_after_startup(self, app: bapp.AApplicationLauncher) -> None:
