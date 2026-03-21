@@ -30,16 +30,21 @@ def default_install_dir(*inner_parts) -> Path:
         return Path(os.path.expandvars(r'%LOCALAPPDATA%\agio'), *inner_parts)
     elif IS_MAC:
         return Path('~/Applications/agio', *inner_parts).expanduser()
+    else:
+        raise NotImplementedError('Unsupported platform')
 
 
 def config_dir(*inner_parts: str) -> Path:
     """Path where agio configs is stored"""
+    path = os.getenv(env_names.CONFIG_PATH)
     if IS_LINUX:
-        return Path('~/.config/agio', *inner_parts).expanduser()
+        return Path(path or '~/.config/agio', *inner_parts).expanduser()
     elif IS_WINDOWS:
-        return Path(os.path.expandvars(r'%APPDATA%\agio'), *inner_parts)
+        return Path(path or os.path.expandvars(r'%APPDATA%\agio'), *inner_parts)
     elif IS_MAC:
-        return Path('~/Library/Preferences/agio', *inner_parts)
+        return Path(path or '~/Library/Preferences/agio', *inner_parts)
+    else:
+        raise NotImplementedError('Unsupported platform')
 
 
 def projects_settings_dir(*inner_parts: str) -> Path:
@@ -48,12 +53,15 @@ def projects_settings_dir(*inner_parts: str) -> Path:
 
 def cache_dir(*inner_parts) -> Path:
     """Path for cache data"""
+    path = os.getenv(env_names.CACHE_DIR)
     if IS_LINUX:
-        return Path('~/.cache/agio', *inner_parts).expanduser()
+        return Path(path or '~/.cache/agio', *inner_parts).expanduser()
     elif IS_WINDOWS:
-        return Path(os.path.expandvars(r'%LOCALAPPDATA%\cache\agio'), *inner_parts)
+        return Path(os.path.expandvars(path or r'%LOCALAPPDATA%\cache\agio'), *inner_parts)
     elif IS_MAC:
-        return Path('~/Library/Caches/agio', *inner_parts).expanduser()
+        return Path(path or '~/Library/Caches/agio', *inner_parts).expanduser()
+    else:
+        raise NotImplementedError('Unsupported platform')
 
 
 def binary_files_dir(*inner_parts) -> Path:
@@ -63,13 +71,16 @@ def binary_files_dir(*inner_parts) -> Path:
 
 def user_binary_path_dir() -> Path:
     """Path for binary files or symlinks, added to PATH env by default"""
+    path = os.getenv(env_names.USER_BINARY_PATH)
     if IS_LINUX:
-        return Path('~/.local/bin').expanduser()
+        return Path(path or '~/.local/bin').expanduser()
     elif IS_WINDOWS:
-        return Path(os.path.expandvars(r'%LOCALAPPDATA%\Microsoft\WindowsApps'))
+        return Path(os.path.expandvars(path or r'%LOCALAPPDATA%\Microsoft\WindowsApps'))
     elif IS_MAC:
         # TODO: need to add to ~/.zshrc or ~/.bashrc
-        return Path('~/.local/bin').expanduser()
+        return Path(path or '~/.local/bin').expanduser()
+    else:
+        raise NotImplementedError('Unsupported platform')
 
 
 def temp_dir(*inner_parts) -> Path:

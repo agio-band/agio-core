@@ -6,7 +6,7 @@ from agio.apps.launcher import AApplicationLauncher
 from agio.apps.app_hub import ApplicationHub
 from .context_app import ContextApp
 
-__all__ = ['app', 'app_hub', 'get_app_config', 'get_registered_apps', 'get_app_list']
+__all__ = ['app', 'app_hub', 'get_app_config', 'get_registered_app_plugins', 'get_app_list']
 
 
 logger = logging.getLogger(__name__)
@@ -21,15 +21,15 @@ def get_app_config():
     return apps_config
 
 
-def get_registered_apps():
-    return list(plugin_hub.APluginHub.instance().get_plugins_by_type('app_launcher'))
+def get_registered_app_plugins():
+    return list(plugin_hub.APluginHub.instance().get_plugins_by_type('application'))
 
 
 def get_app_list():
     apps_config = get_app_config()
     if not apps_config:
         return
-    all_app_plugins = get_registered_apps()
+    all_app_plugins = get_registered_app_plugins()
     if not all_app_plugins:
         logger.warning('No plugins found for any applications')
         return

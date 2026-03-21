@@ -58,8 +58,8 @@ class AppLauncherService(ServicePlugin):
         action_name = f'{self.name}.{self.launch.__name__}'
         for i, app in enumerate(sorted(apps, key=lambda a: (a.name, a.version))):
             label = f'{app.label} {app.version}'
-            if app.mode_label:
-                label += f' ({app.mode_label})'
+            if app.mode:
+                label += f' ({app.mode})'
             action_data = {
                 # filters
                 'action': action_name,

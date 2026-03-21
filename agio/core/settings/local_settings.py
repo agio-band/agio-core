@@ -58,7 +58,7 @@ def load(project: str | pd.AProject = None) -> settings_hub.LocalSettingsHub:
     return settings
 
 
-def save(settings: settings_hub.LocalSettingsHub|dict, project: str | pd.AProject=None) -> str:
+def save(settings: settings_hub.LocalSettingsHub|dict, project: str | pd.AProject=None) -> str|None:
     settings_file = Path(get_settings_dir(get_project_dir_name(project)), _settings_file_name)
     emit('core.settings.before_project_settings_save', {'settings': settings, 'project': project, 'settings_file': settings_file})
     if not isinstance(settings, dict):
@@ -68,11 +68,12 @@ def save(settings: settings_hub.LocalSettingsHub|dict, project: str | pd.AProjec
         settings_file.write_text(json.dumps(settings, indent=2, cls=JsonSerializer))
         emit('core.settings.project_settings_saved', {'settings': settings, 'project': project, 'settings_file': settings_file})
         logger.info(f'Saved local settings for {project!r}: {settings_file}')
+        return settings_file.as_posix()
     else:
         settings_file.unlink(missing_ok=True)
         emit('core.settings.project_settings_empty', {'settings': None, 'project': project, 'settings_file': settings_file})
         logger.info(f'Removed local settings for: {project!r}')
-    return settings_file.as_posix()
+    return None
 
 
 def copy(from_project: pd.AProject, to_project: pd.AProject) -> str:

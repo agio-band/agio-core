@@ -53,10 +53,10 @@ class APlugin(metaclass=PluginMeta):
         return self.name
 
     @classmethod
-    def load_from_info(cls, plugin_info: dict, info_file_path: str) -> Generator[APlugin, None, None]:
+    def load_from_info(cls, plugin_info: dict, info_file_path: str) -> Generator[type[APlugin], None, None]:
         from agio.apps import app
 
-        for imp in plugin_info.get('implementations', ()):
+        for imp in plugin_info.get('implementations', []):
             if not app.filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
                 continue
             module = imp.get('module')

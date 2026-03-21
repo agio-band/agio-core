@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from agio.core.settings import APackageSettings
 from agio.tools import local_dirs
@@ -8,6 +8,11 @@ class ApplicationSettings(BaseModel):
     name: str
     version: str
     install_dir: str
+    workdir: str = None
+    extra_args: str = None
+    extra_envs: dict[str, str] = Field(default_factory=dict)
+    custom_data: dict = None
+    python_version: str = None
 
 
 

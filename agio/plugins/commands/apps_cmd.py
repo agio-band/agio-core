@@ -3,7 +3,7 @@ from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 import click
 
 from agio.apps.exceptions import ApplicationError
-from agio.apps import get_registered_apps, get_app_config
+from agio.apps import get_registered_app_plugins, get_app_config
 
 
 class ListAppCommand(ASubCommand):
@@ -13,35 +13,35 @@ class ListAppCommand(ASubCommand):
     ]
 
     def execute(self, as_args: bool):
-        registered = get_registered_apps()
+        registered = get_registered_app_plugins()
         if registered:
             click.secho('Registered apps:', fg='yellow')
             for app in registered:
                 click.secho(f'  {app.name}')
         else:
             click.secho('No app plugins found', fg='red')
-        configs = get_app_config()
-        if configs:
-            configured = []
-            for app_plg in registered:
-                conf_list = [x for x in configs if x.name == app_plg.app_name]
-                for c in conf_list:
-                    app =  AApplicationLauncher(app_plg, c.version, c)
-                    try:
-                        install_dir = app.get_install_dir()
-                    except ApplicationError:
-                        install_dir = None
-                    configured.append((app, install_dir))
-            if configured:
-                click.secho('Configs:', fg='yellow')
-
-                for app, install_dir in configured:
-                    if as_args:
-                        click.echo(f'  --app-name {app.name} --app-version {app.version} --app-mode {app.mode}')
-                    else:
-                        click.echo(f'  {app.name} v{app.version} [{install_dir or "NOT-SET"}]') # TODO make beauty
-            else:
-                click.secho('No configured app found', fg='red')
+        # configs = get_app_config()
+        # if configs:
+        #     configured = []
+        #     for app_plg in registered:
+        #         conf_list = [x for x in configs if x.name == app_plg.app_name]
+        #         for c in conf_list:
+        #             app =  AApplicationLauncher(app_plg, c.version, c)
+        #             try:
+        #                 install_dir = app.get_install_dir()
+        #             except ApplicationError:
+        #                 install_dir = None
+        #             configured.append((app, install_dir))
+        #     if configured:
+        #         click.secho('Configs:', fg='yellow')
+        #
+        #         for app, install_dir in configured:
+        #             if as_args:
+        #                 click.echo(f'  --app-name {app.name} --app-version {app.version} --app-mode {app.mode}')
+        #             else:
+        #                 click.echo(f'  {app.name} v{app.version} [{install_dir or "NOT-SET"}]') # TODO make beauty
+        #     else:
+        #         click.secho('No configured app found', fg='red')
 
 
 
