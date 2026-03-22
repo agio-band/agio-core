@@ -36,4 +36,4 @@ def get_app_list():
     for app_plg in all_app_plugins:
         conf_list = [x for x in apps_config if x.name == app_plg.app_name]
         for c in conf_list:
-            yield AApplicationLauncher(app_plg, c.version, c)
+            yield AApplicationLauncher(app_plg, c.version)
