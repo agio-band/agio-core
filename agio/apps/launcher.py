@@ -26,8 +26,8 @@ class AApplicationLauncher:
         ) -> None:
         self._app_plugin = app_plugin
         self._version = version
-
         self._settings = self.get_settings()
+        self.ctx = self.create_launch_context()
 
     def __str__(self):
         return f'{self.label} v{self._version} [{self._app_plugin.app_mode}]'
@@ -155,11 +155,11 @@ class AApplicationLauncher:
         """
         PID equal None is app is started as detached
         """
-        context = self.create_launch_context()
+        # context = self.create_launch_context()
         if cmd_args:
-            context.add_args(*cmd_args)
+            self.ctx.add_args(*cmd_args)
         if cmd_envs:
-            context.append_envs(**cmd_envs)
+            self.ctx.append_envs(**cmd_envs)
 
         ### DEBUG INFO ###########################################################
         if not self.silent_echo():
@@ -167,7 +167,7 @@ class AApplicationLauncher:
             print('Name:', end=' ')
             click.secho(str(self), fg='green')
             print('CMD:', end=' ')
-            click.secho(' '.join(context.command), fg='green')
+            click.secho(' '.join(self.ctx.command), fg='green')
             envs = self.get_default_launch_envs()
             if cmd_envs:
                 envs.update(**cmd_envs)
@@ -176,10 +176,10 @@ class AApplicationLauncher:
             click.secho('=========================================', fg='yellow')
         ##########################################################################
 
-        emit('agio_core.application.before_start', payload={'app': self, 'context': context})
-        self._app_plugin.on_before_startup(context)
+        emit('agio_core.application.before_start', payload={'app': self})
+        self._app_plugin.on_before_startup(self.ctx)
         kwargs.setdefault('new_console', False)
         kwargs.setdefault('detached', False)
         kwargs['replace'] = not kwargs['detached']
-        start_process(context.command, env=context.envs, **kwargs)
+        start_process(self.ctx.command, env=self.ctx.envs, **kwargs)
 

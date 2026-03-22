@@ -9,7 +9,7 @@ from agio.core.workspaces import AWorkspaceManager
 logger = logging.getLogger(__name__)
 
 
-@subscribe('agio_apps.start_app.app_created', raise_error=True)
+@subscribe('agio_core.start_app.app_created', raise_error=True)
 def create_app_workspace(event: AEvent):
     """
     Create personal venv for application. Interpreter is not used, only libs loaded from this venv.

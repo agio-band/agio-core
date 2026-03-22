@@ -126,11 +126,13 @@ class ChipsInfoCommand(ASubCommand):
     def execute(self):
         from agio.core.chips import chips_hub
 
-
-        for collection in chips_hub.collections:
-            click.secho(collection, fg='yellow')
-            for chip in chips_hub.get_collection(collection):
-                print('  ', chips_hub.get_chip_name(chip))
+        if not chips_hub.collections:
+            click.secho('No chips registered', fg='yellow')
+        else:
+            for collection in chips_hub.collections:
+                click.secho(collection, fg='yellow')
+                for chip in chips_hub.get_collection(collection):
+                    print('  ', chips_hub.get_chip_name(chip))
 
 
 class CallbacksInfoCommand(ASubCommand):

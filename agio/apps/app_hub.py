@@ -46,7 +46,6 @@ class ApplicationHub(metaclass=Singleton):
     @classmethod
     def find_plugin(cls, name: str, mode: str = 'default') -> bp.ApplicationPlugin | None:
         for plg in cls.find_app_plugins(name):
-            print(plg)
             if plg.app_mode == mode:
                 return plg
         return None
