@@ -29,6 +29,7 @@ class ApiClient:
     def login(self, refresh=False, force=False):
         # long time blocking command !
         emit('core.auth.before_login')
+        logger.debug('Start login process...')
         auth_data = auth_services.get_token(refresh_only=refresh, force=force)
         if auth_data:
             auth_services.write_cache_file(auth_data)
@@ -36,6 +37,7 @@ class ApiClient:
             logger.info('Logged in')
             emit('core.auth.on_login')
         else:
+            logger.error('Login failed')
             emit('core.auth.login_error')
             raise AuthorizationError
 
