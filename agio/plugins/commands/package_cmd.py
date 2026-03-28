@@ -238,7 +238,6 @@ class PackageUninstallCommand(ASubCommand):
         # get local manager
         try:
             ws: AWorkspace = AWorkspace.current()
-            print(ws)
             manager: AWorkspace = ws.get_manager()
         except WorkspaceNotDefined:
             manager: AWorkspaceManager = AWorkspaceManager.default()
