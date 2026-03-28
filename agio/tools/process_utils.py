@@ -1,6 +1,7 @@
 import logging
 import os
 import shlex
+import shutil
 import sys
 import signal
 import subprocess
@@ -85,10 +86,24 @@ def start_process(
                 print(f"Error changing directory: {e}")
                 exit(1)
         # command = [shlex.quote(x).replace("'", '"') for x in command]  # TODO fix quotes for Windows os ?
-        if os.path.isabs(executable):
-            os.execve(executable, command, new_env)
+        if sys.platform == 'win32':
+            target_executable = executable
+            if not os.path.isabs(target_executable):
+                found_path = shutil.which(target_executable)
+                if found_path:
+                    target_executable = found_path
+
+            try:
+                sys.exit(subprocess.call(command, env=new_env))
+                #  TODO allow exit ???
+            except FileNotFoundError:
+                print(f"Error: {target_executable} not found.")
+                sys.exit(1)
         else:
-            os.execvpe(executable, command, new_env)
+            if os.path.isabs(executable):
+                os.execve(executable, command, new_env)
+            else:
+                os.execvpe(executable, command, new_env)
 
     creationflags = 0
     stdin = None
@@ -200,8 +215,6 @@ def start_process(
             else:
                 sys.stdout.flush()
                 sys.stderr.flush()
-                
-                # Сохраняем настройки терминала до запуска процесса (для Unix)
                 if not IS_WIN32:
                     try:
                         import termios
@@ -212,8 +225,6 @@ def start_process(
                     _saved_tty_attrs = None
                 
                 process.wait()
-                
-                # Восстанавливаем настройки терминала после завершения
                 if not IS_WIN32 and _saved_tty_attrs is not None:
                     try:
                         import termios
