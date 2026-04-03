@@ -1,19 +1,20 @@
 from __future__ import annotations
+
 import json
 from functools import cached_property
 from typing import Iterator, Generator
+from typing import TypeVar
 from uuid import UUID
 
 from agio.core import api
-from agio.core.entities.domain import DomainBase
-from typing import TypeVar
+from .base_object import BaseObject
 
 
-class AEntity(DomainBase):
+class AEntity(BaseObject):
     """
     Provider of project entity
     """
-    domain_name = 'entity'
+    object_name = 'entity'
     entity_class = None
 
     def __init__(self, *args, **kwargs):
@@ -171,7 +172,7 @@ class AEntity(DomainBase):
         return '/'.join([x['name'] for x in self._load_parents_data()])
 
     @cached_property
-    def parent(self) -> AEntity|None:
+    def parent(self) -> AEntity | None:
         if self._data.get('parent'):
             return AEntity.from_id(self._data['parent']['id'])
         return None

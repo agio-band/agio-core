@@ -16,5 +16,6 @@ query GetPublishVersionsById($id: ID!) {
             name
         }
         fields
+        publishSessionId
     }
 }

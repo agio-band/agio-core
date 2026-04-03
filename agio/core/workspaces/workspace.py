@@ -228,6 +228,14 @@ class AWorkspaceManager:
         return manager
 
     @classmethod
+    def is_current(cls, workspace_id: str) -> bool:
+        return workspace_id.strip() in (
+            os.getenv(env_names.REVISION_ID),
+            os.getenv(env_names.WORKSPACE_ID),
+            os.getenv(env_names.SETTINGS_REVISION_ID),
+        )
+
+    @classmethod
     def default(cls):
         return cls(root=local_dirs.default_env_install_dir())
 

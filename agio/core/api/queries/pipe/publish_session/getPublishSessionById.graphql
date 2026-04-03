@@ -1,0 +1,17 @@
+query GetPublishSessionByID($id: ID!) {
+  publishSession(id: $id) {
+    id
+    state
+    status
+    data
+    entity {
+      id
+      name
+    }
+    publishVersions {
+      id
+      name
+      publishId
+    }
+  }
+}

@@ -8,15 +8,15 @@ from uuid import UUID
 from agio.tools import modules
 
 
-class DomainBase(ABC):
+class BaseObject(ABC):
     """
     Base class for database entity
     """
-    domain_name = None
+    object_name = None
 
     def __init__(self, data: str | UUID | dict):
-        if self.domain_name is None:
-            raise AttributeError("Domain name not set")
+        if self.object_name is None:
+            raise AttributeError(f"object_name not set for {self.__class__.__name__}")
         if isinstance(data, (str, UUID)):
             # from ID
             self._data: dict = self.get_data(data)
@@ -46,7 +46,7 @@ class DomainBase(ABC):
 
     @property
     def type(self):
-        return self.domain_name
+        return self.object_name
 
     @property
     def name(self):
@@ -90,12 +90,12 @@ class DomainBase(ABC):
 
     @classmethod
     @abstractmethod
-    def iter(cls, **kwargs) -> Iterator['DomainBase']:
+    def iter(cls, **kwargs) -> Iterator['BaseObject']:
         raise NotImplementedError()
 
     @classmethod
     @abstractmethod
-    def create(cls, **kwargs) -> 'DomainBase':
+    def create(cls, **kwargs) -> 'BaseObject':
         raise NotImplementedError()
 
     @abstractmethod

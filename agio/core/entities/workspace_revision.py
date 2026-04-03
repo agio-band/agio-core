@@ -7,11 +7,12 @@ from agio.core.api.utils import NOTSET
 from agio.core.entities import workspace
 from agio.core.settings import settings_hub
 from . import APackageRelease
-from .entity import DomainBase
+from .base_object import BaseObject
+from .workspace_settings import AWorkspaceSettings
 
 
-class AWorkspaceRevision(DomainBase):
-    domain_name = 'workspace_revision'
+class AWorkspaceRevision(BaseObject):
+    object_name = 'workspace_revision'
 
     @classmethod
     def get_data(cls, object_id: str) -> dict:
@@ -70,7 +71,7 @@ class AWorkspaceRevision(DomainBase):
              workspace_id: str = NOTSET,
              is_current: bool = NOTSET,
              ready_only: bool = NOTSET,
-             ) -> 'AWorkspaceRevision':
+             ) -> AWorkspaceRevision:
         data = api.workspace.find_revision(
             workspace_id=workspace_id,
             is_ready=ready_only,
@@ -133,11 +134,19 @@ class AWorkspaceRevision(DomainBase):
     def set_settings(self, settings_data: dict|settings_hub.WorkspaceSettingsHub, set_current: bool = True) -> str:
         if not isinstance(settings_data, dict):
             settings_data = settings_data.dump()
-        return api.workspace.create_revision_settings(
-            self.id,
-            settings_data,
-            set_current=set_current
-        )
+        settings = AWorkspaceSettings.create(self.id, settings_data, set_current=set_current)
+        return settings.id
 
     def set_current(self, is_current: bool):
         return api.workspace.update_revision(self.id, set_current=is_current)
+
+    def get_settings_id(self):
+        settings_data = api.workspace.get_settings_by_revision_id(self.id)
+        if settings_data:
+            return settings_data['id']
+        return None
+
+    @classmethod
+    def get_from_settings_id(cls, settings_id: str):
+        data = api.workspace.get_revision_by_settings_id(settings_id)
+        return cls(data)

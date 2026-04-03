@@ -1,0 +1,8 @@
+mutation UpdatePublishSession($id: ID!, $input: PublishSessionUpdateInput!){
+  updatePublishSession(
+    id: $id,
+    input: $input
+  ){
+    ok
+  }
+}

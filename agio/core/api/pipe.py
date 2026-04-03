@@ -1,4 +1,5 @@
 import os.path
+from typing import Iterator
 from uuid import UUID
 
 from agio.core.api import client
@@ -147,18 +148,11 @@ def update_product_type(
 # Published Version
 
 def iter_prodict_versions(
-        # entity_id: UUID,
-        # product_type: str = None,
         product_id: str = None,
-        # variant: UUID = None,
         items_per_page: int = 50
 ):
     filters = deep_dict()
     filters['where']['publish']['id']['equalTo'] = product_id
-    # if variant:
-    #     filters['where']['publish']['variant']['equalTo'] = variant
-    # if product_type:
-    #     filters['where']['publish']['type']['equalTo'] = product_type
     yield from iter_query_list(
         'pipe/versions/getVersionList',
         'publishVersions',
@@ -179,9 +173,10 @@ def get_version(version_id: str|UUID):
 
 
 def create_version(
-        product_id: UUID,
+        product_id: str|UUID,
         version: str,
-        task_id: UUID,
+        task_id: str|UUID,
+        publish_session_id: str,
         fields: dict = None,
         dependencies: list[str] = None
         ):
@@ -189,6 +184,7 @@ def create_version(
             name=version,
             publish=product_id,
             entity=task_id,
+            publishSession=str(publish_session_id),
             fields=fields
         )
     if dependencies:
@@ -199,7 +195,10 @@ def create_version(
     )['data']['createPublishVersion']['publishVersionId']
 
 
-def update_version(version_id: str|UUID, fields: dict, dependencies: list[str]):
+def update_version(
+        version_id: str|UUID,
+        fields: dict,
+        dependencies: list[str] = NOTSET):
     update_data = {}
     if fields:
         update_data['fields'] = fields
@@ -275,6 +274,89 @@ def iter_publish_files(
     yield from iter_query_list(
         'pipe/published_file/getPublishFileList',
         'publishFiles',
+        variables=dict(
+            filter=filters,
+        ),
+        items_per_page=items_per_page
+    )
+
+
+# Publish session
+
+def get_publish_session(session_id: str|UUID):
+    return client.make_query(
+        'pipe/publish_session/getPublishSessionById',
+        id=session_id,
+    )["data"]["publishSession"]
+
+
+# class PublishStatus:
+#     ready
+#     to
+#     review
+#     viewed
+#     sup
+#     okay
+#     dir
+#     okay
+#     santa is coming
+#     approved
+
+
+def create_publish_session(
+        entity_id: str|UUID,
+        state: str = None,
+        status: str = None,
+        workspace_settings_id: str = None,
+        comment: str = None,
+        data: dict = None,
+) -> str:
+    input_data = dict(
+        entity=str(entity_id),
+        state=state or 'PENDING', # TODO add enum
+        status=status or 'rvw', # TODO add enum
+        workspaceSettingsId=workspace_settings_id,
+        comment=comment or '',
+        data=data or {}
+    )
+    return client.make_query(
+        'pipe/publish_session/createPublishSession',
+        input=input_data
+    )['data']['createPublishSession']['publishSessionId']
+
+
+def update_publish_session(
+        session_id: str|UUID,
+        state: str = NOTSET,
+        status: str = NOTSET,
+        comment: str = NOTSET,
+        data: dict = NOTSET) -> dict:
+    update_data = {}
+    if state:
+        update_data['state'] = state
+    if status:
+        update_data['status'] = status
+    if comment:
+        update_data['comment'] = comment
+    if data:
+        if not isinstance(data, dict):
+            raise TypeError('data must be a dict')
+        update_data['data'] = data
+    if not update_data:
+        raise ValueError('Nothing to update')
+    return client.make_query(
+        'pipe/publish_session/updatePublishSession',
+        id=session_id,
+        input=update_data
+    )['data']['updatePublishSession']['ok']
+
+
+def iter_publish_sessions(project_id: str|UUID, items_per_page: int = 25) -> Iterator[dict]:
+    filters = deep_dict()
+    filters['where']['entity']['project']['id']['equalTo'] = project_id
+    yield from iter_query_list(
+        'pipe/publish_session/getPublishSessionList',
+        'publishSessions',
         variables=dict(
             filter=filters,
         ),

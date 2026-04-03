@@ -1,24 +1,25 @@
 from __future__ import annotations
+
 import logging
 from typing import Generator
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
-from .entity import DomainBase
+from .base_object import BaseObject
 from .package_release import APackageRelease
 
 logger = logging.getLogger(__name__)
 
 
-class APackage(DomainBase):
-    domain_name = "package"
+class APackage(BaseObject):
+    object_name = "package"
 
     @classmethod
     def get_data(cls, object_id: str) -> dict:
         return api.package.get_package(object_id)
 
     @classmethod
-    def create(cls, name: str) -> 'APackage':
+    def create(cls, name: str) -> APackage:
         package_id = api.package.create_package(name)
         return cls(package_id)
 
@@ -36,7 +37,7 @@ class APackage(DomainBase):
         self._data.update(resp)
 
     @classmethod
-    def iter(cls, limit: int = None) -> Generator['APackage', None, None]:
+    def iter(cls, limit: int = None) -> Generator[APackage, None, None]:
         for pkg in api.package.iter_packages():
             yield cls(pkg)
 
@@ -44,10 +45,11 @@ class APackage(DomainBase):
         return api.package.delete_package(self.id)
 
     @classmethod
-    def find(cls, name: str) -> 'APackage' or None:
+    def find(cls, name: str) -> APackage | None:
         pkg = api.package.find_package(name)
         if pkg is not None:
             return cls(pkg)
+        return None
 
     @property
     def name(self):
@@ -60,9 +62,10 @@ class APackage(DomainBase):
         for release_data in api.package.iter_package_releases(self.id):
             yield APackageRelease(release_data)
 
-    def latest_release(self) -> APackageRelease:
+    def latest_release(self) -> APackageRelease|None:
         revision_id = api.package.get_latest_release(self.id)
         if revision_id is not None:
             return APackageRelease(revision_id)
+        return None
 
 

@@ -129,7 +129,7 @@ class ApiClient:
         except HTTPError as e:
             try:
                 resp_data = response.json()
-                resp_data = resp_data['error']['status']
+                resp_data = self._extract_error(resp_data)
             except JSONDecodeError:
                 resp_data = response.text
             raise RequestError(f'{resp_data}') from e
@@ -144,6 +144,12 @@ class ApiClient:
             return self._do_request(data, attempt=attempt + 1)
         self._check_response_errors(result)
         return result
+
+    def _extract_error(self, data: dict):
+        error_text = []
+        for err in data['errors']:
+            error_text.append(err['message'])
+        return '\n'.join(error_text)
 
     def _is_unauthorized_error(self, response: dict) -> bool:
         if 'errors' in response:
@@ -167,7 +173,7 @@ class ApiClient:
         print(json.dumps(data, indent=2).replace('\\n', '\n'), flush=True)
         print('='*50)
 
-    def _remove_notset_values(self, data: dict, sentinel: NOTSET = NOTSET):
+    def _remove_notset_values(self, data: dict, sentinel: type[NOTSET] = NOTSET):
         if isinstance(data, dict):
             keys_to_delete = []
             for key, value in data.items():

@@ -4,18 +4,19 @@ import os
 from typing import Iterator
 
 from agio.core import api
-from ...tools import env_names
 from agio.core.api.utils import NOTSET
-from . import APackageRelease, APackage
-from .entity import DomainBase
+from agio.core.events import emit
+from agio.core.exceptions import RequestError, WorkspaceNotDefined
+from agio.core.settings import settings_hub
+from agio.tools import env_names
+from .base_object import BaseObject
+from .package import APackage
+from .package_release import APackageRelease
 from .workspace_revision import AWorkspaceRevision
-from ..events import emit
-from ..exceptions import RequestError, SettingsRevisionNotExists, WorkspaceNotDefined
-from ..settings import settings_hub
 
 
-class AWorkspace(DomainBase):
-    domain_name = 'workspace'
+class AWorkspace(BaseObject):
+    object_name = 'workspace'
 
     @classmethod
     def get_data(cls, object_id: str) -> dict:
@@ -81,6 +82,9 @@ class AWorkspace(DomainBase):
 
     @classmethod
     def get_current_revision_from_env(cls):
+        settings_id = os.getenv(env_names.SETTINGS_REVISION_ID)
+        if settings_id:
+            revision_id = AWorkspaceSet
         revision_id = os.getenv(env_names.REVISION_ID)
         if revision_id:
             return AWorkspaceRevision(revision_id)

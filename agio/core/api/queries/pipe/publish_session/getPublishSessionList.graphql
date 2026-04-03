@@ -1,0 +1,31 @@
+query GetPublishSessionList($filter: PublishSessionFilter, $first: Int = 100, $afterCursor: String){
+  publishSessions(
+    first: $first,
+    filter: $filter,
+    after: $afterCursor
+  ){
+    edges{
+      node{
+        id
+        state
+        status
+        data
+        entity {
+          id
+          name
+        }
+        publishVersions {
+          id
+          name
+          publishId
+        }
+      }
+    }
+    pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+        }
+  }
+}

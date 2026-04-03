@@ -1,0 +1,7 @@
+mutation CreatePublishSession($input: PublishSessionCreateInput!) {
+  createPublishSession (
+    input:$input
+  ) {
+    publishSessionId
+  }
+}

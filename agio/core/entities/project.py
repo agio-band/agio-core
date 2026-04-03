@@ -7,15 +7,15 @@ from uuid import UUID
 
 from agio.core import api
 from agio.core import settings
-from agio.core.entities import domain, workspace_revision
-from agio.core.entities import workspace as ws
 from agio.core.entities import company as company_entity
+from agio.core.entities import workspace as ws, BaseObject
+from agio.core.entities import workspace_revision
 from agio.core.settings import settings_hub
 from agio.core.settings.settings_hub import LocalSettingsHub
 
 
-class AProject(domain.DomainBase):
-    domain_name = "project"
+class AProject(BaseObject):
+    object_name = "project"
 
     @property
     def code(self):
@@ -35,12 +35,12 @@ class AProject(domain.DomainBase):
         return resp
 
     @classmethod
-    def iter(cls, company_id: str|UUID, **kwargs) -> Iterator['AProject']:
+    def iter(cls, company_id: str|UUID, **kwargs) -> Iterator[AProject]:
         for prj_data in api.track.iter_projects(company_id=company_id, **kwargs):
             yield cls(prj_data)
 
     @classmethod
-    def create(cls, **kwargs) -> 'AProject':
+    def create(cls, **kwargs) -> AProject:
         raise NotImplementedError()
 
     def delete(self) -> None:
@@ -48,7 +48,7 @@ class AProject(domain.DomainBase):
 
     @classmethod
     def find(cls, name: str = None, code: str = None, state: str = None,
-        company: company_entity.ACompany|str = None) -> 'AProject':
+        company: company_entity.ACompany|str = None) -> AProject|None:
         if isinstance(company, company_entity.ACompany):
             company_id = company.id
         elif isinstance(company, (str, UUID)):
@@ -63,6 +63,7 @@ class AProject(domain.DomainBase):
         data = api.track.find_project(company_id, name=name, code=code, state=state)
         if data is not None:
             return cls(data)
+        return None
 
 
     def get_company(self):
@@ -86,24 +87,25 @@ class AProject(domain.DomainBase):
         else:
             return ws.AWorkspace(workspace_dict['id'])
 
-    def get_revision(self) -> workspace_revision.AWorkspaceRevision:
+    def get_revision(self) -> workspace_revision.AWorkspaceRevision|None:
         if self.revision_id:
             return workspace_revision.AWorkspaceRevision(self.revision_id)
         else:
             workspace = self.get_workspace()
             if workspace:
                 return workspace.get_current_revision()
+        return None
 
     @property
-    def workspace_id(self):
+    def workspace_id(self) -> str|None:
         return self._data['workspace']['id'] if self._data['workspace'] else None
 
     @property
-    def revision_id(self):
+    def revision_id(self) -> str|None:
         return self._data['workspaceRevision']['id'] if self._data['workspaceRevision'] else None
 
     @property
-    def workspace_launching_id(self):
+    def workspace_launching_id(self) -> str|None:
         return self.revision_id or self.workspace_id
 
     def set_workspace(self, workspace: ws.AWorkspace|str|None) -> bool:

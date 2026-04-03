@@ -37,7 +37,7 @@ def get_company_by_code(code: str) -> dict|None:
         raise NotFoundError(detail='Company not found')
 
 
-def iter_companies(user_id: str = None, limit: int = None) -> Iterator[dict]:
+def iter_companies(user_id: str = None, limit: int = None, items_per_page: int = 25) -> Iterator[dict]:
     if user_id is None:
         from .profile import get_current_user
         user_id = get_current_user()['id']
@@ -45,7 +45,8 @@ def iter_companies(user_id: str = None, limit: int = None) -> Iterator[dict]:
         'desk/company/getCompanyList',
         entities_data_key='companies',
         limit=limit,
+        items_per_page=items_per_page,
         variables={
-            "userId":user_id
-            }
+            "userId": user_id
+            },
     )

@@ -18,6 +18,7 @@ query GetVersionList($first: Int!, $filter: PublishVersionFilter, $afterCursor: 
                     }
                 }
                 fields
+                publishSessionId
             }
         }
         pageInfo {

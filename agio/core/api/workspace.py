@@ -275,6 +275,20 @@ def get_revision_settings(settings_id: UUID|str) -> dict:
     )['data']['workspaceSettings']
 
 
+def update_revision_settings(settings_id: str|UUID, is_current: bool = NOTSET, comment: str = NOTSET) -> bool:
+    input_data = {}
+    if is_current is not None:
+        input_data['isCurrent'] = is_current
+    if comment is not None:
+        input_data['comment'] = comment
+    return client.make_query(
+        'ws/settings/updateSettings',
+        id=str(settings_id),
+        input=input_data,
+    )["data"]["updateWorkspaceSettings"]["ok"]
+
+
+
 def iter_revision_settings(revision_id: UUID|str) -> Iterator[dict]:
     yield from iter_query_list(
         'ws/settings/getRevisionSettingsList',

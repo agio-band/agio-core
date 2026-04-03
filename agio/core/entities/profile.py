@@ -1,11 +1,13 @@
 from __future__ import annotations
+
 from typing import Iterator
+
 from agio.core import api
-from agio.core.entities import DomainBase
+from agio.core.entities import BaseObject
 
 
-class AProfile(DomainBase):
-    domain_name = "profile"
+class AProfile(BaseObject):
+    object_name = "profile"
 
     @classmethod
     def get_data(cls, object_id: str) -> dict:
@@ -15,11 +17,11 @@ class AProfile(DomainBase):
         raise NotImplementedError()
 
     @classmethod
-    def iter(cls, **kwargs) -> Iterator['AProfile']:
+    def iter(cls, **kwargs) -> Iterator[AProfile]:
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, **kwargs) -> 'AProfile':
+    def create(cls, **kwargs) -> AProfile:
         raise NotImplementedError()
 
     def delete(self) -> None:
@@ -30,7 +32,7 @@ class AProfile(DomainBase):
         raise NotImplementedError()
 
     @classmethod
-    def current(cls, **kwargs) -> 'AProfile':
+    def current(cls, **kwargs) -> AProfile:
         data = api.profile.get_current_user()
         if not data:
             raise Exception('Current user not authenticated')

@@ -8,14 +8,14 @@ from agio.core import api
 from agio.core.api.utils import NOTSET
 from agio.core.exceptions import PackageError
 from agio.tools.repository_utils import filter_compatible_package
-from .entity import DomainBase
+from .entity import BaseObject
 from ..events import emit
 
 logger = logging.getLogger(__name__)
 
 
-class APackageRelease(DomainBase):
-    domain_name = 'package_release'
+class APackageRelease(BaseObject):
+    object_name = 'package_release'
 
     def __repr__(self):
         return f'<{self.__class__.__name__} {self.get_package_name()} v{self.get_version()} ({self.id!r})>'

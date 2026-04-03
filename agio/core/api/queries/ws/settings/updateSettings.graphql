@@ -1,0 +1,9 @@
+mutation UpdateSettingsById($id: ID!, $input: WorkspaceSettingsUpdateInput!){
+  updateWorkspaceSettings(
+        id: $id,
+        input: $input
+  )
+  {
+    ok
+  }
+}

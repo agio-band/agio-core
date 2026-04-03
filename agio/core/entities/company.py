@@ -1,14 +1,14 @@
 from __future__ import annotations
 from typing import Iterator
 
-from agio.core.entities import workspace as ws, domain as dm
+from agio.core.entities import workspace as ws, base_object as base
 from agio.core import api
 from agio.core.entities import project
 from agio.core.exceptions import NotFoundError
 
 
-class ACompany(dm.DomainBase):
-    domain_name = "company"
+class ACompany(base.BaseObject):
+    object_name = "company"
 
     @classmethod
     def get_data(cls, object_id: str) -> dict:
@@ -18,8 +18,8 @@ class ACompany(dm.DomainBase):
         raise NotImplementedError()
 
     @classmethod
-    def iter(cls, **kwargs) -> Iterator['ACompany']:
-        yield from api.desk.iter_companies(**kwargs)
+    def iter(cls, **kwargs) -> Iterator[ACompany]:
+        yield from (cls(data) for data in api.desk.iter_companies(**kwargs))
 
     @classmethod
     def create(cls, **kwargs) -> ACompany:
@@ -36,7 +36,7 @@ class ACompany(dm.DomainBase):
     def get_by_name(cls, name: str) -> ACompany|None:
         try:
             data = api.desk.get_company_by_code(name)
-            return ACompany(data)
+            return cls(data)
         except NotFoundError:
             return None
 
@@ -46,6 +46,7 @@ class ACompany(dm.DomainBase):
 
     @classmethod
     def switch(cls, company_id: str) -> ACompany:
+        """Deprecated"""
         if api.desk.switch_company(company_id):
             return cls.current()
         else:
@@ -58,5 +59,5 @@ class ACompany(dm.DomainBase):
         raise NotImplementedError()
 
     def workspaces(self) -> Iterator[ws.AWorkspace]:
-        for item in api.workspace.iter_workspaces(self.id):
+        for item in api.workspace.iter_workspaces(company_id=self.id):
             yield ws.AWorkspace(item)
