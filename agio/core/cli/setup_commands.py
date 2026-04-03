@@ -71,10 +71,11 @@ def agio_group(ctx, workspace, debug, app, **kwargs):
         is_unknown = obj.get('is_unknown_command', False)
 
         if workspace:
-            ws = AWorkspaceManager.create_from_id(workspace)
-            full_command = ['-a', app, cmd_name, *cmd_args] if app else [cmd_name, *cmd_args]
-            # restart in new workspace
-            launching.exec_agio_command(full_command, ws, replace=True)
+            if not AWorkspaceManager.is_current(workspace):
+                ws = AWorkspaceManager.create_from_id(workspace)
+                full_command = ['-a', app, cmd_name, *cmd_args] if app else [cmd_name, *cmd_args]
+                # restart in new workspace
+                launching.exec_agio_command(full_command, ws, replace=True)
         if app:
             ws = AWorkspaceManager.current()
             if not ws:
