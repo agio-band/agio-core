@@ -74,6 +74,8 @@ class BaseObject(ABC):
         return f"<{self.__class__.__name__} {name} ('{self.id}')>"
 
     def __eq__(self, other):
+        if not isinstance(other, BaseObject):
+            raise TypeError(f"Cannot compare with {type(other)}")
         return self.id == other.id
 
     def __hash__(self):
