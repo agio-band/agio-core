@@ -52,6 +52,10 @@ class ACompany(base.BaseObject):
         else:
             raise NotFoundError(detail="Company not found")
 
+    @property
+    def host_user(self):
+        return self._data.get('hostUser') or {}
+
     def find_project(self, name: str = None, state: str = None, code: str = None) -> project.AProject|None:
         return project.AProject.find(company=self.id, name=name, state=state, code=code)
 
