@@ -60,6 +60,8 @@ class APluginHub(metaclass=Singleton):
             pkg.collect_chips()
 
     def get_plugins_by_type(self, type_type: str) -> Generator[APlugin, None, None]:
+        if type_type not in self.plugins:
+            return
         yield from self.plugins[type_type].values()
 
     def get_plugin_by_name(self, plugin_type: str, name: str) -> 'APlugin | None':
