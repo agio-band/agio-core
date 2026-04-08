@@ -31,7 +31,7 @@ def get_app_list():
         return
     all_app_plugins = get_registered_app_plugins()
     if not all_app_plugins:
-        logger.warning('No plugins found for any applications')
+        logger.debug('No plugins found for any applications')
         return
     for app_plg in all_app_plugins:
         conf_list = [x for x in apps_config if x.name == app_plg.app_name]
