@@ -1,6 +1,8 @@
 query GetPublishSessionByID($id: ID!) {
   publishSession(id: $id) {
     id
+    name
+    number
     state
     status
     data

@@ -7,6 +7,8 @@ query GetPublishSessionList($filter: PublishSessionFilter, $first: Int = 100, $a
     edges{
       node{
         id
+        name
+        number
         state
         status
         data

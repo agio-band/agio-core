@@ -1,0 +1,19 @@
+query GetPublishSessionByEntityId($entityId: ID!) {
+  publishSessions(
+    first: 1,
+    filter: { where: {
+      entityId: { equalTo: $entityId },
+      state: {in: ["IN_PROGRESS", "PENDING", "PENDING", "DONE"]}
+    } },
+    ordering: { direction: DESC, sort: NUMBER }
+  ) {
+    edges {
+      node {
+        id
+        name
+        number
+        status
+      }
+    }
+  }
+}

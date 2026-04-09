@@ -1,5 +1,5 @@
 import os.path
-from typing import Iterator
+from typing import Iterator, Generator
 from uuid import UUID
 
 from agio.core.api import client
@@ -14,7 +14,7 @@ def iter_products(
         product_type_id: str = None,
         product_type_name: str = None,
         items_per_page: int = 50
-    ) -> list:
+    ) -> Generator[dict, None, None]:
     filters = deep_dict()
     filters['where']['entity']['id']['equalTo'] = entity_id
     if product_type_id:
@@ -305,6 +305,8 @@ def get_publish_session(session_id: str|UUID):
 
 def create_publish_session(
         entity_id: str|UUID,
+        name: str,
+        version: int,
         state: str = None,
         status: str = None,
         workspace_settings_id: str = None,
@@ -313,6 +315,8 @@ def create_publish_session(
 ) -> str:
     input_data = dict(
         entity=str(entity_id),
+        name=name,
+        number=version,
         state=state or 'PENDING', # TODO add enum
         status=status or 'rvw', # TODO add enum
         workspaceSettingsId=workspace_settings_id,
@@ -327,23 +331,21 @@ def create_publish_session(
 
 def update_publish_session(
         session_id: str|UUID,
+        name: str = NOTSET,
         state: str = NOTSET,
         status: str = NOTSET,
         comment: str = NOTSET,
         data: dict = NOTSET) -> dict:
-    update_data = {}
-    if state:
-        update_data['state'] = state
-    if status:
-        update_data['status'] = status
-    if comment:
-        update_data['comment'] = comment
+    update_data = {
+        'name': name,
+        'state': state,
+        'status': status,
+        'comment': comment,
+        'data': data
+    }
     if data:
         if not isinstance(data, dict):
             raise TypeError('data must be a dict')
-        update_data['data'] = data
-    if not update_data:
-        raise ValueError('Nothing to update')
     return client.make_query(
         'pipe/publish_session/updatePublishSession',
         id=session_id,
@@ -362,3 +364,13 @@ def iter_publish_sessions(project_id: str|UUID, items_per_page: int = 25) -> Ite
         ),
         items_per_page=items_per_page
     )
+
+def get_next_session_version(entity_id: str|UUID):
+    result = client.make_query(
+        'pipe/publish_session/getLatestPublishSessionForEntity',
+        entityId=entity_id,
+        )
+    items = result["data"]["publishSessions"]["edges"]
+    if items:
+        return items[0]["node"]["number"] + 1
+    return 1
