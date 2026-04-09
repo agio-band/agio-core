@@ -1,10 +1,11 @@
 import shutil
 from pathlib import Path
+from typing import Generator
 
 from agio.tools import local_dirs
 
 
-def get_files_from_cache(key) -> list[Path]:
+def get_files_from_cache(key) -> Generator[tuple[Path, Path], None, None]:
     file_cache_dir = local_dirs.cache_dir('cached-files', key)
     if file_cache_dir.exists():
         for file in file_cache_dir.rglob('*'):
@@ -13,7 +14,7 @@ def get_files_from_cache(key) -> list[Path]:
         raise FileNotFoundError('No cached files found')
 
 
-def save_file_to_cache(key, src_file, save_path) -> (Path, Path):
+def save_file_to_cache(key, src_file, save_path) -> tuple[Path, Path]:
     file_cache_dir = local_dirs.cache_dir('cached-files', key)
     file_cache_dir.mkdir(parents=True, exist_ok=True)
     full_save_path = file_cache_dir / save_path
