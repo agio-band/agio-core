@@ -133,7 +133,7 @@ class AEntity(BaseObject):
         return self._data['projectId']
 
     @cached_property
-    def project(self):
+    def project(self) -> 'AProject':
         from .project import AProject
         return AProject(self.project_id)
 
