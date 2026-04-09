@@ -156,6 +156,7 @@ class ApiClient:
             for error in response['errors']:
                 if error['message'] == 'UNAUTHORIZED':
                     return True
+        return False
 
     def _check_response_errors(self, response: dict):
         if 'errors' in response:
@@ -164,8 +165,9 @@ class ApiClient:
     def _pprint_request(self, data):
         print('< QUERY >'.center(50, '='))
         print(data['query'])
-        print('< VARIABLES >'.center(50, '='))
-        print(json.dumps(data.get('variables'), indent=2).replace('\\n', '\n'), flush=True)
+        if data.get('variables'):
+            print('< VARIABLES >'.center(50, '='))
+            print(json.dumps(data.get('variables'), indent=2).replace('\\n', '\n'), flush=True)
         # print('='*50)
 
     def _print_response(self, data: dict):
