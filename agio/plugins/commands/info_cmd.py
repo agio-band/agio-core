@@ -131,8 +131,9 @@ class ChipsInfoCommand(ASubCommand):
         else:
             for collection in chips_hub.collections:
                 click.secho(collection, fg='yellow')
-                for chip in chips_hub.get_collection(collection):
-                    print('  ', chips_hub.get_chip_name(chip))
+                names = [chips_hub.get_chip_name(chip) for chip in chips_hub.get_collection(collection)]
+                for chip_name in sorted(names):
+                    print('  ', chip_name)
 
 
 class CallbacksInfoCommand(ASubCommand):
