@@ -17,6 +17,11 @@ query FindEntity(
               id
               name
               projectId
+                project {
+                    name
+                    code
+                    workspaceId
+                }
               class{
                 name
                 id

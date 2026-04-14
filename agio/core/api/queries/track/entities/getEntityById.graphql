@@ -10,6 +10,11 @@ query GetEntityById($id: ID!) {
         id
         name
         projectId
+        project {
+          name
+          code
+          workspaceId
+        }
         fields
         class {
           name

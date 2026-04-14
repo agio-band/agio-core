@@ -7,23 +7,28 @@ query GetEntityList($where: EntityWhere, $first: Int!) {
     ){
         edges {
             node{
-              id
-              name
-              projectId
-              class{
-                name
-              }
-               fields
-              links{
-                toId
-                roleId
-              }
-
-              parent{
-                name
                 id
-                parentId
-              }
+                name
+                projectId
+                project {
+                    name
+                    code
+                    workspaceId
+                }
+                class{
+                    name
+                }
+                fields
+                links{
+                    toId
+                    roleId
+                }
+
+                parent{
+                    name
+                    id
+                    parentId
+                }
             }
         }
     }
