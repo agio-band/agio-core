@@ -23,20 +23,20 @@ class AVersion(BaseObject):
         return product.AProduct(self.data['publish']['id'])
 
     @classmethod
-    def get_data(cls, object_id: str) -> dict:
-        return api.pipe.get_version(object_id)
+    def get_data(cls, object_id: str, client=None) -> dict:
+        return api.pipe.get_version(object_id, client=client)
 
     def update(self, fields: dict, dependencies: list[str] = None) -> None:
-        return api.pipe.update_version(self.id, fields, dependencies=dependencies)
+        return api.pipe.update_version(self.id, fields, dependencies=dependencies, client=self.client)
 
     @classmethod
-    def iter(cls, product_id: str|UUID) -> Iterator[Self]:
-        for data in api.pipe.iter_prodict_versions(product_id):
-            yield AVersion(data)
+    def iter(cls, product_id: str|UUID, client=None) -> Iterator[Self]:
+        for data in api.pipe.iter_prodict_versions(product_id, client=client):
+            yield AVersion(data, client=client)
 
     @classmethod
-    def get_next_version_number(cls, product_id: str) -> int:
-        return api.pipe.get_next_version_number(product_id)
+    def get_next_version_number(cls, product_id: str, client=None) -> int:
+        return api.pipe.get_next_version_number(product_id, client=client)
 
     @classmethod
     def create(cls,
@@ -45,9 +45,10 @@ class AVersion(BaseObject):
                publish_session_id: str|UUID,
                version: int = None,
                fields: dict = None,
+               client=None,
         ) -> Self:
         if version is None:
-            version = cls.get_next_version_number(product_id)
+            version = cls.get_next_version_number(product_id, client=client)
         # add padding
         version = f"{version:0{cls.VERSION_PADDING}d}"
         schema = AVersionCreateSchema(
@@ -59,11 +60,11 @@ class AVersion(BaseObject):
                 fields=fields
             ),
         )
-        version_id = api.pipe.create_version(**schema.model_dump())
-        return AVersion(version_id)
+        version_id = api.pipe.create_version(**schema.model_dump(), client=client)
+        return AVersion(version_id, client=client)
 
     def delete(self) -> bool:
-        return api.pipe.delete_version(self.id)
+        return api.pipe.delete_version(self.id, client=self.client)
 
     @classmethod
     def find(cls, **kwargs):

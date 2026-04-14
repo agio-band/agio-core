@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import json
 from functools import cached_property
-from typing import Iterator, Generator
+from typing import Iterator, Generator, TYPE_CHECKING
 from typing import TypeVar
 from uuid import UUID
 
 from agio.core import api
 from .base_object import BaseObject
+if TYPE_CHECKING:
+    from .project import AProject
 
 
 class AEntity(BaseObject):
@@ -28,11 +30,11 @@ class AEntity(BaseObject):
             raise RuntimeError('Entity class name does not match attribute "entity_class"')
 
     @classmethod
-    def get_data(cls, object_id: str) -> dict:
-        return api.track.get_entity(object_id)
+    def get_data(cls, object_id: str, client=None) -> dict:
+        return api.track.get_entity(object_id, client=client)
 
     def update(self, name: str, fields: dict) -> None:
-        if api.track.update_entity(self.id, name, fields):
+        if api.track.update_entity(self.id, name, fields, client=self.client):
             self.reload()
 
     @classmethod
@@ -41,9 +43,10 @@ class AEntity(BaseObject):
              parent_id: str|UUID,
              name: str = None, # can be regex
              class_name: str = None,
+             client=None,
              ) -> Iterator[T_Entity]:
-        for data in api.track.iter_entities(project_id, class_name or cls.entity_class, parent_id, name):
-            yield cls.from_data(data)
+        for data in api.track.iter_entities(project_id, class_name or cls.entity_class, parent_id, name, client=client):
+            yield cls.from_data(data, client=client)
 
     @classmethod
     def create(cls,
@@ -79,38 +82,38 @@ class AEntity(BaseObject):
             raise TypeError('Field data must be a dict or str')
 
     def delete(self) -> None:
-        return api.track.delete_entity(self.id)
+        return api.track.delete_entity(self.id, client=self.client)
 
     @classmethod
-    def find(cls, project_id: str, entity_class: str, entity_name: str) -> T_Entity|None:
-        data = api.track.get_entity_by_name(project_id, entity_class, entity_name)
+    def find(cls, project_id: str, entity_class: str, entity_name: str, client=None) -> T_Entity|None:
+        data = api.track.get_entity_by_name(project_id, entity_class, entity_name, client=client)
         if data:
-            return cls.from_data(data)
+            return cls.from_data(data, client=client)
         return None
 
     @classmethod
-    def from_data(cls, entity_data) -> T_Entity: # TODO merge from_data and from ID
+    def from_data(cls, entity_data, client=None) -> T_Entity: # TODO merge from_data and from ID
         entity_id = entity_data.get('id')
         if entity_id is None:
             raise KeyError('Field id is missing')
         entity_class = entity_data.get('class', {}).get('name')
         if entity_class is None:
-            entity_data = api.track.get_entity(entity_id)
+            entity_data = api.track.get_entity(entity_id, client=client)
             entity_class = entity_data.get('class', {}).get('name')
         cls_ = cls.find_entity_class(entity_class)
         if cls_ is None:
-            return AEntity(entity_data)
-        return cls_(entity_data)
+            return AEntity(entity_data, client=client)
+        return cls_(entity_data, client=client)
 
     @classmethod
-    def from_id(cls, entity_id: str) -> T_Entity:
-        entity_data = api.track.get_entity(entity_id)
+    def from_id(cls, entity_id: str, client=None) -> T_Entity:
+        entity_data = api.track.get_entity(entity_id, client=client)
         entity_class = entity_data.get('class', {}).get('name')
         cls_ = cls.find_entity_class(entity_class)
         if not cls_:
-            return AEntity(entity_data)
+            return AEntity(entity_data, client=client)
         else:
-            return cls_(entity_data)
+            return cls_(entity_data, client=client)
 
     @property
     def name(self):
@@ -158,7 +161,7 @@ class AEntity(BaseObject):
         ...
 
     def _load_parents_data(self, depth: int = 10):
-        return api.track.get_entity_hierarchy(self.id, depth, False)
+        return api.track.get_entity_hierarchy(self.id, depth, False, client=self.client)
 
     def get_parents(self) -> Generator[T_Entity|None]:
         items = self._load_parents_data(10)

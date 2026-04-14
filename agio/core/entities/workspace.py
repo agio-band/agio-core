@@ -13,37 +13,40 @@ from .base_object import BaseObject
 from .package import APackage
 from .package_release import APackageRelease
 from .workspace_revision import AWorkspaceRevision
+from .workspace_settings import AWorkspaceSettings
 
 
 class AWorkspace(BaseObject):
     object_name = 'workspace'
 
     @classmethod
-    def get_data(cls, object_id: str) -> dict:
-        return api.workspace.get_workspace(object_id)
+    def get_data(cls, object_id: str, client=None) -> dict:
+        return api.workspace.get_workspace(object_id, client=client)
 
     def update(self, name: str = NOTSET, description: str = None) -> None:
         if api.workspace.update_workspace(
             self.id,
             name=name,
             description=description,
+            client=self.client,
         ):
             self.reload()
 
     @classmethod
-    def iter(cls, company_id: str = None) -> Iterator['AWorkspace']:
-        company_id = company_id or api.desk.get_current_company()['id']
-        for data in api.workspace.iter_workspaces(company_id=company_id):
-            yield cls(data)
+    def iter(cls, company_id: str = None, client=None) -> Iterator['AWorkspace']:
+        company_id = company_id or api.desk.get_current_company(client=client)['id']
+        for data in api.workspace.iter_workspaces(company_id=company_id, client=client):
+            yield cls(data, client=client)
 
     @classmethod
-    def create(cls, company_id: str, name: str, description: str = NOTSET) -> 'AWorkspace':
+    def create(cls, company_id: str, name: str, description: str = NOTSET, client=None) -> 'AWorkspace':
         ws_id = api.workspace.create_workspace(
             company_id=company_id,
             name=name,
             description=description,
+            client=client,
         )
-        return cls(ws_id)
+        return cls(ws_id, client=client)
 
     @classmethod
     def from_revision_id(cls, revision_id: str) -> 'AWorkspace':
@@ -51,7 +54,7 @@ class AWorkspace(BaseObject):
         return rev.get_workspace()
 
     def delete(self) -> bool:
-        return api.workspace.delete_workspace(self.id)
+        return api.workspace.delete_workspace(self.id, client=self.client)
 
     def is_deleted(self):
         if 'deletedAt' not in self._data:
@@ -59,35 +62,36 @@ class AWorkspace(BaseObject):
         return bool(self._data['deletedAt'])
 
     @classmethod
-    def find(cls, company_id: str = None, name: str = NOTSET) -> 'AWorkspace|None':
-        company_id = company_id or api.desk.get_current_company()['id']
-        data = api.workspace.find_workspace(company_id=company_id, name=name)
+    def find(cls, company_id: str = None, name: str = NOTSET, client=None) -> 'AWorkspace|None':
+        company_id = company_id or api.desk.get_current_company(client=client)['id']
+        data = api.workspace.find_workspace(company_id=company_id, name=name, client=client)
         if data:
-            return cls(data)
+            return cls(data, client=client)
         return None
 
     @classmethod
-    def current(cls):
+    def current(cls, client=None):
         ws_id = os.getenv(env_names.WORKSPACE_ID)
         if ws_id:
-            return cls(ws_id)
-        rev = cls.get_current_revision_from_env()
+            return cls(ws_id, client=client)
+        rev = cls.get_current_revision_from_env(client=client)
         if rev:
             return rev.get_workspace()
         raise WorkspaceNotDefined
 
     def get_current_revision(self):
-        revision = api.workspace.get_revision_by_workspace_id(self.id)
+        revision = api.workspace.get_revision_by_workspace_id(self.id, client=self.client)
         return AWorkspaceRevision(revision)
 
     @classmethod
-    def get_current_revision_from_env(cls):
+    def get_current_revision_from_env(cls, client=None) -> AWorkspaceRevision|None:
         settings_id = os.getenv(env_names.SETTINGS_REVISION_ID)
         if settings_id:
-            revision_id = AWorkspaceSet
-        revision_id = os.getenv(env_names.REVISION_ID)
+            revision_id = AWorkspaceSettings(settings_id, client=client).revision_id
+        else:
+            revision_id = os.getenv(env_names.REVISION_ID)
         if revision_id:
-            return AWorkspaceRevision(revision_id)
+            return AWorkspaceRevision(revision_id, client=client)
 
     def get_manager(self):
         from agio.core.workspaces import AWorkspaceManager
@@ -119,7 +123,7 @@ class AWorkspace(BaseObject):
         elif isinstance(input_data, str):
 
             try:
-                release = api.package.get_package_release(input_data)
+                release = api.package.get_package_release(input_data, client=self.client)
                 return APackageRelease(release)
             except RequestError:
                 try:
@@ -131,6 +135,7 @@ class AWorkspace(BaseObject):
             release = api.package.get_package_release_by_name_and_version(
                 package_name=input_data['name'],
                 version=input_data['version'],
+                client=self.client
             )
             if not release:
                 raise Exception(f'Package release {input_data} not found')
@@ -139,7 +144,7 @@ class AWorkspace(BaseObject):
             raise Exception(f'Unknown input type {type(input_data)}')
 
     def _find_revision(self, revision_id: str) -> AWorkspaceRevision|None:
-        data = api.workspace.find_workspace_revision(workspace_id=self.id, revision_id=revision_id)
+        data = api.workspace.find_workspace_revision(workspace_id=self.id, revision_id=revision_id, client=self.client)
         if data:
             return AWorkspaceRevision(data)
 
@@ -173,6 +178,7 @@ class AWorkspace(BaseObject):
             status='ready', # TODO change to "sync"
             comment=comment,
             layout=layout or NOTSET,
+            client=self.client
         )
         return AWorkspaceRevision(result)
 

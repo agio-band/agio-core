@@ -21,8 +21,8 @@ class APackageRelease(BaseObject):
         return f'<{self.__class__.__name__} {self.get_package_name()} v{self.get_version()} ({self.id!r})>'
 
     @classmethod
-    def get_data(cls, object_id: str) -> dict:
-        return api.package.get_package_release(object_id)
+    def get_data(cls, object_id: str, client=None) -> dict:
+        return api.package.get_package_release(object_id, client=client)
 
     def update(self,
                label: str = NOTSET,
@@ -36,13 +36,14 @@ class APackageRelease(BaseObject):
             description=description,
             assets=assets,
             metadata=metadata,
+            client=self.client,
         )
         self._data.update(resp)
 
     @classmethod
-    def iter(cls, package_id: str) -> Iterator['APackageRelease']:
-        for release_data in api.package.iter_package_releases(package_id):
-            yield cls(release_data)
+    def iter(cls, package_id: str, client=None) -> Iterator['APackageRelease']:
+        for release_data in api.package.iter_package_releases(package_id, client=client):
+            yield cls(release_data, client=client)
 
     @classmethod
     def create(cls,
@@ -52,6 +53,7 @@ class APackageRelease(BaseObject):
                label: str,
                description: str = NOTSET,
                metadata: dict = NOTSET,
+               client=None,
                ) -> 'APackageRelease':
         release_id = api.package.create_package_release(
             package_id=package_id,
@@ -60,17 +62,18 @@ class APackageRelease(BaseObject):
             label=label,
             description=description,
             metadata=metadata or {},
+            client=client,
         )
-        return cls(release_id)
+        return cls(release_id, client=client)
 
     def delete(self) -> bool:
-        return api.package.delete_package_release(self.id)
+        return api.package.delete_package_release(self.id, client=self.client)
 
     @classmethod
-    def find(cls, package_name: str, version: str) -> 'APackageRelease'|None:
-        data = api.package.get_package_release_by_name_and_version(package_name, version)
+    def find(cls, package_name: str, version: str, client=None) -> 'APackageRelease'|None:
+        data = api.package.get_package_release_by_name_and_version(package_name, version, client=client)
         if data:
-            return cls(data)
+            return cls(data, client=client)
 
     def get_package_id(self) -> str:
         return self._data['package']['id']

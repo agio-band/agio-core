@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Iterator
 
-from agio.core.api import client
+from agio.core.api import client as default_client
 
 
 def iter_query_list(query: str,
@@ -9,6 +9,7 @@ def iter_query_list(query: str,
                     variables: dict = None,
                     limit: int = None,
                     items_per_page: int = 50,
+                    client=default_client
                     ) -> Iterator[dict]:
     """
     required in response:
@@ -45,7 +46,3 @@ def iter_query_list(query: str,
             current_cursor = page_info['endCursor']
         else:
             break
-
-
-def deep_dict():
-    return defaultdict(deep_dict)

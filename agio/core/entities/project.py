@@ -26,18 +26,18 @@ class AProject(BaseObject):
         return self.data["name"]
 
     @classmethod
-    def get_data(cls, object_id: str) -> dict:
-        return api.track.get_project(object_id)
+    def get_data(cls, object_id: str, client=None) -> dict:
+        return api.track.get_project(object_id, client=client)
 
     def update(self, state: str = None, fields: dict = None, workspace_id: str|UUID = None) -> bool:
-        resp = api.track.update_project(self.id, state=state, fields=fields, workspace_id=workspace_id)
+        resp = api.track.update_project(self.id, state=state, fields=fields, workspace_id=workspace_id, client=self.client)
         self.reload()
         return resp
 
     @classmethod
-    def iter(cls, company_id: str|UUID, **kwargs) -> Iterator[AProject]:
-        for prj_data in api.track.iter_projects(company_id=company_id, **kwargs):
-            yield cls(prj_data)
+    def iter(cls, company_id: str|UUID, client=None, **kwargs) -> Iterator[AProject]:
+        for prj_data in api.track.iter_projects(company_id=company_id, client=client, **kwargs):
+            yield cls(prj_data, client=client)
 
     @classmethod
     def create(cls, **kwargs) -> AProject:
@@ -48,21 +48,21 @@ class AProject(BaseObject):
 
     @classmethod
     def find(cls, name: str = None, code: str = None, state: str = None,
-        company: company_entity.ACompany|str = None) -> AProject|None:
+        company: company_entity.ACompany|str = None, client=None) -> AProject|None:
         if isinstance(company, company_entity.ACompany):
             company_id = company.id
         elif isinstance(company, (str, UUID)):
             company_id = str(company)
         elif company is None:
-            comp = company_entity.ACompany.current()
+            comp = company_entity.ACompany.current(client=client)
             if not comp:
                 raise Exception(f"Company not provided or not found")
             company_id = comp.id
         else:
             raise TypeError("Invalid type for project_company")
-        data = api.track.find_project(company_id, name=name, code=code, state=state)
+        data = api.track.find_project(company_id, name=name, code=code, state=state, client=client)
         if data is not None:
-            return cls(data)
+            return cls(data, client=client)
         return None
 
 
@@ -98,7 +98,11 @@ class AProject(BaseObject):
 
     @property
     def workspace_id(self) -> str|None:
-        return self._data['workspace']['id'] if self._data['workspace'] else None
+        ws_id = self._data.get('workspaceId') or (self._data.get('workspace') or {}).get('id')
+        if not ws_id:
+            ws_id = (self._data.get('workspaceRevision') or {}).get('workspaceId')
+        return ws_id
+        # ws_id = self._data['workspace']['id'] if self._data['workspace'] else None
 
     @property
     def revision_id(self) -> str|None:
@@ -112,12 +116,12 @@ class AProject(BaseObject):
         if workspace is None:
             return self.unset_workspace()
         ws_id = workspace.id if isinstance(workspace, ws.AWorkspace) else workspace
-        resp = api.track.update_project(self.id, workspace_id=ws_id)
+        resp = api.track.update_project(self.id, workspace_id=ws_id, client=self.client)
         self.reload()
         return resp
 
     def unset_workspace(self) -> bool:
-        resp = api.track.update_project(self.id, workspace_id=None)
+        resp = api.track.update_project(self.id, workspace_id=None, client=self.client)
         self.reload()
         return resp
 
@@ -125,12 +129,12 @@ class AProject(BaseObject):
         if revision is None:
             return self.unset_revision()
         ws_id = revision.id if isinstance(revision, workspace_revision.AWorkspaceRevision) else revision
-        resp = api.track.update_project(self.id, revision_id=ws_id)
+        resp = api.track.update_project(self.id, revision_id=ws_id, client=self.client)
         self.reload()
         return resp
 
     def unset_revision(self) -> bool:
-        resp = api.track.update_project(self.id, revision_id=None)
+        resp = api.track.update_project(self.id, revision_id=None, client=self.client)
         self.reload()
         return resp
 

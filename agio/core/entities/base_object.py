@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Iterator
 from uuid import UUID
 
+from agio.core.api import client as default_client, ApiClient
 from agio.tools import modules
 
 
@@ -14,7 +15,7 @@ class BaseObject(ABC):
     """
     object_name = None
 
-    def __init__(self, data: str | UUID | dict):
+    def __init__(self, data: str | UUID | dict, client: ApiClient = None):
         if self.object_name is None:
             raise AttributeError(f"object_name not set for {self.__class__.__name__}")
         if isinstance(data, (str, UUID)):
@@ -32,9 +33,14 @@ class BaseObject(ABC):
         fields_data = self._data.get('fields')
         if isinstance(fields_data, str):
             self.data['fields'] = json.loads(fields_data)
+        self._client = client or default_client
 
     def reload(self):
         self._data = self.get_data(self.id)
+
+    @property
+    def client(self):
+        return self._client
 
     @property
     def id(self):

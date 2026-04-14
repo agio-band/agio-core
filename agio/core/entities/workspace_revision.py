@@ -15,20 +15,20 @@ class AWorkspaceRevision(BaseObject):
     object_name = 'workspace_revision'
 
     @classmethod
-    def get_data(cls, object_id: str) -> dict:
-        return api.workspace.get_revision(object_id)
+    def get_data(cls, object_id: str, client=None) -> dict:
+        return api.workspace.get_revision(object_id, client=client)
 
     def update(self,
                set_current: bool = NOTSET,
                layout: dict = NOTSET,
                status: str = NOTSET,
                ) -> None:
-        api.workspace.update_revision(self.id, set_current=set_current, layout=layout, status=status)
+        api.workspace.update_revision(self.id, set_current=set_current, layout=layout, status=status, client=self.client)
 
     @classmethod
-    def iter(cls, workspace_id: str, **kwargs) -> Iterator['AWorkspaceRevision']:
-        for data in api.workspace.iter_revisions(workspace_id):
-            yield cls(**data)
+    def iter(cls, workspace_id: str, client=None, **kwargs) -> Iterator['AWorkspaceRevision']:
+        for data in api.workspace.iter_revisions(workspace_id, client=client):
+            yield cls(data, client=client)
 
     @classmethod
     def create(cls,
@@ -39,6 +39,7 @@ class AWorkspaceRevision(BaseObject):
                layout: dict = NOTSET,
                comment: str = NOTSET,
                metadata: dict = NOTSET,
+               client=None,
                ) -> 'AWorkspaceRevision':
         release_ids = []
         for package_release in package_releases:
@@ -59,26 +60,29 @@ class AWorkspaceRevision(BaseObject):
             status=status or 'ready', # TODO
             layout=layout or NOTSET,
             comment=comment or NOTSET,
-            metadata=metadata or {}
+            metadata=metadata or {},
+            client=client,
         )
-        return cls(revision_id)
+        return cls(revision_id, client=client)
 
     def delete(self) -> None:
-        api.workspace.delete_revision(self.id)
+        api.workspace.delete_revision(self.id, client=self.client)
 
     @classmethod
     def find(cls,
              workspace_id: str = NOTSET,
              is_current: bool = NOTSET,
              ready_only: bool = NOTSET,
-             ) -> AWorkspaceRevision:
+             client=None,
+             ) -> AWorkspaceRevision|None:
         data = api.workspace.find_revision(
             workspace_id=workspace_id,
             is_ready=ready_only,
             is_current=is_current,
+            client=client,
         )
         if data:
-            return cls(data)
+            return cls(data, client=client)
 
     @property
     def metadata(self):
@@ -104,11 +108,12 @@ class AWorkspaceRevision(BaseObject):
         Return raw dict settings data
         """
         if '_settings_data' not in self._data:
-            self._data["_settings_data"] = api.workspace.get_settings_by_revision_id(self.id)['data']
+            self._data["_settings_data"] = api.workspace.get_settings_by_revision_id(self.id, client=self.client)['data']
         return self._data["_settings_data"]
 
     def get_settings(self):
-        return settings_hub.WorkspaceSettingsHub(self.get_settings_data())
+        data = self.get_settings_data()
+        return settings_hub.WorkspaceSettingsHub(data)
 
     def copy_settings_from(self, source: str|AWorkspaceRevision):
         if isinstance(source, str):
@@ -128,7 +133,8 @@ class AWorkspaceRevision(BaseObject):
     def set_layout(self, layout: dict):
         return api.workspace.update_revision(
             revision_id=self.id,
-            layout=layout
+            layout=layout,
+            client=self.client,
         )
 
     def set_settings(self, settings_data: dict|settings_hub.WorkspaceSettingsHub, set_current: bool = True) -> str:
@@ -138,15 +144,15 @@ class AWorkspaceRevision(BaseObject):
         return settings.id
 
     def set_current(self, is_current: bool):
-        return api.workspace.update_revision(self.id, set_current=is_current)
+        return api.workspace.update_revision(self.id, set_current=is_current, client=self.client)
 
     def get_settings_id(self):
-        settings_data = api.workspace.get_settings_by_revision_id(self.id)
+        settings_data = api.workspace.get_settings_by_revision_id(self.id, client=self.client)
         if settings_data:
             return settings_data['id']
         return None
 
     @classmethod
-    def get_from_settings_id(cls, settings_id: str):
-        data = api.workspace.get_revision_by_settings_id(settings_id)
-        return cls(data)
+    def get_from_settings_id(cls, settings_id: str, client=None):
+        data = api.workspace.get_revision_by_settings_id(settings_id, client=client)
+        return cls(data, client=client)

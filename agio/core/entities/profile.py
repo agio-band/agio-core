@@ -10,8 +10,8 @@ class AProfile(BaseObject):
     object_name = "profile"
 
     @classmethod
-    def get_data(cls, object_id: str) -> dict:
-        return api.profile.get_user_by_id(object_id)
+    def get_data(cls, object_id: str, client=None) -> dict:
+        return api.profile.get_user_by_id(object_id, client=client)
 
     def update(self, **kwargs) -> None:
         raise NotImplementedError()
@@ -32,11 +32,11 @@ class AProfile(BaseObject):
         raise NotImplementedError()
 
     @classmethod
-    def current(cls, **kwargs) -> AProfile:
-        data = api.profile.get_current_user()
+    def current(cls, client=None, **kwargs) -> AProfile:
+        data = api.profile.get_current_user(client=client)
         if not data:
             raise Exception('Current user not authenticated')
-        return cls(data)
+        return cls(data, client=client)
 
     @property
     def first_name(self):

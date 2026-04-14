@@ -12,14 +12,15 @@ class AProductType(BaseObject):
     object_name = "product_type"
 
     @classmethod
-    def get_data(cls, object_id: str | UUID) -> dict:
-        return api.pipe.get_product_type(object_id)
+    def get_data(cls, object_id: str | UUID, client=None) -> dict:
+        return api.pipe.get_product_type(object_id, client=client)
 
     def update(self, config: dict = None, data_type: str = None) -> None:
         return api.pipe.update_product_type(
             self.id,
             config=config,
             data_type=data_type,
+            client=self.client,
         )
 
     def set_config(self, config: dict) -> None:
@@ -42,9 +43,9 @@ class AProductType(BaseObject):
         return self._data.get("config", {})
 
     @classmethod
-    def iter(cls, **kwargs) -> Iterator[AProductType]:
-        for prod in api.pipe.iter_product_types(**kwargs):
-            yield cls(prod)
+    def iter(cls, client=None, **kwargs) -> Iterator[AProductType]:
+        for prod in api.pipe.iter_product_types(client=client, **kwargs):
+            yield cls(prod, client=client)
 
     @classmethod
     def create(cls,
@@ -52,10 +53,11 @@ class AProductType(BaseObject):
                description: str,
                config: dict = None,
                data_type: str = None,
+               client=None,
                ) -> AProductType:
         product_type_id = api.pipe.create_product_type(
-            name, description, config, data_type)
-        return cls(product_type_id)
+            name, description, config, data_type, client=client)
+        return cls(product_type_id, client=client)
 
     def delete(self) -> None:
         raise NotImplementedError
@@ -63,11 +65,12 @@ class AProductType(BaseObject):
     @classmethod
     def find(cls,
              name: str,
+             client=None,
              **kwargs):
-        data = api.pipe.get_product_type_by_name(name)
+        data = api.pipe.get_product_type_by_name(name, client=client)
         if not data:
             return
-        return cls(data)
+        return cls(data, client=client)
 
     @property
     def name(self) -> str:
