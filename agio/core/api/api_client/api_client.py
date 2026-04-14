@@ -22,9 +22,10 @@ class ApiClient:
     queries_root = Path(__file__).parent.parent.joinpath('queries')
 
     def __init__(self, *args, **kwargs):
+        self._token = None
         self.session = requests.Session()
         self._debug_query = bool(os.getenv(env_names.DEBUG_QUERY))
-        self._load_session()
+        self._load_session(**kwargs)
 
     def login(self, refresh=False, force=False):
         # long time blocking command !
@@ -44,6 +45,7 @@ class ApiClient:
     def logout(self):
         emit('core.auth.before_logout')
         self.session.headers.pop('Authorization', None)
+        self._token = None
         auth_services.logout()
         logger.info('Logged out')
         emit('core.auth.on_logout')
@@ -56,14 +58,18 @@ class ApiClient:
             raise AuthorizationError
         self.login(refresh=True)
 
-    def _load_session(self):
-        session = auth_services.read_auth_cache_file()
-        if session:
-            self._set_token(session)
+    def _load_session(self, **kwargs):
+        if 'token' in kwargs:
+            self._set_token({'AccessToken': kwargs['token']})
+        else:
+            session = auth_services.read_auth_cache_file()
+            if session:
+                self._set_token(session)
 
     def _set_token(self, session: dict):
+        self._token = session["AccessToken"]
         self.session.headers.update({
-            'Authorization': f'Bearer {session["AccessToken"]}',
+            'Authorization': f'Bearer {self._token}',
             "Content-Type": "application/json",
         })
 
