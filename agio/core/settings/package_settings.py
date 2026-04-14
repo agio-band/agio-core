@@ -189,6 +189,7 @@ class _SettingsMeta(type):
         annotations = namespace.get('__annotations__', {})
         
         # Process field instances from class namespace
+        # TODO apply fix for py3.14
         for attr_name, attr_value in namespace.items():
             if isinstance(attr_value, BaseField):
                 field = copy.deepcopy(attr_value)
