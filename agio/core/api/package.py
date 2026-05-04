@@ -1,13 +1,14 @@
 from typing import Iterator
 from uuid import UUID
-from . import client as default_client
-from .utils import NOTSET
-from .utils.query_tools import iter_query_list
-from agio.core.api._utils import set_client
+
+from agio.core.api import client as default_client
+from agio.core.api.utils import NOTSET, api_call
+from agio.core.api.utils.query_tools import iter_query_list
+
 
 # packages
 
-@set_client
+@api_call
 def get_package(package_id: str|UUID, client=default_client) -> dict:
     return client.make_query(
         'ws/package/getPackage',
@@ -15,7 +16,7 @@ def get_package(package_id: str|UUID, client=default_client) -> dict:
     )['data']['package']
 
 
-@set_client
+@api_call
 def create_package(name: str, client=default_client) -> str:
     return client.make_query(
         'ws/package/createPackage',
@@ -23,7 +24,7 @@ def create_package(name: str, client=default_client) -> str:
     )['data']['createPackage']['packageId']
 
 
-@set_client
+@api_call
 def find_package(name: str, client=default_client) -> dict|None:
     resp = client.make_query(
         'ws/package/findPackage',
@@ -33,7 +34,7 @@ def find_package(name: str, client=default_client) -> dict|None:
         return resp[0]['node']
 
 
-@set_client
+@api_call
 def update_package(
         package_id: UUID|str,
         hidden: bool = NOTSET,
@@ -66,7 +67,7 @@ def update_package(
 #     )
 
 
-@set_client
+@api_call
 def iter_packages(limit: int = None, client=default_client) -> Iterator[dict]:
     yield from iter_query_list(
         'ws/package/getPackageList',
@@ -76,7 +77,7 @@ def iter_packages(limit: int = None, client=default_client) -> Iterator[dict]:
     )
 
 
-@set_client
+@api_call
 def delete_package(package_id: str, client=default_client) -> None:
     return client.make_query(
         'ws/package/deletePackage',
@@ -85,7 +86,7 @@ def delete_package(package_id: str, client=default_client) -> None:
 
 # releases
 
-@set_client
+@api_call
 def create_package_release(
         package_id: UUID|str,
         version: str,
@@ -106,7 +107,7 @@ def create_package_release(
     )["data"]["createPackageRelease"]["packageReleaseId"]
 
 
-@set_client
+@api_call
 def get_package_release(release_id: UUID|str, client=default_client) -> dict:
     return client.make_query(
         'ws/release/getPackageRelease',
@@ -120,7 +121,7 @@ def get_package_release(release_id: UUID|str, client=default_client) -> dict:
 #     )
 
 
-@set_client
+@api_call
 def get_package_release_by_name_and_version(package_name: str, version: str, client=default_client) -> dict|None:
     resp = client.make_query(
         'ws/release/findPackageRelease',
@@ -144,7 +145,7 @@ def get_package_release_by_name_and_version(package_name: str, version: str, cli
 #     )['data']['packageReleases']['edges']
 
 
-@set_client
+@api_call
 def iter_package_releases(package_id: UUID|str, limit: int = None, client=default_client) -> Iterator[dict]:
     yield from iter_query_list(
         'ws/release/getPackageReleaseList',
@@ -155,7 +156,7 @@ def iter_package_releases(package_id: UUID|str, limit: int = None, client=defaul
     )
 
 
-@set_client
+@api_call
 def update_package_release(
         release_id: UUID|str,
         label: str,
@@ -174,7 +175,7 @@ def update_package_release(
     )['data']['updatePackageRelease']['ok']
 
 
-@set_client
+@api_call
 def delete_package_release(release_id: UUID, client=default_client) -> bool:
     return client.make_query(
         'ws/release/deletePackageRelease',
@@ -182,7 +183,7 @@ def delete_package_release(release_id: UUID, client=default_client) -> bool:
     )['data']['deletePackageRelease']['ok']
 
 
-@set_client
+@api_call
 def get_latest_release(package_id: str, client=default_client) -> dict|None:
     resp = client.make_query(
         'ws/release/getLatestRelease',

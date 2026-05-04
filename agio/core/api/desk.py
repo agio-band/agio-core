@@ -1,14 +1,15 @@
 from typing import Iterator
 from uuid import UUID
 
-from . import client as default_client
-from .utils.query_tools import iter_query_list
-from ..exceptions import NotFoundError
-from agio.core.api._utils import set_client
+from agio.core.api.utils import api_call
+from agio.core.api.utils.query_tools import iter_query_list
+from agio.core.exceptions import NotFoundError
+from agio.core.api import client as default_client
+
 
 # Company
 
-@set_client
+@api_call
 def get_current_company(client=default_client) -> dict:
     """
     Get current active company.
@@ -16,12 +17,12 @@ def get_current_company(client=default_client) -> dict:
     return client.make_query('desk/company/currentCompany')['data']['currentCompany']
 
 
-@set_client
+@api_call
 def switch_company(company_id: str, client=default_client):
     return client.make_query('desk/company/switchCompany', id=company_id)
 
 
-@set_client
+@api_call
 def get_company(company_id: str|UUID, client=default_client) -> dict:
     return client.make_query(
         'desk/company/getCompanyById',
@@ -29,7 +30,7 @@ def get_company(company_id: str|UUID, client=default_client) -> dict:
     )['data']['company']
 
 
-@set_client
+@api_call
 def get_company_by_code(code: str, client=default_client) -> dict|None:
     resp = client.make_query(
         'desk/company/getCompanyByCode',
@@ -41,7 +42,7 @@ def get_company_by_code(code: str, client=default_client) -> dict|None:
         raise NotFoundError(detail='Company not found')
 
 
-@set_client
+@api_call
 def iter_companies(user_id: str = None, limit: int = None, items_per_page: int = 25, client=default_client) -> Iterator[dict]:
     if user_id is None:
         from .profile import get_current_user

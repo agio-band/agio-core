@@ -2,16 +2,16 @@ from functools import cache
 from typing import Any, Iterator, Generator
 from uuid import UUID
 
-from agio.core.api.utils import NOTSET
-from agio.core.api.utils.query_tools import iter_query_list
 from agio.core.api import client as default_client
+from agio.core.api.utils import NOTSET, api_call
+from agio.core.api.utils.query_tools import iter_query_list
 from agio.core.exceptions import ProjectNotExists, EntityNotExists
 from agio.tools.data_helpers import deep_tree
-from agio.core.api._utils import set_client
+
 
 # project
 
-@set_client
+@api_call
 def get_project(project_id: str|UUID, client=default_client) -> dict:
     return client.make_query(
         'track/projects/getProjectById',
@@ -19,7 +19,7 @@ def get_project(project_id: str|UUID, client=default_client) -> dict:
     )['data']['project']
 
 
-@set_client
+@api_call
 def get_project_by_name(company_id: str|UUID, name: str, client=default_client) -> dict:
     filters = dict(
         where=dict(
@@ -36,7 +36,7 @@ def get_project_by_name(company_id: str|UUID, name: str, client=default_client) 
     raise ProjectNotExists
 
 
-@set_client
+@api_call
 def update_project(
         project_id: str|UUID,
         state: str = NOTSET,
@@ -63,7 +63,7 @@ def update_project(
     )['data']['updateProject']['ok']
 
 
-@set_client
+@api_call
 def iter_projects(company_id: str|UUID, has_workspace: bool = NOTSET, items_per_page: int = 50, client=default_client) -> Iterator[dict]:
     filters = deep_tree()
     filters['where']['company']['id']['equalTo'] = str(company_id)
@@ -80,7 +80,7 @@ def iter_projects(company_id: str|UUID, has_workspace: bool = NOTSET, items_per_
     )
 
 
-@set_client
+@api_call
 def find_project(
         company_id: str|UUID = NOTSET,
         company_name: str|None = NOTSET,
@@ -109,7 +109,7 @@ def find_project(
 
 
 # entities
-@set_client
+@api_call
 def get_entity(entity_id: str|UUID, client=default_client) -> dict:
     data = client.make_query(
         'track/entities/getEntityById',
@@ -120,7 +120,7 @@ def get_entity(entity_id: str|UUID, client=default_client) -> dict:
     raise EntityNotExists(detail='Entity not found: {}'.format(entity_id))
 
 
-@set_client
+@api_call
 def get_entity_hierarchy(entity_id: str|UUID, depth: int = 10, include_source: bool = False, client=default_client) -> tuple[dict]:
     query_text = client.load_query('track/entities/getEntityHierarchy.graphql')
     part = client.load_query('track/entities/getEntityHierarchyPart.graphql')
@@ -156,7 +156,7 @@ def get_entity_hierarchy(entity_id: str|UUID, depth: int = 10, include_source: b
 
 
 
-@set_client
+@api_call
 def get_entity_by_name(project_id: str|UUID, entity_class: str, name: str, client=default_client) -> dict:
     data = client.make_query(
         'track/entities/getEntityByName',
@@ -169,7 +169,7 @@ def get_entity_by_name(project_id: str|UUID, entity_class: str, name: str, clien
     raise EntityNotExists
 
 
-@set_client
+@api_call
 def iter_entities(
         project_id: str|UUID,
         entity_class: str,
@@ -197,7 +197,7 @@ def iter_entities(
     )
 
 
-@set_client
+@api_call
 def create_entity(project_id: str|UUID,
                   entity_class: str,
                   name: str,
@@ -221,7 +221,7 @@ def create_entity(project_id: str|UUID,
     )["data"]["createEntity"]["entityId"]
 
 
-@set_client
+@api_call
 def update_entity(
         entity_id: str|UUID,
         name: str = NOTSET,
@@ -239,12 +239,12 @@ def update_entity(
     )
 
 
-@set_client
+@api_call
 def delete_entity(entity_id: str|UUID, client=default_client) -> None:
     raise NotImplementedError
 
 
-@set_client
+@api_call
 def get_entity_children(entity_id: str|UUID, client=default_client) -> Generator[dict, None, None]:
     yield from iter_query_list(
         'track/entities/findEntities',
@@ -264,7 +264,7 @@ def get_entity_children(entity_id: str|UUID, client=default_client) -> Generator
     )
 
 
-@set_client
+@api_call
 def get_entity_parent(entity: str|UUID|dict) -> list:
     parents = []
     if isinstance(entity, UUID|str):
@@ -279,7 +279,7 @@ def get_entity_parent(entity: str|UUID|dict) -> list:
 # entity classes
 
 @cache
-@set_client
+@api_call
 def get_entity_class_id(project_id: str | UUID,
                         entity_class: str,
                         client=default_client) -> UUID:

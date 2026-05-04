@@ -14,6 +14,7 @@ query GetEntityById($id: ID!) {
           name
           code
           workspaceId
+          companyId
         }
         fields
         class {

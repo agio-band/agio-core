@@ -14,6 +14,7 @@ query GetEntityList($where: EntityWhere, $first: Int!) {
                     name
                     code
                     workspaceId
+                    companyId
                 }
                 class{
                     name

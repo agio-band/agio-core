@@ -1,16 +1,16 @@
 from agio.core import exceptions
-from . import client as default_client
-from agio.core.api._utils import set_client
+from agio.core.api import client as default_client
+from agio.core.api.utils import api_call
 
 
-@set_client
+@api_call
 def get_current_user(client=default_client):
     return client.make_query(
         'desk/account/getCurrentUserProfile'
     )['data']['currentUser']
 
 
-@set_client
+@api_call
 def get_user_by_id(user_id: str, client=default_client):
     return client.make_query(
         'desk/account/getUserById',
@@ -18,7 +18,7 @@ def get_user_by_id(user_id: str, client=default_client):
     )['data']['user']
 
 
-@set_client
+@api_call
 def is_logged_in(client=default_client):
     try:
         get_current_user(client)

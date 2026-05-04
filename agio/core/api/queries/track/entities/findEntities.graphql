@@ -21,6 +21,7 @@ query FindEntity(
                     name
                     code
                     workspaceId
+                    companyId
                 }
               class{
                 name

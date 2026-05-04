@@ -3,14 +3,14 @@ from typing import Iterator, Generator
 from uuid import UUID
 
 from agio.core.api import client as default_client
-from agio.core.api.utils import NOTSET
+from agio.core.api.utils import NOTSET, api_call
 from agio.core.api.utils.query_tools import iter_query_list
 from agio.tools.data_helpers import deep_tree
-from agio.core.api._utils import set_client
+
 
 # Product
 
-@set_client
+@api_call
 def iter_products(
         entity_id: str|UUID,
         product_type_id: str = None,
@@ -35,7 +35,7 @@ def iter_products(
     )
 
 
-@set_client
+@api_call
 def get_product(product_id: UUID, client=default_client):
     return client.make_query(
         'pipe/products/getProductById',
@@ -43,7 +43,7 @@ def get_product(product_id: UUID, client=default_client):
     )['data']['publish']
 
 
-@set_client
+@api_call
 def create_product(
         name: str,
         entity_id: str|UUID,
@@ -64,7 +64,7 @@ def create_product(
     )['data']['createPublish']['publishId']
 
 
-@set_client
+@api_call
 def update_product(product_id: str,
                    name: str|None = None,
                    variant: str|None = None,
@@ -84,7 +84,7 @@ def update_product(product_id: str,
     )['data']['updatePublish']['ok']
 
 
-@set_client
+@api_call
 def find_product(entity_id: str|UUID, name: str, variant: str, client=default_client) -> dict|None:
     filters = deep_tree()
     filters['where']['entity']['id']['equalTo'] = entity_id
@@ -102,7 +102,7 @@ def find_product(entity_id: str|UUID, name: str, variant: str, client=default_cl
 
 # product type
 
-@set_client
+@api_call
 def iter_product_types(items_per_page: int = 50, client=default_client):
     yield from iter_query_list(
         'pipe/product_types/getProductTypeList',
@@ -112,7 +112,7 @@ def iter_product_types(items_per_page: int = 50, client=default_client):
     )
 
 
-@set_client
+@api_call
 def get_product_type(product_type_id: str, client=default_client) -> dict:
     return client.make_query(
         'pipe/product_types/getProductTypeById',
@@ -120,7 +120,7 @@ def get_product_type(product_type_id: str, client=default_client) -> dict:
     )['data']['publishType']
 
 
-@set_client
+@api_call
 def get_product_type_by_name(name: str, client=default_client) -> dict|None:
     resp = client.make_query(
         'pipe/product_types/getProductTypeByName',
@@ -130,7 +130,7 @@ def get_product_type_by_name(name: str, client=default_client) -> dict|None:
         return resp['data']['publishTypes']['edges'][0]['node']
 
 
-@set_client
+@api_call
 def create_product_type(name, description, config: dict = None, data_type: str = None, client=default_client) -> dict:
     return client.make_query(
         'pipe/product_types/createProductType',
@@ -143,7 +143,7 @@ def create_product_type(name, description, config: dict = None, data_type: str =
     )['data']['createPublishType']['publishTypeId']
 
 
-@set_client
+@api_call
 def update_product_type(
         publish_type_id: str,
         config: dict = None,
@@ -164,7 +164,7 @@ def update_product_type(
 
 # Published Version
 
-@set_client
+@api_call
 def iter_prodict_versions(
         product_id: str = None,
         items_per_page: int = 50,
@@ -184,7 +184,7 @@ def iter_prodict_versions(
 
 
 # versions
-@set_client
+@api_call
 def get_version(version_id: str|UUID, client=default_client):
     return client.make_query(
         'pipe/versions/getVersionById',
@@ -192,7 +192,7 @@ def get_version(version_id: str|UUID, client=default_client):
     )['data']['publishVersion']
 
 
-@set_client
+@api_call
 def create_version(
         product_id: str|UUID,
         version: str,
@@ -217,7 +217,7 @@ def create_version(
     )['data']['createPublishVersion']['publishVersionId']
 
 
-@set_client
+@api_call
 def update_version(
         version_id: str|UUID,
         fields: dict,
@@ -237,7 +237,7 @@ def update_version(
     )
 
 
-@set_client
+@api_call
 def delete_version(version_id: str|UUID, client=default_client) -> bool:
     return client.make_query(
         'pipe/versions/deleteVersion',
@@ -245,7 +245,7 @@ def delete_version(version_id: str|UUID, client=default_client) -> bool:
     )['data']['deletePublishVersion']['ok']
 
 
-@set_client
+@api_call
 def get_next_version_number(product_id: str|UUID, client=default_client) -> int:
     response =  client.make_query(
         'pipe/versions/getLatestVersion',
@@ -260,7 +260,7 @@ def get_next_version_number(product_id: str|UUID, client=default_client) -> int:
 
 
 # publish file
-@set_client
+@api_call
 def create_publish_file(
         version_id: str|UUID,
         path: str,
@@ -278,7 +278,7 @@ def create_publish_file(
     )["data"]["createPublishFile"]["publishFileId"]
 
 
-@set_client
+@api_call
 def get_published_file(published_file_id: str|UUID, client=default_client):
     return client.make_query(
         'pipe/published_file/getPublishedFile',
@@ -286,7 +286,7 @@ def get_published_file(published_file_id: str|UUID, client=default_client):
     )["data"]["publishFile"]
 
 
-@set_client
+@api_call
 def iter_publish_files(
         version_id: str|UUID,
         path: str = NOTSET,
@@ -313,7 +313,7 @@ def iter_publish_files(
 
 
 # Publish session
-@set_client
+@api_call
 def get_publish_session(session_id: str|UUID, client=default_client):
     return client.make_query(
         'pipe/publish_session/getPublishSessionById',
@@ -333,7 +333,7 @@ def get_publish_session(session_id: str|UUID, client=default_client):
 #     santa is coming
 #     approved
 
-@set_client
+@api_call
 def create_publish_session(
         entity_id: str|UUID,
         name: str,
@@ -361,7 +361,7 @@ def create_publish_session(
     )['data']['createPublishSession']['publishSessionId']
 
 
-@set_client
+@api_call
 def update_publish_session(
         session_id: str|UUID,
         name: str = NOTSET,
@@ -387,7 +387,7 @@ def update_publish_session(
     )['data']['updatePublishSession']['ok']
 
 
-@set_client
+@api_call
 def iter_publish_sessions(project_id: str|UUID, items_per_page: int = 25, client=default_client) -> Iterator[dict]:
     filters = deep_tree()
     filters['where']['entity']['project']['id']['equalTo'] = project_id
@@ -402,7 +402,7 @@ def iter_publish_sessions(project_id: str|UUID, items_per_page: int = 25, client
     )
 
 
-@set_client
+@api_call
 def get_next_session_version(entity_id: str|UUID, client=default_client):
     result = client.make_query(
         'pipe/publish_session/getLatestPublishSessionForEntity',

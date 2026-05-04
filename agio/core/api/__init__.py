@@ -1,9 +1,8 @@
 from .api_client.api_client import ApiClient
-
-client = ApiClient()
-
-from . import workspace, package, desk, auth, pipe, track, profile
+# from agio.tools.thread_tools import ThreadLocalProxy
 
 
-__all__ = ['client', 'workspace', 'package', 'desk', 'auth', 'pipe', 'track']
-
+client: ApiClient = ApiClient()
+# threaded_client = ThreadLocalProxy(ApiClient)
+from . import workspace, package, desk, auth, pipe, track, profile, drive
+__all__ = ['client', 'workspace', 'package', 'desk', 'auth', 'pipe', 'track', 'profile', 'drive', 'ApiClient']

@@ -1,0 +1,7 @@
+query PutDriveFileLink ($companyId: ID!, $filePath: String!, $facilityId: ID!) {
+  putDriveFileLink(
+    companyId: $companyId,
+    filePath: $filePath,
+    facilityId: $facilityId
+    )
+}

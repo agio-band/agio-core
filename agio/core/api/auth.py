@@ -1,21 +1,21 @@
-from requests.exceptions import HTTPError
+from agio.core.api.utils import api_call
 from agio.core.exceptions import RequestError
-from . import client as default_client
-from agio.core.api._utils import set_client
+from requests.exceptions import HTTPError
+from agio.core.api import client as default_client
 
 
 # auth
-@set_client
+@api_call
 def login(client=default_client):
     client.login()
 
 
-@set_client
+@api_call
 def logout(client=default_client):
     client.logout()
 
 
-@set_client
+@api_call
 def is_logged_in(client=default_client):
     """
     Check current user is logged in

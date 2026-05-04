@@ -1,0 +1,24 @@
+query GetFileID ($companyId: ID!, $filePath: String!){
+  driveObjects(
+    first: 100,
+    ordering:{
+      sort: CREATED_AT,
+      direction: DESC
+    },
+    filter:{
+      where:{
+        company: {
+          id: {equalTo: $companyId}
+        },
+        path: {equalTo: $filePath}
+
+      }
+    }
+  ){
+    edges{
+      node{
+        id
+      }
+    }
+  }
+}

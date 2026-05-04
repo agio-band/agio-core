@@ -1,0 +1,27 @@
+query getClusterList($companyId: ID!){
+  facilities(
+    first: 1000
+    filter: {
+      where: {
+        allocations: {
+          renderNodeTypes: {
+            company: {
+              id: {
+                equalTo: $companyId
+              }
+            }
+          }
+        }
+      }
+    }
+  ) {
+    edges {
+      node {
+        name
+        label
+        id
+        default
+      }
+    }
+  }
+}

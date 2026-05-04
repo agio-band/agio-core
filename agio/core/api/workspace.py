@@ -1,17 +1,15 @@
 from typing import Iterator
 from uuid import UUID
 
-from . import client as default_client
-from .utils import NOTSET
-from .utils.query_tools import iter_query_list
-from ..exceptions import RevisionNotExists, SettingsRevisionNotExists, WorkspaceNotExists, ProjectNotExists, \
-    ProjectWorkspaceNotSet
-from . import track
+from agio.core.api import client as default_client
+from agio.core.api.utils import NOTSET, api_call
+from agio.core.api.utils.query_tools import iter_query_list
+from agio.core import exceptions
 from agio.tools.data_helpers import deep_tree
-from agio.core.api._utils import set_client
+from . import track
 
 
-@set_client
+@api_call
 def get_workspace(workspace_id: UUID|str, full: bool = False, client=default_client) -> dict:
     if full:
         query_file = 'ws/workspace/getWorkspaceFull'
@@ -20,11 +18,11 @@ def get_workspace(workspace_id: UUID|str, full: bool = False, client=default_cli
     resp = client.make_query(query_file, id=workspace_id)
     ws = resp['data']['workspace']
     if not ws:
-        raise WorkspaceNotExists(detail=f'Workspace Not Found or Deleted {workspace_id}')
+        raise exceptions.WorkspaceNotExists(detail=f'Workspace Not Found or Deleted {workspace_id}')
     return ws
 
 
-@set_client
+@api_call
 def iter_workspaces(company_id: UUID|str, limit: int = None, client=default_client) -> Iterator[dict]:
     yield from iter_query_list(
         'ws/workspace/getWorkspaceList',
@@ -35,7 +33,7 @@ def iter_workspaces(company_id: UUID|str, limit: int = None, client=default_clie
     )
 
 
-@set_client
+@api_call
 def create_workspace(company_id: UUID|str, name: str, description: str = NOTSET, client=default_client) -> str:
     return client.make_query(
         'ws/workspace/createWorkspace',
@@ -45,7 +43,7 @@ def create_workspace(company_id: UUID|str, name: str, description: str = NOTSET,
     )['data']['createWorkspace']['workspaceId']
 
 
-@set_client
+@api_call
 def update_workspace(workspace_id: UUID|str, name: str = NOTSET, description: str = NOTSET, client=default_client) -> bool:
     response = client.make_query(
         'ws/workspace/updateWorkspace',
@@ -59,7 +57,7 @@ def update_workspace(workspace_id: UUID|str, name: str = NOTSET, description: st
     return response['data']['updateWorkspace']['ok']
 
 
-@set_client
+@api_call
 def find_workspace(company_id: UUID|str, name: str, client=default_client) -> dict:
     filters = deep_tree()
     filters['where']['company']['id']['equalTo'] = str(company_id)
@@ -72,10 +70,10 @@ def find_workspace(company_id: UUID|str, name: str, client=default_client) -> di
     if resp['data']['workspaces']['edges']:
         return resp['data']['workspaces']['edges'][0]['node']
     else:
-        raise WorkspaceNotExists
+        raise exceptions.WorkspaceNotExists
 
 
-@set_client
+@api_call
 def delete_workspace(workspace_id: UUID|str, client=default_client) -> bool:
     return client.make_query(
         'ws/workspace/deleteWorkspace',
@@ -83,7 +81,7 @@ def delete_workspace(workspace_id: UUID|str, client=default_client) -> bool:
     )['data']['deleteWorkspace']['ok']
 
 
-@set_client
+@api_call
 def get_workspace_with_revision(workspace_id: UUID|str, revision_id: UUID|str = None, client=default_client) -> dict:
     """
     used current revision if revision_id not set
@@ -96,11 +94,11 @@ def get_workspace_with_revision(workspace_id: UUID|str, revision_id: UUID|str = 
         )
         workspace = resp['data']['workspace']
         if not workspace:
-            raise WorkspaceNotExists
+            raise exceptions.WorkspaceNotExists
 
         revision = resp['data']['workspaceRevision']
         if not revision:
-            raise RevisionNotExists
+            raise exceptions.RevisionNotExists
     else:
         resp = client.make_query(
             'ws/workspace/getWorkspaceFull',
@@ -108,10 +106,10 @@ def get_workspace_with_revision(workspace_id: UUID|str, revision_id: UUID|str = 
         )
         workspace = resp['data']['workspace']
         if not workspace:
-            raise WorkspaceNotExists
+            raise exceptions.WorkspaceNotExists
         revision = resp['data']['workspaceRevisions']['edges'][0]['node']
         if not revision:
-            raise RevisionNotExists
+            raise exceptions.RevisionNotExists
     return dict(
         workspace=workspace,
         revision=revision
@@ -119,7 +117,7 @@ def get_workspace_with_revision(workspace_id: UUID|str, revision_id: UUID|str = 
 
 
 # revisions
-@set_client
+@api_call
 def create_revision(
         workspace_id: UUID|str,
         package_release_ids: list[str | UUID],
@@ -144,7 +142,7 @@ def create_revision(
     )['data']['createWorkspaceRevision']['workspaceRevisionId']
 
 
-@set_client
+@api_call
 def get_revision(revision_id: UUID|str, client=default_client) -> dict:
     response = client.make_query(
         'ws/revision/getWorkspaceRevision',
@@ -153,10 +151,10 @@ def get_revision(revision_id: UUID|str, client=default_client) -> dict:
     if response:
         return response
     else:
-        raise RevisionNotExists(detail=f'Workspace revision not found {revision_id}')
+        raise exceptions.RevisionNotExists(detail=f'Workspace revision not found {revision_id}')
 
 
-@set_client
+@api_call
 def update_revision(
         revision_id: UUID|str,
         set_current: bool = NOTSET,
@@ -175,7 +173,7 @@ def update_revision(
     )['data']['updateWorkspaceRevision']['ok']
 
 
-@set_client
+@api_call
 def iter_revisions(workspace_id: UUID|str, limit: int = None, client=default_client) -> Iterator[dict]:
     yield from iter_query_list(
         'ws/revision/getWorkspaceRevisionList',
@@ -188,7 +186,7 @@ def iter_revisions(workspace_id: UUID|str, limit: int = None, client=default_cli
     )
 
 
-@set_client
+@api_call
 def find_revision(
         workspace_id: str = None,
         is_ready: bool = True,
@@ -216,18 +214,18 @@ def find_revision(
             client=client,
         ))
     except StopIteration:
-        raise RevisionNotExists
+        raise exceptions.RevisionNotExists
 
 
-@set_client
+@api_call
 def find_workspace_revision(workspace_id: UUID|str, revision_id: str, client=default_client) -> dict:
     resp = find_revision(workspace_id=workspace_id, revision_id=revision_id, client=client)
     if not resp:
-        raise RevisionNotExists
+        raise exceptions.RevisionNotExists
     return resp
 
 
-@set_client
+@api_call
 def get_current_revision(workspace_id: UUID|str, client=default_client) -> dict:
     revision = find_revision(
         workspace_id,
@@ -237,28 +235,28 @@ def get_current_revision(workspace_id: UUID|str, client=default_client) -> dict:
     if revision:
         return revision
     else:
-        raise RevisionNotExists
+        raise exceptions.RevisionNotExists
 
 
-@set_client
+@api_call
 def get_revision_by_project_id(project_id: str, client=default_client) -> dict:
     project = track.get_project(project_id, client=client)
     if not project:
-        raise ProjectNotExists
+        raise exceptions.ProjectNotExists
     if not project['workspace']:
-        raise ProjectWorkspaceNotSet
+        raise exceptions.ProjectWorkspaceNotSet
     return get_revision_by_workspace_id(project['workspace']['id'], client=client)
 
 
-@set_client
+@api_call
 def get_revision_by_workspace_id(workspace_id: str, client=default_client) -> dict:
     try:
         return find_revision(workspace_id, is_current=True, client=client)
-    except RevisionNotExists:
-        raise RevisionNotExists('No current revision for workspace {}'.format(workspace_id))
+    except exceptions.RevisionNotExists:
+        raise exceptions.RevisionNotExists('No current revision for workspace {}'.format(workspace_id))
 
 
-@set_client
+@api_call
 def find_workspace_or_revision_by_id(entity_id: UUID|str, client=default_client) -> dict:
     resp = client.make_query(
         'ws/workspace/findWorkspaceOrRevisionById.graphql',
@@ -270,16 +268,16 @@ def find_workspace_or_revision_by_id(entity_id: UUID|str, client=default_client)
     }
 
 
-@set_client
+@api_call
 def delete_revision(revision_id: UUID|str, client=default_client) -> bool:
     return client.make_query(
         'ws/revision/deleteWorkspaceRevision',
         id=str(revision_id),
-    )
+    )['deleteWorkspaceRevision']['ok']
 
 
 # settings
-@set_client
+@api_call
 def create_revision_settings(
         revision_id: str|UUID,
         data: dict,
@@ -296,7 +294,7 @@ def create_revision_settings(
     )['data']['createWorkspaceSettings']['workspaceSettingsId']
 
 
-@set_client
+@api_call
 def get_revision_settings(settings_id: UUID|str, client=default_client) -> dict:
     return client.make_query(
         'ws/settings/getSettings',
@@ -304,7 +302,7 @@ def get_revision_settings(settings_id: UUID|str, client=default_client) -> dict:
     )['data']['workspaceSettings']
 
 
-@set_client
+@api_call
 def update_revision_settings(settings_id: str|UUID, is_current: bool = NOTSET, comment: str = NOTSET, client=default_client) -> bool:
     input_data = {}
     if is_current is not None:
@@ -318,7 +316,7 @@ def update_revision_settings(settings_id: str|UUID, is_current: bool = NOTSET, c
     )["data"]["updateWorkspaceSettings"]["ok"]
 
 
-@set_client
+@api_call
 def iter_revision_settings(revision_id: UUID|str, client=default_client) -> Iterator[dict]:
     yield from iter_query_list(
         'ws/settings/getRevisionSettingsList',
@@ -328,7 +326,7 @@ def iter_revision_settings(revision_id: UUID|str, client=default_client) -> Iter
     )
 
 
-@set_client
+@api_call
 def get_settings_by_workspace_id(workspace_id: UUID|str, client=default_client) -> dict:
     resp = client.make_query(
         'ws/settings/getSettingsByWorkspaceId',
@@ -337,10 +335,10 @@ def get_settings_by_workspace_id(workspace_id: UUID|str, client=default_client) 
     if resp:
         return resp[0]['node']
     else:
-        raise SettingsRevisionNotExists
+        raise exceptions.SettingsRevisionNotExists
 
 
-@set_client
+@api_call
 def get_settings_by_revision_id(revision_id: UUID|str, client=default_client) -> dict:
     resp = client.make_query(
         'ws/settings/getSettingsByRevisionId',
@@ -349,10 +347,10 @@ def get_settings_by_revision_id(revision_id: UUID|str, client=default_client) ->
     if resp:
         return resp[0]['node']
     else:
-        raise SettingsRevisionNotExists
+        raise exceptions.SettingsRevisionNotExists
 
 
-@set_client
+@api_call
 def get_revision_by_settings_id(settings_id: UUID|str, client=default_client) -> dict:
     # TODO Cache
     settings = get_revision_settings(settings_id, client=client)
@@ -360,11 +358,11 @@ def get_revision_by_settings_id(settings_id: UUID|str, client=default_client) ->
         revision_id = settings['workspaceRevisionId']
         return get_revision(revision_id, client=client)
     else:
-        raise RevisionNotExists
+        raise exceptions.RevisionNotExists
 
 
 # find environment
-@set_client
+@api_call
 def find_environment_by_id(id: str | UUID, client=default_client) -> dict:
     """
     Return list of ids:
@@ -420,8 +418,8 @@ def find_environment_by_id(id: str | UUID, client=default_client) -> dict:
         entity = 'project'
     else:
         if resp['data']['by_workspace_id']['edges']:
-            raise RevisionNotExists(detail=f'Workspace {id} has no current revision')
-        raise WorkspaceNotExists(detail=f'Can not define workspace with provided ID "{id}"')
+            raise exceptions.RevisionNotExists(detail=f'Workspace {id} has no current revision')
+        raise exceptions.WorkspaceNotExists(detail=f'Can not define workspace with provided ID "{id}"')
     return dict(
         workspace_id=workspace_id,
         revision_id=revision_id,

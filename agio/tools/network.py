@@ -109,6 +109,131 @@ def download_file(
     return file_path
 
 
+def upload_file(
+        url: str,
+        file_path: str,
+        method: str = "POST",
+        read_mode: str = "rb",
+        params: dict[str, Any] = None,
+        headers: dict[str, str] = None,
+        callback: Optional[Callable[[dict[str, Any]], None]] = None,
+) -> dict[str, Any]:
+    method = method.upper()
+    if method not in ("POST", "PUT"):
+        raise ValueError("method must be 'POST' or 'PUT'")
+    if read_mode not in ("r", "rb"):
+        raise ValueError("read_mode must be 'r' or 'rb'")
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File '{file_path}' not found.")
+
+    callback = callback or simple_upload_progress_callback
+    file_size = os.path.getsize(file_path)
+
+    start_time = time.time()
+    total_sent = 0
+    progress_step = 0
+
+    if callback:
+        callback({
+            "status": "in_progress",
+            "total_size": file_size,
+            "uploaded_size": 0,
+            "percent": 0,
+            "time_elapsed": 0.0,
+            "time_left": None,
+        })
+
+    try:
+        def file_reader():
+            nonlocal total_sent, progress_step
+            with open(file_path, read_mode) as f:
+                while True:
+                    chunk = f.read(8192)
+                    if not chunk:
+                        break
+                    yield chunk
+                    total_sent += len(chunk)
+                    if file_size and callback:
+                        percent = int(total_sent * 100 / file_size)
+                        if percent >= (progress_step + 1) * 10 or percent == 100:
+                            current_time = time.time()
+                            time_elapsed = current_time - start_time
+                            avg_speed = total_sent / time_elapsed if time_elapsed > 0 else 0
+                            time_left = None
+                            if avg_speed > 0 and file_size > 0:
+                                remaining_size = file_size - total_sent
+                                time_left = remaining_size / avg_speed
+                            callback({
+                                "status": "in_progress",
+                                "total_size": file_size,
+                                "uploaded_size": total_sent,
+                                "percent": percent,
+                                "time_elapsed": time_elapsed,
+                                "time_left": time_left,
+                            })
+                            if percent < 100:
+                                progress_step = percent // 10
+
+        if method == "POST":
+            with open(file_path, read_mode) as f:
+                response = requests.post(
+                    url,
+                    files={"file": (os.path.basename(file_path), f)},
+                    data=params,
+                    headers=headers,
+                )
+        else:
+            response = requests.put(url, data=file_reader(), params=params, headers=headers)
+
+        response.raise_for_status()
+
+        end_time = time.time()
+        time_elapsed = end_time - start_time
+
+        if callback:
+            callback({
+                "status": "completed",
+                "total_size": file_size,
+                "uploaded_size": file_size,
+                "percent": 100,
+                "time_elapsed": time_elapsed,
+                "time_left": 0.0,
+            })
+
+        return {
+            "status": "completed",
+            "file_path": file_path,
+            "response": response.json() if response.headers.get("content-type", "").startswith("application/json") else response.text,
+        }
+
+    except requests.exceptions.RequestException as e:
+        if callback:
+            callback({"status": "failed", "error": str(e)})
+        raise Exception(f"Upload failed: {e}")
+
+
+def simple_upload_progress_callback(data: dict[str, Any]):
+    status = data.get("status")
+    if status == "in_progress":
+        total = data["total_size"]
+        uploaded = data["uploaded_size"]
+        percent = data["percent"]
+        elapsed = data["time_elapsed"]
+        time_left = data["time_left"]
+        total_mb = total / (1024 * 1024) if total else "???"
+        uploaded_mb = uploaded / (1024 * 1024)
+        time_left_str = f"{time_left:.1f} сек" if time_left is not None else "---"
+        logger.info(f"Uploading: {percent:3d}% | Done: {uploaded_mb:.2f} MB / {total_mb:.2f} MB | Time: {elapsed:.1f} (Left: {time_left_str})")
+    elif status == "completed":
+        elapsed = data["time_elapsed"]
+        logger.info(f"Upload Done. Total time: {elapsed:.2f}sec.")
+    elif status == "skipped":
+        logger.info(f"File already exists: {data['file_path']}")
+    elif status == "failed":
+        logger.error(f"Upload failed: {data.get('error')}")
+
+
 def simple_progress_callback(data: dict[str, Any]):
     status = data.get("status")
     if status == "in_progress":

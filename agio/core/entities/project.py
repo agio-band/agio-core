@@ -65,6 +65,9 @@ class AProject(BaseObject):
             return cls(data, client=client)
         return None
 
+    @property
+    def company_id(self):
+        return self._data.get('companyId') or self._data.get('company', {}).get('id')
 
     def get_company(self):
         return company_entity.ACompany(self._data['company']['id'])
