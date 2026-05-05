@@ -97,6 +97,14 @@ def write_cache_file(cache_data, base_url=None):
         json.dump(cache_data, f, indent=2)
 
 
+def agio_login_binary_available():
+    try:
+        _get_agio_login_binary()
+        return True
+    except FileNotFoundError:
+        return False
+
+
 def _get_agio_login_binary() -> str:
     # overridden
     if config.API.LOGIN_BINARY:

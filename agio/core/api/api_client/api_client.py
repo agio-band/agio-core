@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import requests
+from agio.tools.text_helpers import shorten_text
 from requests.exceptions import HTTPError, ConnectionError, JSONDecodeError
 from agio.core.config import config
 from agio.core.api.api_client import auth_services
@@ -21,11 +22,12 @@ class ApiClient:
     base_api_url = f'{platform_url}/graphql'
     queries_root = Path(__file__).parent.parent.joinpath('queries')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         self._token = None
         self.session = requests.Session()
         self._debug_query = bool(os.getenv(env_names.DEBUG_QUERY))
         self._load_session(**kwargs)
+        self._agio_login_available = auth_services.agio_login_binary_available()
 
     def login(self, refresh=False, force=False):
         # long time blocking command !
@@ -40,7 +42,7 @@ class ApiClient:
         else:
             logger.error('Login failed')
             emit('core.auth.login_error')
-            raise AuthorizationError
+            raise AuthorizationError(detail='Login process failed')
 
     def logout(self):
         emit('core.auth.before_logout')
@@ -55,7 +57,11 @@ class ApiClient:
 
     def refresh(self):
         if not self.session.headers.get('Authorization'):
-            raise AuthorizationError
+            raise AuthorizationError(
+                detail=f'Authorization error. Token: {(shorten_text(self.session.headers.get("Authorization", "none"), 20))}'
+            )
+        if not self._agio_login_available:
+            raise AuthorizationError(detail='agio-login binary is not available')
         self.login(refresh=True)
 
     def _load_session(self, **kwargs):
@@ -66,8 +72,14 @@ class ApiClient:
             if session:
                 self._set_token(session)
 
-    def _set_token(self, session: dict):
-        self._token = session["AccessToken"]
+    def _set_token(self, session: dict|str):
+        if isinstance(session, dict):
+            self._token = session["AccessToken"]
+        elif isinstance(session, str):
+            self._token = session
+        else:
+            raise ValueError('Invalid token')
+        logger.debug('Set token', self._token)
         self.session.headers.update({
             'Authorization': f'Bearer {self._token}',
             "Content-Type": "application/json",
@@ -125,6 +137,9 @@ class ApiClient:
         response = self.session.post(self.base_api_url, json=data)
         if not response.ok:
             if response.status_code == 401:
+                logger.debug(
+                    f'Try to refresh current token: '
+                    f'{(shorten_text(self.session.headers.get("Authorization", "none"), 20))}')
                 self.refresh()
             response = self.session.post(self.base_api_url, json=data)
             if not response.ok:
