@@ -79,7 +79,7 @@ class ApiClient:
             self._token = session
         else:
             raise ValueError('Invalid token')
-        logger.debug('Set token', self._token)
+        logger.debug(f'Set token {self._token[:20]}')
         self.session.headers.update({
             'Authorization': f'Bearer {self._token}',
             "Content-Type": "application/json",
