@@ -81,7 +81,7 @@ class AWorkspace(BaseObject):
 
     def get_current_revision(self):
         revision = api.workspace.get_revision_by_workspace_id(self.id, client=self.client)
-        return AWorkspaceRevision(revision)
+        return AWorkspaceRevision(revision, client=self.client)
 
     @classmethod
     def get_current_revision_from_env(cls, client=None) -> AWorkspaceRevision|None:

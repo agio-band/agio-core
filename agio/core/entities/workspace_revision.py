@@ -117,18 +117,18 @@ class AWorkspaceRevision(BaseObject):
 
     def copy_settings_from(self, source: str|AWorkspaceRevision):
         if isinstance(source, str):
-            source = AWorkspaceRevision(source)
+            source = AWorkspaceRevision(source, client=self.client)
         settings = source.get_settings()
         return self.set_settings(settings.dump(skip_default=True), False)
 
     def get_package_list(self):
         for pkg_data in self._data.get("packageReleases"):
-            yield APackageRelease(pkg_data)
+            yield APackageRelease(pkg_data, client=self.client)
 
     def get_manager(self):
         from agio.core.workspaces import AWorkspaceManager
 
-        return AWorkspaceManager(self)
+        return AWorkspaceManager(self, client=self.client)
 
     def set_layout(self, layout: dict):
         return api.workspace.update_revision(

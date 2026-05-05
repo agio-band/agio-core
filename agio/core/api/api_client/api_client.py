@@ -66,6 +66,7 @@ class ApiClient:
 
     def _load_session(self, **kwargs):
         if 'token' in kwargs:
+            logger.debug('Use custom token')
             self._set_token({'AccessToken': kwargs['token']})
         else:
             session = auth_services.read_auth_cache_file()

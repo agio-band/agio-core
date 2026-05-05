@@ -145,11 +145,11 @@ class AWorkspaceManager:
     @classmethod
     def from_workspace(cls, workspace: AWorkspace|dict|str, **kwargs) -> 'AWorkspaceManager|None':
         if isinstance(workspace, str):
-            data = api.workspace.get_revision_by_workspace_id(workspace)
-            revision = AWorkspaceRevision(data)
+            data = api.workspace.get_revision_by_workspace_id(workspace, client=kwargs.get('client'))
+            revision = AWorkspaceRevision(data, **kwargs)
             return cls(revision, **kwargs)
         elif isinstance(workspace, dict):
-            workspace = AWorkspace(workspace)
+            workspace = AWorkspace(workspace, **kwargs)
             current_revision = workspace.get_current_revision()
             return cls(current_revision, **kwargs)
         elif isinstance(workspace, AWorkspace):
