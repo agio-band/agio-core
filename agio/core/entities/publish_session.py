@@ -78,7 +78,7 @@ class APublishSession(BaseObject):
         return pipe.get_next_session_version(entity_id, client=client)
 
     def delete(self) -> None:
-        raise NotImplementedError
+        return pipe.delete_publish_session(self.id, client=self.client)
 
     @classmethod
     def find(cls, **kwargs):

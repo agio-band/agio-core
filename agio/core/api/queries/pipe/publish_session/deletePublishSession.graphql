@@ -1,0 +1,7 @@
+mutation deletePublishSession($id: ID!){
+  deletePublishSession(
+    id: $id
+  ){
+    ok
+  }
+}

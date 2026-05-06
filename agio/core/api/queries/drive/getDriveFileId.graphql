@@ -1,10 +1,6 @@
 query GetFileID ($companyId: ID!, $filePath: String!){
   driveObjects(
-    first: 100,
-    ordering:{
-      sort: CREATED_AT,
-      direction: DESC
-    },
+    first: 1,
     filter:{
       where:{
         company: {

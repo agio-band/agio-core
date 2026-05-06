@@ -403,6 +403,14 @@ def iter_publish_sessions(project_id: str|UUID, items_per_page: int = 25, client
 
 
 @api_call
+def delete_publish_session(session_id: str|UUID, client=default_client):
+    return client.make_query(
+        'pipe/publish_session/deletePublishSession',
+        id=session_id,
+    )['data']['deletePublishSession']['ok']
+
+
+@api_call
 def get_next_session_version(entity_id: str|UUID, client=default_client):
     result = client.make_query(
         'pipe/publish_session/getLatestPublishSessionForEntity',
