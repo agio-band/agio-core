@@ -29,7 +29,7 @@ def upload_file(local_file, upload_path: str, company_id: str|UUID, facility_id:
 
 
 @api_call
-def get_file_id(company_id: str, file_path: str, attempts: int = 5, delay: int = 1, client=default_client) -> str:
+def get_file_id(company_id: str, file_path: str, attempts: int = 5, delay: int = 1, client=default_client, **kwargs) -> str:
     def get_file_id_wrapper():
         resp = client.make_query(
             'drive/getDriveFileId',
@@ -44,7 +44,7 @@ def get_file_id(company_id: str, file_path: str, attempts: int = 5, delay: int =
         try:
             return get_file_id_wrapper()
         except FileNotFoundError:
-            print('Retrying...')
+            print('File not registered yet. Retrying...')
             time.sleep(delay)
     raise FileNotFoundError
 
@@ -60,8 +60,8 @@ def get_file_url_by_id(drive_file_id: str, client=default_client) -> str:
 
 
 @api_call
-def get_file_url_by_path(drive_file_path: str, company_id: str, client=default_client) -> str:
-    file_id = get_file_id(company_id, drive_file_path, client=client)
+def get_file_url_by_path(drive_file_path: str, company_id: str, client=default_client, **kwargs) -> str:
+    file_id = get_file_id(company_id, drive_file_path, client=client, **kwargs)
     return get_file_url_by_id(file_id, client=client)
 
 
