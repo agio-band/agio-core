@@ -212,7 +212,7 @@ class ApiClient:
                 data[i] = self._remove_notset_values(data[i], sentinel)
         return data
 
-    def configure_local_object(self, *args, **kwargs):
-        raise RuntimeError('Thread or async proxy not configured. '
-                           'Use AGIO_USE_API_CLIENT_THREAD_PROXY or AGIO_USE_API_CLIENT_ASYNC_PROXY '
+    def configure_context(self, *args, **kwargs):
+        raise RuntimeError('Context proxy not configured. '
+                           'Use env variable AGIO_USE_API_CLIENT_CONTEXT_PROXY=true'
                            'to setup proxy client.')

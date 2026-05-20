@@ -22,7 +22,12 @@ class ContextVarProxy:
 
     @contextlib.contextmanager
     def configure_context(self, *args, **kwargs):
-        """for для with"""
+        """
+        Synchronous context manager
+
+        >>> with client.configure_context(key=value):
+        >>>      pass
+        """
         tok_cfg = self._cv_config.set((args, kwargs))
         tok_obj = self._cv_object.set(None)
         try:
@@ -33,7 +38,12 @@ class ContextVarProxy:
 
     @contextlib.asynccontextmanager
     async def aconfigure_context(self, *args, **kwargs):
-        """for async with"""
+        """
+        Async context manager
+
+        >>> async with client.configure_context(key=value):
+        >>>      await ...
+        """
         tok_cfg = self._cv_config.set((args, kwargs))
         tok_obj = self._cv_object.set(None)
         try:
