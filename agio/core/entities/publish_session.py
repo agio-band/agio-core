@@ -65,12 +65,11 @@ class APublishSession(BaseObject):
     def _get_current_settings_workspace_id(cls, entity_id: str|None, client=None):
         if entity_id:
             project: AProject = AEntity.from_id(entity_id, client=client).project # type: ignore
-            ws = project.get_workspace()
+            settings_id = project.get_revision().get_settings_id()
         else:
-            ws = AWorkspace.current(client=client)
-        settings_id = ws.get_current_revision().get_settings_id()
+            settings_id = AWorkspace.current(client=client).get_current_revision().get_settings_id()
         if not settings_id:
-            raise Exception(f'No settings found for current workspace {ws}')
+            raise Exception(f'No settings found for entity {entity_id}')
         return settings_id
 
     @classmethod
