@@ -65,7 +65,7 @@ class ApiClient:
         self.login(refresh=True)
 
     def _load_session(self, **kwargs):
-        if 'token' in kwargs:
+        if 'token' in kwargs and kwargs.get('token'):
             logger.debug('Use custom token')
             self._set_token({'AccessToken': kwargs['token']})
         else:

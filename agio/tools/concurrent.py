@@ -1,60 +1,56 @@
-import asyncio
+import contextlib
 import contextvars
-import threading
+import logging
 from typing import Callable, Any
 
 
-class AsyncContextProxy:
+logger = logging.getLogger(__name__)
+
+
+class ContextVarProxy:
+    """
+    Separate client for different threads or coroutines
+    """
     def __init__(self, object_class: Callable, *args, **kwargs):
         self._object_class = object_class
-        self._default_args = args
-        self._default_kwargs = kwargs
+        self._cv_config: contextvars.ContextVar[tuple[tuple, dict]] = contextvars.ContextVar(
+            f"proxy_config_{id(self)}", default=(args, kwargs)
+        )
+        self._cv_object: contextvars.ContextVar[object | None] = contextvars.ContextVar(
+            f"proxy_obj_{id(self)}", default=None
+        )
 
-        self._obj_var = contextvars.ContextVar("proxy_obj", default=None)
-        self._cfg_var = contextvars.ContextVar("proxy_cfg", default=None)
-
-    def configure_local_object(self, *args, **kwargs):
+    @contextlib.contextmanager
+    def configure_context(self, *args, **kwargs):
+        """for для with"""
+        tok_cfg = self._cv_config.set((args, kwargs))
+        tok_obj = self._cv_object.set(None)
         try:
-            asyncio.get_running_loop()
-        except RuntimeError:
-            raise RuntimeError("AsyncContextProxy.configure_local_object() must be called within a running event loop.")
+            yield self
+        finally:
+            self._cv_object.reset(tok_obj)
+            self._cv_config.reset(tok_cfg)
 
-        self._cfg_var.set((args, kwargs))
-        self._obj_var.set(None)
+    @contextlib.asynccontextmanager
+    async def aconfigure_context(self, *args, **kwargs):
+        """for async with"""
+        tok_cfg = self._cv_config.set((args, kwargs))
+        tok_obj = self._cv_object.set(None)
+        try:
+            yield self
+        finally:
+            self._cv_object.reset(tok_obj)
+            self._cv_config.reset(tok_cfg)
 
     def _get_object(self) -> Any:
-        obj = self._obj_var.get()
+        obj = self._cv_object.get()
         if obj is None:
-            cfg = self._cfg_var.get()
-            args, kwargs = cfg if cfg else (self._default_args, self._default_kwargs)
+            args, kwargs = self._cv_config.get()
             obj = self._object_class(*args, **kwargs)
-            self._obj_var.set(obj)
+            self._cv_object.set(obj)
         return obj
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._get_object(), name)
 
-
-class ThreadContextProxy:
-    def __init__(self, object_class: Callable, *args, **kwargs):
-        self._object_class = object_class
-        self._default_args = args
-        self._default_kwargs = kwargs
-        self._local = threading.local()
-
-    def configure_local_object(self, *args, **kwargs):
-        self._local.args = args
-        self._local.kwargs = kwargs
-        if hasattr(self._local, "object"):
-            del self._local.object
-
-    def _get_object(self) -> Any:
-        if not hasattr(self._local, "object"):
-            args = getattr(self._local, "args", self._default_args)
-            kwargs = getattr(self._local, "kwargs", self._default_kwargs)
-            self._local.object = self._object_class(*args, **kwargs)
-        return self._local.object
-
-    def __getattr__(self, name):
-        return getattr(self._get_object(), name)
 
