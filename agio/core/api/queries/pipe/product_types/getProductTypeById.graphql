@@ -7,5 +7,6 @@ query GetProductType($id: ID!) {
         config
         description
         dataType
+        createdAt
 }
 }

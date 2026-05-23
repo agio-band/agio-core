@@ -17,8 +17,14 @@ query GetVersionList($first: Int!, $filter: PublishVersionFilter, $afterCursor: 
                         name
                     }
                 }
+                entityId
+                entity{
+                    id
+                    name
+                }
                 fields
                 publishSessionId
+                createdAt
             }
         }
         pageInfo {

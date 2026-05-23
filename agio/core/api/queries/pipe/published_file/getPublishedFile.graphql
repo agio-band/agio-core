@@ -4,5 +4,6 @@ query GetPublishFile($id: ID!) {
     name
     path
     publishVersionId
+    createdAt
   }
 }

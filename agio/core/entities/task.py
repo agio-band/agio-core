@@ -1,6 +1,7 @@
 from functools import cached_property
 
 from agio.core.entities import entity, project
+from agio.core.entities._mixins import EntityRelationMixin
 
 
 class ATask(entity.AEntity):

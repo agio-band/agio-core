@@ -12,14 +12,20 @@ from agio.tools.data_helpers import deep_tree
 
 @api_call
 def iter_products(
-        entity_id: str|UUID,
+        entity_id: str|UUID = None,
+        project_id: str|UUID = None,
         product_type_id: str = None,
         product_type_name: str = None,
         items_per_page: int = 50, 
         client=default_client
     ) -> Generator[dict, None, None]:
+    if not any([entity_id, project_id]):
+        raise ValueError('Project ID or Entity ID not provided')
     filters = deep_tree()
-    filters['where']['entity']['id']['equalTo'] = entity_id
+    if entity_id:
+        filters['where']['entity']['id']['equalTo'] = entity_id
+    if project_id:
+        filters['where']['entity']['project']['id']['equalTo'] = project_id
     if product_type_id:
         filters['where']['type']['id']['equalTo'] = product_type_id
     if product_type_name:
@@ -167,11 +173,18 @@ def update_product_type(
 @api_call
 def iter_prodict_versions(
         product_id: str = None,
+        entity_id: str = None,
+        project_id: str = None,
         items_per_page: int = 50,
         client=default_client
 ):
     filters = deep_tree()
-    filters['where']['publish']['id']['equalTo'] = product_id
+    if product_id:
+        filters['where']['publish']['id']['equalTo'] = product_id
+    if entity_id:
+        filters['where']['entity']['id']['equalTo'] = entity_id
+    if project_id:
+        filters['where']['entity']['project']['id']['equalTo'] = project_id
     yield from iter_query_list(
         'pipe/versions/getVersionList',
         'publishVersions',
@@ -220,14 +233,17 @@ def create_version(
 @api_call
 def update_version(
         version_id: str|UUID,
-        fields: dict,
+        fields: dict = NOTSET,
         dependencies: list[str] = NOTSET,
+        publish_session_id: str|UUID = NOTSET,
         client=default_client):
     update_data = {}
     if fields:
         update_data['fields'] = fields
     if dependencies:
         update_data['upstreams'] = dependencies
+    if publish_session_id:
+        update_data['publishSessionId'] = publish_session_id
     if not update_data:
         raise ValueError('Nothing to update')
     return client.make_query(

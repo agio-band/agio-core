@@ -11,6 +11,7 @@ query GetPublishTypeList($first: Int!, $filter: PublishTypeFilter, $afterCursor:
                 config
                 description
                 dataType
+                createdAt
             }
         }
         pageInfo {

@@ -9,6 +9,7 @@ query GetPublishFileList($first: Int!, $filter: PublishFileFilter) {
                 name
                 path
               	publishVersionId
+                createdAt
             }
         }
         pageInfo {

@@ -3,6 +3,7 @@ query GetProductList($first: Int!, $filter: PublishFilter, $afterCursor: String)
         first: $first,
         filter: $filter,
         after: $afterCursor
+        ordering: {sort: CREATED_AT}
     ) {
         edges {
             node {
@@ -15,6 +16,7 @@ query GetProductList($first: Int!, $filter: PublishFilter, $afterCursor: String)
                 fields
                 variant
                 entityId
+                createdAt
             }
         }
         pageInfo {

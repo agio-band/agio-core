@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
+from datetime import datetime
+from functools import cached_property
 from typing import Iterator
 from uuid import UUID
 
@@ -66,18 +68,28 @@ class BaseObject(ABC):
     def fields(self):
         return self._data.get('fields', {})
 
+    @cached_property
+    def created_at(self) -> datetime|None:
+        date = self.data.get('createdAt')
+        if date:
+            return datetime.fromisoformat(date)
+        return None
+
     def set_fields(self, **kwargs) -> None:
         fields = self.fields.copy()
         fields.update(kwargs)
         self.update(fields=kwargs)
         self.reload()
 
+    @property
+    def repr_name(self):
+        return self.code or self.name or ''
+
     def __str__(self):
         return str(self.id)
 
     def __repr__(self):
-        name = self.code or self.name or ''
-        return f"<{self.__class__.__name__} {name} ('{self.id}')>"
+        return f"<{self.__class__.__name__} {self.repr_name} ('{self.id}')>"
 
     def __eq__(self, other):
         if not isinstance(other, BaseObject):

@@ -1,16 +1,18 @@
 import os
+from functools import cached_property
 from pathlib import Path
 from typing import Self, Iterator
 from uuid import UUID
 
 from agio.core import api
-from agio.core.entities import BaseObject, product
+from agio.core.entities import BaseObject, product, AEntity
 from agio.core.entities import task
+from agio.core.entities._mixins import EntityRelationMixin
 from agio_pipe.schemas.version import AVersionCreateSchema
 from agio_pipe.utils import template_solver
 
 
-class AVersion(BaseObject):
+class AVersion(EntityRelationMixin, BaseObject):
     object_name = "version"
 
     VERSION_PADDING = os.getenv('AGIO_VERSION_NUMBER_PADDING', 7)
@@ -19,8 +21,20 @@ class AVersion(BaseObject):
     def version_number(self):
         return int(self._data['name'])
 
+    @property
+    def repr_name(self):
+        return str(self.version_number)
+
     def get_product(self):
         return product.AProduct(self.data['publish']['id'])
+
+    @cached_property
+    def product(self) -> product.AProduct:
+        return self.get_product()
+
+    @property
+    def product_name(self):
+        return  self.data.get('publish', {}).get('name')
 
     @classmethod
     def get_data(cls, object_id: str, client=None) -> dict:
@@ -29,9 +43,21 @@ class AVersion(BaseObject):
     def update(self, fields: dict, dependencies: list[str] = None) -> None:
         return api.pipe.update_version(self.id, fields, dependencies=dependencies, client=self.client)
 
+    @property
+    def publish_session_id(self):
+        return self.data.get('publishSessionId')
+
     @classmethod
-    def iter(cls, product_id: str|UUID, client=None) -> Iterator[Self]:
-        for data in api.pipe.iter_prodict_versions(product_id, client=client):
+    def iter(cls,
+             product_id: str|UUID = None,
+             entity_id: str|UUID = None,
+             project_id: str|UUID = None,
+             client=None) -> Iterator[Self]:
+        for data in api.pipe.iter_prodict_versions(
+                product_id=product_id,
+                entity_id=entity_id,
+                project_id=project_id,
+                client=client):
             yield AVersion(data, client=client)
 
     @classmethod

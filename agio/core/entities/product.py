@@ -6,9 +6,11 @@ from uuid import UUID
 
 from agio.core import api
 from agio.core.entities import BaseObject, AEntity, product_type
+from agio.core.entities._mixins import EntityRelationMixin
+from agio.core.entities.project import AProject
 
 
-class AProduct(BaseObject):
+class AProduct(EntityRelationMixin, BaseObject):
     object_name = "product"
 
     @classmethod
@@ -26,15 +28,19 @@ class AProduct(BaseObject):
 
     @classmethod
     def iter(cls,
-             entity: str | UUID | AEntity,
+             entity: str | UUID | AEntity = None,
+             project: str | UUID | AEntity = None,
              product_type_id: str = None,
              product_type_name: str = None,
              client=None,
              **kwargs) -> Iterator['AProduct']:
-        if isinstance(entity, AEntity):
+        if entity and isinstance(entity, AEntity):
             entity = str(entity.id)
+        if project and isinstance(project, AProject):
+            project = str(project.id)
         for prod in api.pipe.iter_products(
                 entity_id=entity,
+                project_id=project,
                 product_type_id=product_type_id,
                 product_type_name=product_type_name,
                 client=client,
@@ -79,11 +85,6 @@ class AProduct(BaseObject):
     @property
     def type(self) -> product_type.AProductType:
         return product_type.AProductType(self._data["type"])
-
-    @property
-    def entity(self) -> AEntity:
-        entity_data = api.track.get_entity(self._data["entityId"], client=self.client)
-        return AEntity.from_data(entity_data)
 
     VALID_VARIANT_PATTERN = re.compile(r'^[a-z](?:[a-z0-9_]*[a-z0-9])?$')
 

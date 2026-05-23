@@ -7,12 +7,13 @@ from typing import TypeVar
 from uuid import UUID
 
 from agio.core import api
+from ._mixins import EntityRelationMixin
 from .base_object import BaseObject
 if TYPE_CHECKING:
     from .project import AProject
 
 
-class AEntity(BaseObject):
+class AEntity(EntityRelationMixin, BaseObject):
     """
     Provider of project entity
     """
