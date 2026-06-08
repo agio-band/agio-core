@@ -35,6 +35,12 @@ class AApplicationLauncher:
     def __repr__(self):
         return f"<ApplicationLauncher({self.name!r} v{self._version!r}, [{self._app_plugin.app_mode!r}])"
 
+    def switch_mode(self, mode: str) -> 'AApplicationLauncher':
+        """Get launcher with same app but other mode"""
+        from agio.apps import app_hub
+
+        return app_hub.get_app(self._app_plugin.app_name, self.version, mode=mode)
+
     def get_settings(self) -> ApplicationSettings|None:
         local_settings = get_local_settings()
         apps_config: list[ApplicationSettings] = local_settings.get('agio_core.applications', [])
@@ -63,13 +69,22 @@ class AApplicationLauncher:
             raise ApplicationError(f'{self.name} v{self.version} settings must provide an install dir')
         return path
 
-
-    def get_executable(self, **kwargs) -> str:
-        path = Path(self.get_install_dir(**kwargs), self._app_plugin.executable_name()).as_posix()
+    def executable_name_context(self, **kwargs):
         context = {
             'version': self.version,
-            # add custom variables
+            # add custom variables,
+            **kwargs
         }
+        context.update(**self._app_plugin.get_executable_name_context(**context))
+        return context
+
+    def get_executable(self, **kwargs) -> str:
+        context = self.executable_name_context(**kwargs)
+        exec_name = self._app_plugin.executable_name(**kwargs)
+        path = Path(
+            self.get_install_dir(**kwargs),
+            exec_name
+            ).as_posix()
         return path.format(**context)
 
     def get_default_workdir(self, **kwargs) -> str:
@@ -117,7 +132,10 @@ class AApplicationLauncher:
         try:
             py_app = app_hub.get_app(self.name, self.version, mode='python')
             cmd = [py_app.get_executable(), '-V']
-            version = start_process(cmd, get_output=True, new_console=False).split()[-1]
+            version_str = start_process(cmd, get_output=True, new_console=False)
+            if not version_str:
+                raise ValueError(f'Can not get python version: {cmd}')
+            version = version_str.split()[-1]
             return version
         except ApplicationNotFoundError:
             return self.default_python_version
@@ -151,11 +169,10 @@ class AApplicationLauncher:
     def silent_echo(self):
         return bool(os.getenv('AGIO_SILENT_APP_STARTUP'))
 
-    def start(self, cmd_args: list[str] = None, cmd_envs: dict = None, **kwargs):
+    def start(self, cmd_args: list[str] = None, cmd_envs: dict = None, echo_paths: bool = False, **kwargs):
         """
         PID equal None is app is started as detached
         """
-        # context = self.create_launch_context()
         if cmd_args:
             self.ctx.add_args(*cmd_args)
         if cmd_envs:
@@ -171,8 +188,21 @@ class AApplicationLauncher:
             envs = self.get_default_launch_envs()
             if cmd_envs:
                 envs.update(**cmd_envs)
-            for k, v in sorted(envs.items()):
-                print(f"{k}={v}")
+            if envs:
+                click.secho('=== Envs: ===')
+                for k, v in sorted(envs.items()):
+                    print(f"{k}={v}")
+            if echo_paths:
+                paths = self.ctx.envs.get('PATH')
+                if paths:
+                    click.secho('=== PATH: ===', fg='yellow')
+                    for p in paths.split(os.pathsep):
+                        print(p)
+                pypaths = self.ctx.envs.get('PYTHONPATH')
+                if pypaths:
+                    click.secho('=== PYTHONPATH: ===', fg='yellow')
+                    for p in pypaths.split(os.pathsep):
+                        print(p)
             click.secho('=========================================', fg='yellow')
         ##########################################################################
 
@@ -180,6 +210,7 @@ class AApplicationLauncher:
         self._app_plugin.on_before_startup(self.ctx)
         kwargs.setdefault('new_console', False)
         kwargs.setdefault('detached', False)
-        kwargs['replace'] = not kwargs['detached']
+        kwargs['replace'] = not kwargs['detached'] and not kwargs['new_console']
+        # print('FAKE APP START', self.ctx.command)
         start_process(self.ctx.command, env=self.ctx.envs, **kwargs)
 

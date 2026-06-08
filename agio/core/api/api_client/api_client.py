@@ -168,10 +168,15 @@ class ApiClient:
         return result
 
     def _extract_error(self, data: dict):
-        error_text = []
-        for err in data['errors']:
-            error_text.append(err['message'])
-        return '\n'.join(error_text)
+        if 'errors' in data:
+            error_text = []
+            for err in data['errors']:
+                error_text.append(err['message'])
+            return '\n'.join(error_text)
+        elif 'error' in data:
+            return data.get('message') or str(data)
+        else:
+            return str(data)
 
     def _is_unauthorized_error(self, response: dict) -> bool:
         if 'errors' in response:
