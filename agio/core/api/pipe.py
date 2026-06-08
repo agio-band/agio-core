@@ -109,13 +109,19 @@ def find_product(entity_id: str|UUID, name: str, variant: str, client=default_cl
 # product type
 
 @api_call
-def iter_product_types(items_per_page: int = 50, client=default_client):
-    yield from iter_query_list(
+def iter_product_types(items_per_page: int = 50, filter_field: str|None = 'is_agio_type', client=default_client):
+    for product_data in iter_query_list(
         'pipe/product_types/getProductTypeList',
         'publishTypes',
         items_per_page=items_per_page,
         client=client
-    )
+        ):
+        # filter for agio product types
+        if filter_field:
+            if product_data.get('config', {}).get(filter_field):
+                yield product_data
+        else:
+            yield product_data
 
 
 @api_call
