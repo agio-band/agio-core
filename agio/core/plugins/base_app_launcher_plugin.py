@@ -67,10 +67,13 @@ class ApplicationPlugin(APlugin):
     def get_work_dir(self):
         pass
 
-    def executable_name(self) -> str:
+    def executable_name(self, **kwargs) -> str:
         if not self.app_executable_file:
             raise ApplicationError('Executable file not provided')
         return self.app_executable_file
+
+    def get_executable_name_context(self, **kwargs) -> dict:
+        return {}
 
     def on_before_startup(self, context: LaunchContext) -> None:
         pass

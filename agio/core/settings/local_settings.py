@@ -17,8 +17,8 @@ _settings_dir = Path(os.getenv(env_names.SETTINGS_DIR) or local_dirs.projects_se
 _settings_file_name = 'settings.json'
 
 
-def get_settings_dir(project_id: str = None):
-    return _settings_dir.joinpath(project_id)
+def get_settings_dir(project_id: str = ''):
+    return _settings_dir.joinpath(project_id or '')
 
 
 def get_project_settings_file(project: AProject|str = None) -> Path:

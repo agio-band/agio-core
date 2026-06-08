@@ -364,7 +364,7 @@ class AWorkspaceManager:
     def install_packages(self, *package_list: APackageRelease|str, **kwargs):
         package_list = collect_packages_to_install(package_list)
         install_args = [pkg.get_installation_command() for pkg in package_list]
-        event = emit('agio_core.workspace.packages_to_install', {'packages': install_args})
+        event = emit('core.workspace.packages_to_install', {'packages': install_args})
         install_args = event.payload['packages']
         print('='*100)
         print('Venv python version:', self.venv_manager.get_python_version())
@@ -379,9 +379,14 @@ class AWorkspaceManager:
         status_code = self.venv_manager.install_packages(*install_args, **kwargs)
         if status_code:
             raise PackageInstallationError(f'Failed to install packages. Status code:{status_code}')
+
         # on pacakge installed callbacks
         for pkg in self.iter_installed_packages():
             pkg.execute_package_callback('on_installed', self)
+        emit('core.workspace.packages_installed', {
+            'venv_path': self.venv_manager.path,
+            'workspace_manager': self,
+        })
 
     def uninstall_packages(self, *packages: APackage|APackageRelease|str):
         existing_packages = []
@@ -519,35 +524,3 @@ class AWorkspaceManager:
         # TODO
         if not self.is_installed():
             self.install()
-
-    # @classmethod # TODO cache it
-    # def create_from_id_old(cls, entity_id: str) -> 'AWorkspaceManager':
-    #     # is workspace id
-    #     try:
-    #         revision = api.workspace.get_revision_by_workspace_id(entity_id)
-    #         return cls(revision)
-    #     except NotExistsError:
-    #         pass
-    #     # is workspace name
-    #     # TODO api.workspace.get_revision_by_workspace_label
-    #     # is revision id
-    #     try:
-    #         revision = api.workspace.get_revision(entity_id)
-    #         return cls(revision)
-    #     except NotExistsError:
-    #         pass
-    #     # is settings id
-    #     try:
-    #         revision = api.workspace.get_revision_by_settings_id(entity_id)
-    #         return cls(revision, settings_revision_id=entity_id)
-    #     except NotExistsError:
-    #         pass
-    #     # is project id
-    #     try:
-    #         revision = api.workspace.get_revision_by_project_id(entity_id)
-    #         manager = cls(revision)
-    #         manager.add_launch_envs({env_names.PROJECT_ID: entity_id})
-    #         return manager
-    #     except NotExistsError:
-    #         pass
-    #     raise WorkspaceNotExists
