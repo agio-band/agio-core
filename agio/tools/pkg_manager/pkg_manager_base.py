@@ -58,6 +58,8 @@ class PackageManagerBase:
             raise FileNotFoundError(f'venv is not installed yet: {self.path}')
         resp = self.run(['run', 'python', '-c', "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
                         start_process_kwargs=dict(get_output=True))
+        if not resp:
+            raise ValueError('Get site packages failed, empty response')
         return resp.strip()
 
     @property
