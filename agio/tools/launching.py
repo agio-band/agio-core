@@ -33,6 +33,7 @@ class LaunchContext:
         self._inherit_system_envs = inherit_system_envs
         system_envs = os.environ.copy() if self._inherit_system_envs else {}
         self._envs = system_envs.copy()
+        self._envs.pop('PYTHONPATH', None) # do setup PYTHONPATH in local and workspace settings
         if executable is not None:
             self.set_executable(executable)
         if args is not None:
@@ -94,8 +95,8 @@ class LaunchContext:
             value = os.pathsep.join(map(str, [os.path.expanduser(x) for x in value]))
         logger.debug(f"Appending path env {env_name}={value}")
         if env_name == 'PYTHONPATH':
-            # specific append function for PYTHONPATH using sitecustomize hook
-            # do not use flag -S to keep this customisation
+            # specific append function for PYTHONPATH using `sitecustomize` hook
+            # do not use flag -S to keep this customization
             if not _site_customize_dir.exists():
                 raise FileNotFoundError('site customize dir not found: {}'.format(_site_customize_dir))
             res = self.append_env_path('__AGIO_POST_APPEND_PATH__', value)
