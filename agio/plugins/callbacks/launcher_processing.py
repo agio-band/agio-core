@@ -1,5 +1,6 @@
 import logging
 
+from agio.apps.exceptions import ApplicationNotFoundError
 from agio.apps.launcher import AApplicationLauncher
 from agio.core.entities import AWorkspace
 from agio.core.events import subscribe, AEvent
@@ -20,9 +21,17 @@ def create_app_workspace(event: AEvent):
         ws = AWorkspace.current()
     except WorkspaceNotDefined:
         return
-    # create custom workspace
+    # create custom workspace for app
     required_version = app.get_python_version()
-    ws_man = AWorkspaceManager.from_workspace(ws, python_version=required_version)
+    try:
+        # try to get app interpreter
+        py_app = app.switch_mode('python')
+        venv_manager_python = py_app.get_executable()
+    except ApplicationNotFoundError:
+        # use interpreter with savme version
+        venv_manager_python = required_version
+    # TODO: update for apps without py interpreter
+    ws_man = AWorkspaceManager.from_workspace(ws, python_version=venv_manager_python)
     suffix = f"{app.name}-{app.version}-py{required_version}"
     ws_man.set_suffix(suffix)
     ws_man.install_or_update_if_needed()
