@@ -1,7 +1,7 @@
 import os
 from functools import cached_property
 from pathlib import Path
-from typing import Self, Iterator
+from typing import Iterator
 from uuid import UUID
 
 from agio.core import api
@@ -52,7 +52,7 @@ class AVersion(EntityRelationMixin, BaseObject):
              product_id: str|UUID = None,
              entity_id: str|UUID = None,
              project_id: str|UUID = None,
-             client=None) -> Iterator[Self]:
+             client=None) -> Iterator['AVersion']:
         for data in api.pipe.iter_prodict_versions(
                 product_id=product_id,
                 entity_id=entity_id,
@@ -72,7 +72,7 @@ class AVersion(EntityRelationMixin, BaseObject):
                version: int = None,
                fields: dict = None,
                client=None,
-        ) -> Self:
+        ) -> 'AVersion':
         if version is None:
             version = cls.get_next_version_number(product_id, client=client)
         # add padding

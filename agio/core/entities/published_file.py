@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Self, Iterator
+from typing import Iterator
 from uuid import UUID
 
 from agio.core.entities import BaseObject
@@ -29,11 +29,11 @@ class APublishedFile(BaseObject):
         raise NotImplementedError()
 
     @classmethod
-    def iter(cls, version_id: str|UUID, client=None) -> Iterator[Self]:
+    def iter(cls, version_id: str|UUID, client=None) -> Iterator['APublishedFile']:
         yield from api.pipe.iter_publish_files(version_id=version_id, client=client)
 
     @classmethod
-    def create(cls, version_id: str|UUID, path: str, name: str = None, client=None) -> Self:
+    def create(cls, version_id: str|UUID, path: str, name: str = None, client=None) -> 'APublishedFile':
         name = name or Path(path).name
         data = api.pipe.create_publish_file(version_id=version_id, path=path, name=name, client=client)
         file = APublishedFile(data, client=client)

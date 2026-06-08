@@ -42,6 +42,10 @@ class AProductType(BaseObject):
             self.reload()
         return self._data.get("config", {})
 
+    @property
+    def supported_engines(self):
+        return self.get_config().get("options", {}).get("supported_engines", [])
+
     @classmethod
     def iter(cls, client=None, **kwargs) -> Iterator[AProductType]:
         for prod in api.pipe.iter_product_types(client=client, **kwargs):
@@ -69,7 +73,7 @@ class AProductType(BaseObject):
              **kwargs):
         data = api.pipe.get_product_type_by_name(name, client=client)
         if not data:
-            return
+            return None
         return cls(data, client=client)
 
     @property

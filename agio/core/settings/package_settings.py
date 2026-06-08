@@ -4,6 +4,7 @@ import json
 import re
 import types
 from typing import Any, Iterator, get_origin, get_args, Union, Type, Mapping, Sequence
+from types import GenericAlias
 
 from pydantic import BaseModel
 
@@ -217,7 +218,7 @@ class _SettingsMeta(type):
             if attr_name in fields:
                 continue
             default_value = namespace.get(attr_name, REQUIRED)
-            if inspect.isclass(annotation) and issubclass(annotation, BaseField):
+            if inspect.isclass(annotation) and not isinstance(annotation, GenericAlias) and issubclass(annotation, BaseField):
                 annotation = annotation.field_type
             try:
                 fields[attr_name] = _create_field_from_annotation(attr_name, annotation, default_value)
