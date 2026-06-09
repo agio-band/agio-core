@@ -94,14 +94,15 @@ class AApplicationLauncher:
         return context
 
     def get_executable(self, **kwargs) -> str:
-        forced_path = self._app_plugin.get_executable_path(self.version)
+        install_dir = self.get_install_dir(**kwargs)
+        forced_path = self._app_plugin.get_executable_path(install_dir=install_dir, version=self.version)
         if forced_path:
             return forced_path
         # join path and name
         context = self.executable_name_context(**kwargs)
         exec_name = self._app_plugin.get_executable_name(**kwargs)
         path = Path(
-            self.get_install_dir(**kwargs),
+            install_dir,
             exec_name
             ).as_posix()
         return path.format(**context)

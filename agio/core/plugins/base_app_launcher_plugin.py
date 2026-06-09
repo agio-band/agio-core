@@ -70,7 +70,7 @@ class ApplicationPlugin(APlugin):
     def get_work_dir(self):
         pass
 
-    def get_executable_path(self, version, **kwargs) -> str:
+    def get_executable_path(self, install_dir: str|Path, version: str, **kwargs) -> str:
         """Will override get_executable_name() if not empty"""
 
     def get_executable_name(self, **kwargs) -> str:
