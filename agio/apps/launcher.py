@@ -24,16 +24,29 @@ class AApplicationLauncher:
             app_plugin: bp.ApplicationPlugin,
             version: str|None = None,
         ) -> None:
+        if not version and app_plugin.version_required:
+            raise ValueError(f'Version is required for application {app_plugin.app_name}')
         self._app_plugin = app_plugin
         self._version = version
         self._settings = self.get_settings()
         self.ctx = self.create_launch_context()
 
+    @property
+    def version_str(self):
+        if self._version:
+            return f'v{self._version}'
+        else:
+            return ''
+
     def __str__(self):
-        return f'{self.label} v{self._version} [{self._app_plugin.app_mode}]'
+        return f'{self.label} {self.version_str} [{self._app_plugin.app_mode}]'
 
     def __repr__(self):
-        return f"<ApplicationLauncher({self.name!r} v{self._version!r}, [{self._app_plugin.app_mode!r}])"
+        return f"<ApplicationLauncher({self.name!r} {self.version_str!r}, [{self._app_plugin.app_mode!r}])"
+
+    @property
+    def plugin(self):
+        return self._app_plugin
 
     def switch_mode(self, mode: str) -> 'AApplicationLauncher':
         """Get launcher with same app but other mode"""
@@ -48,7 +61,9 @@ class AApplicationLauncher:
             if app_config.name == self.name:
                 if app_config.version == self.version:
                     return app_config
-        raise ApplicationError(f'Application settings not found: {self}')
+        if self._app_plugin.local_settings_required:
+            raise ApplicationError(f'Application settings not found: {self}')
+        return ApplicationSettings(name=self.name)
 
     def create_launch_context(self) -> launching.LaunchContext:
         executable = self.get_executable()
@@ -79,8 +94,12 @@ class AApplicationLauncher:
         return context
 
     def get_executable(self, **kwargs) -> str:
+        forced_path = self._app_plugin.get_executable_path(self.version)
+        if forced_path:
+            return forced_path
+        # join path and name
         context = self.executable_name_context(**kwargs)
-        exec_name = self._app_plugin.executable_name(**kwargs)
+        exec_name = self._app_plugin.get_executable_name(**kwargs)
         path = Path(
             self.get_install_dir(**kwargs),
             exec_name
@@ -122,6 +141,10 @@ class AApplicationLauncher:
     def icon(self):
         return self._app_plugin.icon
 
+    @property
+    def python_env_required(self):
+        return self._app_plugin.python_env_required
+
     def get_python_version(self) -> str|None:
         from agio.apps import app_hub
 
@@ -153,7 +176,7 @@ class AApplicationLauncher:
             **{
                 env_names.APP_NAME: self.name,
                 env_names.APP_GROUPS: ','.join(groups),
-                env_names.APP_VERSION:self.version,
+                env_names.APP_VERSION: self.version or '',
                 env_names.APP_MODE: self.mode,
                 env_names.APP_EXECUTABLE:self.get_executable(),
             }
@@ -169,7 +192,7 @@ class AApplicationLauncher:
     def silent_echo(self):
         return bool(os.getenv('AGIO_SILENT_APP_STARTUP'))
 
-    def start(self, cmd_args: list[str] = None, cmd_envs: dict = None, echo_paths: bool = False, **kwargs):
+    def start(self, cmd_args: list[str] = None, cmd_envs: dict = None, echo_paths: bool = True, **kwargs):
         """
         PID equal None is app is started as detached
         """
@@ -211,6 +234,5 @@ class AApplicationLauncher:
         kwargs.setdefault('new_console', False)
         kwargs.setdefault('detached', False)
         kwargs['replace'] = not kwargs['detached'] and not kwargs['new_console']
-        # print('FAKE APP START', self.ctx.command)
         start_process(self.ctx.command, env=self.ctx.envs, **kwargs)
 

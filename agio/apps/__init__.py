@@ -25,7 +25,7 @@ def get_registered_app_plugins():
     return list(plugin_hub.APluginHub.instance().get_plugins_by_type('application'))
 
 
-def get_app_list():
+def get_app_list(configured_only: bool = False):
     apps_config = get_app_config()
     if not apps_config:
         return
@@ -33,7 +33,11 @@ def get_app_list():
     if not all_app_plugins:
         logger.debug('No plugins found for any applications')
         return
-    for app_plg in all_app_plugins:
-        conf_list = [x for x in apps_config if x.name == app_plg.app_name]
-        for c in conf_list:
-            yield AApplicationLauncher(app_plg, c.version)
+    if configured_only:
+        for app_plg in all_app_plugins:
+            conf_list = [x for x in apps_config if x.name == app_plg.app_name]
+            for c in conf_list:
+                yield AApplicationLauncher(app_plg, c.version)
+    else:
+        for app_plg in all_app_plugins:
+            yield AApplicationLauncher(app_plg, None)

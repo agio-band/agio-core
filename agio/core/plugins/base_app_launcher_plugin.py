@@ -23,6 +23,9 @@ class ApplicationPlugin(APlugin):
     app_icon: str = None
     app_executable_file: str = None
     version_required: bool = False
+    local_settings_required = False
+    python_env_required = False
+    task_id_required = False
 
     def __str__(self):
         return f"{self.app_name}/{self.app_mode}"
@@ -67,7 +70,10 @@ class ApplicationPlugin(APlugin):
     def get_work_dir(self):
         pass
 
-    def executable_name(self, **kwargs) -> str:
+    def get_executable_path(self, version, **kwargs) -> str:
+        """Will override get_executable_name() if not empty"""
+
+    def get_executable_name(self, **kwargs) -> str:
         if not self.app_executable_file:
             raise ApplicationError('Executable file not provided')
         return self.app_executable_file
@@ -89,6 +95,8 @@ class ApplicationPlugin(APlugin):
 
 class DccApplicationPlugin(ApplicationPlugin):
     local_settings_required = True
+    version_required = True
+    task_id_required = True
     _plugin_type_groups = {'dcc'}
     required_attrs = {'app_name', 'app_groups', 'app_mode', 'app_executable_file'}
 

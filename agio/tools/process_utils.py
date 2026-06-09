@@ -168,6 +168,7 @@ def start_process(
             errors="replace",
             )
         )
+    validate_envs(new_env)
     process_timeout = kwargs.pop('timeout', None)
     process = subprocess.Popen(
         command,
@@ -247,6 +248,15 @@ def start_process(
         return process
 
     return None
+
+
+def validate_envs(envs: dict, covert_to_str: bool = False):
+    for k, v in envs.items():
+        if not isinstance(v, str):
+            if covert_to_str:
+                envs[k] = str(v)
+            else:
+                raise ValueError(f'Key {k} is not a string: type {type(v)} [{v!r}]')
 
 
 def write_to_pipe(data: str|bytes):

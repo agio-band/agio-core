@@ -25,12 +25,19 @@ def create_app_workspace(event: AEvent):
     required_version = app.get_python_version()
     try:
         # try to get app interpreter
-        py_app = app.switch_mode('python')
+        py_app = __get_pyinstall_app(app)
         venv_manager_python = py_app.get_executable()
     except ApplicationNotFoundError:
-        # use interpreter with savme version
+        if not app.plugin.python_env_required:
+            # not need to create custom venv, use default workspace venv instead
+            ws_man = AWorkspaceManager.from_workspace(ws)
+            site_packages = ws_man.get_site_packages_path()
+            app.ctx.append_env_path('PYTHONPATH', site_packages)
+            return
+        # use interpreter with same version
         venv_manager_python = required_version
-    # TODO: update for apps without py interpreter
+    # create custom venv for specific app
+    logger.info('Use interpreter for custom venv: %s', venv_manager_python)
     ws_man = AWorkspaceManager.from_workspace(ws, python_version=venv_manager_python)
     suffix = f"{app.name}-{app.version}-py{required_version}"
     ws_man.set_suffix(suffix)
@@ -39,3 +46,12 @@ def create_app_workspace(event: AEvent):
     logger.debug("Adding site packages path from workspace: %s", site_packages)
     app.ctx.append_env_path('PYTHONPATH', site_packages)
     app.ctx.append_envs(**ws_man.get_launch_envs())
+
+
+def __get_pyinstall_app(app: AApplicationLauncher) -> AApplicationLauncher:
+    for name in ['venv', 'python']:
+        try:
+            return app.switch_mode(name)
+        except ApplicationNotFoundError:
+            continue
+    raise ApplicationNotFoundError

@@ -1,10 +1,8 @@
-import os
-
 import click
 
+from agio.apps import app_hub, AApplicationLauncher
 from agio.core.events import emit
 from agio.core.plugins.base_command import ACommandPlugin
-from agio.apps import app_hub, AApplicationLauncher
 from agio.tools import env_names
 
 
@@ -34,15 +32,15 @@ class LauncherCommand(ACommandPlugin):
                 **kwargs):
         if not app_name:
             raise click.BadOptionUsage('app-name', 'app-name not set')
-        if not app_version:
-            raise click.BadOptionUsage('app_version', 'app-version not set')
-        click.secho(f'Start app "{app_name}" v{app_version} [{app_mode}]', fg='green')
         new_app: AApplicationLauncher = app_hub.get_app(app_name, app_version, mode=app_mode)
-        if not task_id:
+        if not task_id and new_app.plugin.task_id_required:
             raise click.BadOptionUsage('task-id', 'Task ID is required')
+        click.secho(f'Start app "{app_name}" v{app_version} [{app_mode}]', fg='green')
         if __extra_args__:
             kwargs['cmd_args'] = __extra_args__
-        kwargs['cmd_envs'] = {env_names.TASK_ID: task_id}
+        kwargs['cmd_envs'] = {}
+        if task_id:
+            kwargs['cmd_envs'] = {env_names.TASK_ID: task_id}
         if env is not None:
             kwargs['cmd_envs'].update(self.parse_envs(env))
         kwargs.update(dict(
