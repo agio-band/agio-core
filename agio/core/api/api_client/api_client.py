@@ -219,5 +219,5 @@ class ApiClient:
 
     def configure_context(self, *args, **kwargs):
         raise RuntimeError('Context proxy not configured. '
-                           'Use env variable AGIO_USE_API_CLIENT_CONTEXT_PROXY=true'
+                           'Use env variable AGIO_USE_API_CLIENT_CONTEXT_PROXY=true '
                            'to setup proxy client.')
