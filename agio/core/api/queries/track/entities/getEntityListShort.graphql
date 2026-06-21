@@ -9,27 +9,11 @@ query GetEntityList($where: EntityWhere, $first: Int!) {
             node{
                 id
                 name
-                projectId
-                project {
-                    name
-                    code
-                    workspaceId
-                    companyId
-                }
                 class{
                     name
                 }
                 fields
-                links{
-                    toId
-                    roleId
-                }
                 parentId
-                parent{
-                    name
-                    id
-                    parentId
-                }
             }
         }
 

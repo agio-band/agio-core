@@ -81,6 +81,50 @@ def iter_projects(company_id: str|UUID, has_workspace: bool = NOTSET, items_per_
 
 
 @api_call
+def get_project_entities(project_id: str|UUID, as_tree = True, client=default_client) -> list:
+    entities = iter_entities(project_id, short=True, client=client)
+    if as_tree:
+        return _build_hierarchy(entities)
+    else:
+        return [
+            {
+                "name": item["name"],
+                "class_name": item["class"]["name"],
+                "id": item["id"],
+                "parent_id": item["parentId"]
+            }
+            for item in entities
+        ]
+
+def _build_hierarchy(data: list) -> list:
+    nodes = {}
+    data = tuple(data)
+    for node in data:
+        nid = node["id"]
+        nodes[nid] = {
+            "name": node["name"],
+            "class_name": node["class"]["name"],
+            "id": nid,
+            "children": [],
+        }
+    roots = []
+    remaining = []
+    for node in data:
+        nid = node["id"]
+        parent_id = node.get("parentId")
+        if parent_id is None:
+            roots.append(nodes[nid])
+        elif parent_id in nodes:
+            nodes[parent_id]["children"].append(nodes[nid])
+        else:
+            remaining.append(nid)
+    for nid in remaining:
+        roots.append(nodes[nid])
+    return roots
+
+
+
+@api_call
 def find_project(
         company_id: str|UUID = NOTSET,
         company_name: str|None = NOTSET,
@@ -172,25 +216,27 @@ def get_entity_by_name(project_id: str|UUID, entity_class: str, name: str, clien
 @api_call
 def iter_entities(
         project_id: str|UUID,
-        entity_class: str,
+        entity_class: str = None,
         parent_id: str|UUID = None,
         name: str = None,       # supported regex
+        short: bool = False,
         items_per_page: int = 50,
         client=default_client
     ) -> Generator[dict, None, None]:
     where_filter = {
-        'project': {'id': {'equalTo': project_id}},
-        'class': {'name': {'equalTo': entity_class}}
+        'project': {'id': {'equalTo': project_id}}
     }
+    if entity_class:
+        where_filter['class'] = {'name': {'equalTo': entity_class}}
     if parent_id:
         where_filter['parent'] = {'id': {'equalTo': parent_id}}
     if name:
         where_filter['name'] = {'regExp': name}
     yield from iter_query_list(
-        'track/entities/getEntityList',
+        'track/entities/getEntityListShort' if short else 'track/entities/getEntityList',
         'entities',
         variables={
-            'where':where_filter,
+            'where': where_filter,
         },
         items_per_page=items_per_page,
         client=client

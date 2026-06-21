@@ -1,5 +1,5 @@
 from functools import wraps
-
+from typing import Callable, ParamSpec, TypeVar
 
 NOTSET = type("NotSetSentinel", (), {
     "__repr__": lambda self: "<NOTSET>",
@@ -8,15 +8,18 @@ NOTSET = type("NotSetSentinel", (), {
     "__str__": lambda self: '',
 })()
 
+P = ParamSpec('P')
+R = TypeVar('R')
 
-def api_call(func):
+
+def api_call(func: Callable[P, R]) -> Callable[P, R]:
     from agio.core.api import client
 
     # TODO add cache
     # TODO add logs
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         # fix client argument
         if 'client' in kwargs:
             if kwargs['client'] is None:

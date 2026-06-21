@@ -106,6 +106,11 @@ def find_product(entity_id: str|UUID, name: str, variant: str, client=default_cl
     if resp['data']['publishes']['edges']:
         return resp['data']['publishes']['edges'][0]['node']
 
+
+@api_call
+def delete_product(product_id: str, client=default_client):
+    raise NotImplementedError
+
 # product type
 
 @api_call
@@ -143,12 +148,12 @@ def get_product_type_by_name(name: str, client=default_client) -> dict|None:
 
 
 @api_call
-def create_product_type(name, description, config: dict = None, data_type: str = None, client=default_client) -> dict:
+def create_product_type(name, description: str = None, config: dict = None, data_type: str = None, client=default_client) -> dict:
     return client.make_query(
         'pipe/product_types/createProductType',
         input=dict(
             name=name,
-            description=description,
+            description=description or "",
             config=config or {},
             dataType=data_type or "",
         )
@@ -172,6 +177,11 @@ def update_product_type(
         id=publish_type_id,
         input=input_data,
     )['data']['updatePublishType']['ok']
+
+
+@api_call
+def delete_product_type(publish_type_id: str, client=default_client):
+    raise NotImplementedError
 
 
 # Published Version
