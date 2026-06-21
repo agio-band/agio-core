@@ -171,7 +171,10 @@ class ApiClient:
         if 'errors' in data:
             error_text = []
             for err in data['errors']:
-                error_text.append(err['message'])
+                msg = err['message']
+                if 'path' in err:
+                    msg = f'{msg}: {".".join(err["path"])}'
+                error_text.append(msg)
             return '\n'.join(error_text)
         elif 'error' in data:
             return data.get('message') or str(data)
