@@ -57,3 +57,19 @@ def iter_companies(user_id: str = None, limit: int = None, items_per_page: int =
             },
         client=client
     )
+
+
+@api_call
+def get_my_companies(user_id: str = None, limit: int = None, items_per_page: int = 50, client=default_client) -> Iterator[dict]:
+    from .profile import get_current_user
+    user_id = user_id or get_current_user()['id']
+    yield from iter_query_list(
+        'desk/company/getCompanyListForUser',
+        entities_data_key="companies",
+        variables={
+            "userId": user_id,
+        },
+        limit= limit,
+        items_per_page=items_per_page,
+        client=client
+    )

@@ -1,0 +1,51 @@
+query myCompanies($first: Int!, $userId: ID!) {
+  companies (
+  first: $first,
+  filter: {
+    where: {
+      and: {
+        hostUser: {
+          id: {
+            equalTo: $userId
+          }
+        },
+        or: {
+          members: {
+            id: {
+              equalTo: $userId
+            }
+          },
+          isHome: {
+            equalTo: false
+          },
+          or: {
+            createdBy: {
+              id: {
+                equalTo: $userId
+              }
+            },
+            isHome: {
+              equalTo: false
+            }
+          }
+        }
+      }
+    }
+  }
+
+  ) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+    pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+    }
+  }
+}
+
