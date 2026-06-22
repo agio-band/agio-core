@@ -1,7 +1,9 @@
-query projectsList($first: Int!, $filter: ProjectFilter) {
+query projectsList($first: Int!, $filter: ProjectFilter, $afterCursor: String) {
   projects(
-    first: $first,
-    filter: $filter)
+    first: $first
+    filter: $filter
+    after: $afterCursor
+  )
   {
     edges {
       node {

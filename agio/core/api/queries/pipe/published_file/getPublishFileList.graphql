@@ -1,7 +1,8 @@
-query GetPublishFileList($first: Int!, $filter: PublishFileFilter) {
+query GetPublishFileList($first: Int!, $filter: PublishFileFilter, $afterCursor: String) {
     publishFiles(
         first: $first,
         filter: $filter
+        after: $afterCursor
     ) {
         edges {
             node {

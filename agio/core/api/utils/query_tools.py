@@ -43,6 +43,8 @@ def iter_query_list(query: str,
                     return
         page_info = response['data'][entities_data_key]['pageInfo']
         if page_info['hasNextPage']:
+            if page_info['endCursor'] == current_cursor:
+                raise ValueError('Next and previous cursors is match!')
             current_cursor = page_info['endCursor']
         else:
             break

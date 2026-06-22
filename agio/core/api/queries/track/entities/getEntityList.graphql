@@ -1,9 +1,10 @@
-query GetEntityList($where: EntityWhere, $first: Int!) {
+query GetEntityList($where: EntityWhere, $first: Int!, $afterCursor: String) {
     entities (
         filter: {
             where: $where
         },
         first: $first
+        after: $afterCursor
     ){
         edges {
             node{

@@ -84,7 +84,7 @@ def update_product(product_id: str,
     if fields:
         input_data['fields'] = fields
     return client.make_query(
-        'pipe/products/updatePublish',
+        'pipe/products/updateProduct',
         id=product_id,
         input=input_data,
     )['data']['updatePublish']['ok']
@@ -162,19 +162,25 @@ def create_product_type(name, description: str = None, config: dict = None, data
 
 @api_call
 def update_product_type(
-        publish_type_id: str,
+        product_type_id: str,
+        name: str = None,
+        description: str = None,
         config: dict = None,
         data_type: str = None,
         client=default_client
 ):
     input_data = deep_tree()
+    if name:
+        input_data['name'] = name
+    if description:
+        input_data['description'] = description
     if config:
         input_data['config'] = config
     if data_type:
         input_data['dataType'] = data_type
     return client.make_query(
-        'pipe/product_types/updatePublishType',
-        id=publish_type_id,
+        'pipe/product_types/updateProductType',
+        id=product_type_id,
         input=input_data,
     )['data']['updatePublishType']['ok']
 
