@@ -25,7 +25,6 @@ query GetWorkspaceSettingsList(
                 id
                 workspaceRevisionId
                 isCurrent
-                data
                 comment
                 createdAt
             }

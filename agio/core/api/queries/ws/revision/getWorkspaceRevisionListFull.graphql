@@ -26,6 +26,20 @@ query GetWorkspaceRevisionList(
         id
         workspaceId
         isCurrent
+        status
+        packageReleases {
+          id
+          name
+          label
+          description
+          assets
+          metadata
+          package{
+            id
+            name
+          }
+        }
+        layout
         comment
         createdAt
       }

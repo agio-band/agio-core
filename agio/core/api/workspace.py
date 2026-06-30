@@ -174,9 +174,9 @@ def update_revision(
 
 
 @api_call
-def iter_revisions(workspace_id: UUID|str, limit: int = None, client=default_client) -> Iterator[dict]:
+def iter_revisions(workspace_id: UUID|str, full: bool = False, limit: int = None, client=default_client) -> Iterator[dict]:
     yield from iter_query_list(
-        'ws/revision/getWorkspaceRevisionList',
+        'ws/revision/getWorkspaceRevisionListFull' if full else 'ws/revision/getWorkspaceRevisionList',
         entities_data_key='workspaceRevisions',
         variables=dict(
             workspaceId=workspace_id,
@@ -317,11 +317,12 @@ def update_revision_settings(settings_id: str|UUID, is_current: bool = NOTSET, c
 
 
 @api_call
-def iter_revision_settings(revision_id: UUID|str, client=default_client) -> Iterator[dict]:
+def iter_revision_settings(revision_id: UUID|str, full: bool = False, limit: int = None, client=default_client) -> Iterator[dict]:
     yield from iter_query_list(
-        'ws/settings/getRevisionSettingsList',
+        'ws/settings/getSettingsListFull' if full else 'ws/settings/getSettingsList',
         entities_data_key='workspaceSettingses',
         variables=dict(revisionId=revision_id),
+        limit=limit,
         client=client,
     )
 
