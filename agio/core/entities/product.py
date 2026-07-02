@@ -44,6 +44,7 @@ class AProduct(EntityRelationMixin, BaseObject):
                 product_type_id=product_type_id,
                 product_type_name=product_type_name,
                 client=client,
+                items_per_page=kwargs.get('items_per_page', 50),
             ):
             yield cls(prod, client=client)
 

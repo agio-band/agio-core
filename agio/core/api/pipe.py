@@ -12,10 +12,10 @@ from agio.tools.data_helpers import deep_tree
 
 @api_call
 def iter_products(
-        entity_id: str|UUID = None,
-        project_id: str|UUID = None,
-        product_type_id: str = None,
-        product_type_name: str = None,
+        entity_id: str|UUID = NOTSET,
+        project_id: str|UUID = NOTSET,
+        product_type_id: str = NOTSET,
+        product_type_name: str = NOTSET,
         items_per_page: int = 50, 
         client=default_client
     ) -> Generator[dict, None, None]:
