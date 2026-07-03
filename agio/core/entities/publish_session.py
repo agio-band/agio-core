@@ -33,6 +33,9 @@ class APublishSession(BaseObject):
         pipe.update_publish_session(self.id, client=self.client, **to_update)
         self.reload()
 
+    def set_status(self, status: str):
+        self.update("status", status)
+
     @classmethod
     def iter(cls, project_id: str|UUID, items_per_page: int = 25, client=None) -> Iterator[APublishSession]:
         yield from (cls(data, client=client) for data in pipe.iter_publish_sessions(project_id, items_per_page=items_per_page, client=client))

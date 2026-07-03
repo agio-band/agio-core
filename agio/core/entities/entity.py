@@ -141,6 +141,13 @@ class AEntity(EntityRelationMixin, BaseObject):
         from .project import AProject
         return AProject(self.project_id)
 
+    @property
+    def status(self) -> str:
+        return self.fields.get('status')
+
+    def set_status(self, status: str):
+        return self.set_fields(status=status)
+
     @classmethod
     def find_entity_class(cls, class_name: str) -> type[T_Entity]|None:
         for cls_ in AEntity.iter_entity_classes():
@@ -154,13 +161,6 @@ class AEntity(EntityRelationMixin, BaseObject):
             yield _cls
 
     # schema and hierarchy
-
-    def set_parent(self, parent: T_Entity) -> None:
-        ...
-
-    def add_child(self, child: T_Entity) -> None:
-        ...
-
     def _load_parents_data(self, depth: int = 10):
         return api.track.get_entity_hierarchy(self.id, depth, False, client=self.client)
 

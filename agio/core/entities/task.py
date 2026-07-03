@@ -1,7 +1,6 @@
 from functools import cached_property
 
 from agio.core.entities import entity, project
-from agio.core.entities._mixins import EntityRelationMixin
 
 
 class ATask(entity.AEntity):
@@ -22,3 +21,7 @@ class ATask(entity.AEntity):
     @cached_property
     def project(self):
         return project.AProject(self._data['projectId'])
+
+    @property
+    def step(self):
+        return self.fields.get('step')
