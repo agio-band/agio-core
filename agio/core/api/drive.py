@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from typing import Callable
 from uuid import UUID
@@ -7,6 +8,7 @@ from uuid import UUID
 from agio.core.api import client as default_client
 from agio.core.api.utils import api_call
 from agio.tools import network
+logger = logging.getLogger(__name__)
 
 
 @api_call
@@ -24,6 +26,7 @@ def get_upload_link(upload_path: str, company_id: str|UUID, facility_id: str|UUI
 def upload_file(local_file, upload_path: str, company_id: str|UUID, facility_id: str|UUID,
                 read_mode='rb', client=default_client, callback: Callable = None) -> str:
     url = get_upload_link(upload_path, company_id, facility_id, client=client)
+    logger.info(f'Upload url: {url}')
     network.upload_file(url, local_file, 'PUT', read_mode, callback=callback)
     return upload_path
 
@@ -44,7 +47,7 @@ def get_file_id(company_id: str, file_path: str, attempts: int = 5, delay: int =
         try:
             return get_file_id_wrapper()
         except FileNotFoundError:
-            print('File not registered yet. Retrying...')
+            logger.info('File not registered yet. Retrying...')
             time.sleep(delay)
     raise FileNotFoundError
 
