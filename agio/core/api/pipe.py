@@ -42,6 +42,30 @@ def iter_products(
 
 
 @api_call
+def iter_task_products(
+        task_id: str,
+        product_type_id: str = NOTSET,
+        product_type_name: str = NOTSET,
+        items_per_page: int = 50,
+        client=default_client):
+    filters = deep_tree()
+    filters['where']['versions']['entity']['id']['equalTo'] = task_id
+    if product_type_id:
+        filters['where']['type']['id']['equalTo'] = product_type_id
+    if product_type_name:
+        filters['where']['type']['name']['equalTo'] = product_type_name
+    yield from iter_query_list(
+        'pipe/products/getProductList',
+        'publishes',
+        items_per_page=items_per_page,
+        variables={
+            'filter': filters
+        },
+        client=client
+    )
+
+
+@api_call
 def get_product(product_id: UUID, client=default_client):
     return client.make_query(
         'pipe/products/getProductById',

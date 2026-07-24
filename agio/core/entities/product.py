@@ -49,6 +49,22 @@ class AProduct(EntityRelationMixin, BaseObject):
             yield cls(prod, client=client)
 
     @classmethod
+    def iter_for_task(
+            cls,
+            task_id: str|UUID,
+            product_type_id: str|UUID = None,
+            product_type_name: str|UUID = None,
+            client=None, **kwargs) -> Iterator['AProduct']:
+        for prod in api.pipe.iter_task_products(
+                task_id=task_id,
+                product_type_id=product_type_id,
+                product_type_name=product_type_name,
+                client=client,
+                items_per_page=kwargs.get('items_per_page', 50),
+            ):
+            yield cls(prod, client=client)
+
+    @classmethod
     def create(cls,
                entity_id: str | UUID,
                name: str,
