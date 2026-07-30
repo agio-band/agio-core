@@ -49,7 +49,7 @@ def get_file_id(company_id: str, file_path: str, attempts: int = 5, delay: int =
         except FileNotFoundError:
             logger.info('File not registered yet. Retrying...')
             time.sleep(delay)
-    raise FileNotFoundError
+    raise FileNotFoundError(f'File not registered in drive: {file_path}')
 
 
 @api_call
