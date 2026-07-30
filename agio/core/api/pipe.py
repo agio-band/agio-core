@@ -115,13 +115,20 @@ def update_product(product_id: str,
 
 
 @api_call
-def find_product(entity_id: str|UUID, name: str, variant: str, client=default_client) -> dict|None:
+def find_product(
+        entity_id: str|UUID,
+        name: str,
+        variant: str = NOTSET,
+        product_type_id: str = NOTSET,
+        client=default_client) -> dict|None:
     filters = deep_tree()
     filters['where']['entity']['id']['equalTo'] = entity_id
     if name:
         filters['where']['name']['equalTo'] = name
     if variant:
         filters['where']['variant']['equalTo'] = variant
+    if product_type_id:
+        filters['where']['type']['id']['equalTo'] = product_type_id
     resp = client.make_query(
         'pipe/products/getProductList',
         filter=filters,
@@ -133,7 +140,10 @@ def find_product(entity_id: str|UUID, name: str, variant: str, client=default_cl
 
 @api_call
 def delete_product(product_id: str, client=default_client):
-    raise NotImplementedError
+    return client.make_query(
+        'pipe/products/deleteProduct',
+        id=product_id
+    )['data']['deletePublish']['ok']
 
 # product type
 

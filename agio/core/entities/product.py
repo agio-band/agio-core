@@ -82,11 +82,17 @@ class AProduct(EntityRelationMixin, BaseObject):
     @classmethod
     def find(cls,
              entity_id: str | UUID,
-             name: str,
+             name: str= None,
              variant: str = None,
+             product_type_id: str = None,
              client=None,
              **kwargs) -> AProduct|None:
-        data = api.pipe.find_product(entity_id=entity_id, name=name, variant=variant, client=client)
+        data = api.pipe.find_product(
+            entity_id=entity_id,
+            name=name,
+            variant=variant,
+            product_type_id=product_type_id,
+            client=client)
         if data:
             return cls(data, client=client)
         return None
