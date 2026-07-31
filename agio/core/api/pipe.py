@@ -148,7 +148,7 @@ def delete_product(product_id: str, client=default_client):
 # product type
 
 @api_call
-def iter_product_types(items_per_page: int = 50, filter_field: str|None = 'is_agio_type', client=default_client):
+def iter_product_types(items_per_page: int = 50, client=default_client):
     for product_data in iter_query_list(
         'pipe/product_types/getProductTypeList',
         'publishTypes',
@@ -156,11 +156,7 @@ def iter_product_types(items_per_page: int = 50, filter_field: str|None = 'is_ag
         client=client
         ):
         # filter for agio product types
-        if filter_field:
-            if product_data.get('config', {}).get(filter_field):
-                yield product_data
-        else:
-            yield product_data
+        yield product_data
 
 
 @api_call
