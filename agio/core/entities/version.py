@@ -90,6 +90,8 @@ class AVersion(EntityRelationMixin, BaseObject):
         return AVersion(version_id, client=client)
 
     def delete(self) -> bool:
+        # todo: delete published files
+        # api.pipe.delete_published_files()
         return api.pipe.delete_version(self.id, client=self.client)
 
     @classmethod

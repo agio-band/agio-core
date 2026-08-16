@@ -77,7 +77,7 @@ class AProduct(EntityRelationMixin, BaseObject):
         return cls(product_id, client=client)
 
     def delete(self) -> None:
-        raise NotImplementedError
+        return api.pipe.delete_product(self.id, client=self.client)
 
     @classmethod
     def find(cls,
