@@ -6,7 +6,8 @@ query GetLatestVersion( $publishId: ID!) {
               publish: {
                   id: {equalTo: $publishId}
               }
-          }
+          },
+          withDeleted: true
       },
       ordering: {
         sort: NAME,
