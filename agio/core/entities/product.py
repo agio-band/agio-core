@@ -69,7 +69,7 @@ class AProduct(EntityRelationMixin, BaseObject):
                entity_id: str | UUID,
                name: str,
                product_type_id: str,
-               variant: str,
+               variant: str = '',
                fields: dict = None,
                client=None,
                ) -> 'AProduct':
