@@ -217,7 +217,10 @@ def update_product_type(
 
 @api_call
 def delete_product_type(publish_type_id: str, client=default_client):
-    raise NotImplementedError
+    return client.make_query(
+        'pipe/product_types/deleteProductType',
+        id=publish_type_id
+    )['data']['deletePublishType']['ok']
 
 
 # Published Version

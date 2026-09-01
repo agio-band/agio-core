@@ -1,0 +1,5 @@
+mutation DeleteProductType($id:ID!){
+  deletePublishType(id: $id){
+    ok
+  }
+}
