@@ -1,5 +1,5 @@
 from typing import Generic, Any, Type, Iterable, Collection, Union, Sized, TypeVar
-
+from collections.abc import MutableMapping
 from pydantic import TypeAdapter, BaseModel
 from pydantic_core import ValidationError
 
@@ -110,7 +110,7 @@ class TupleField(CollectionField[T]):
         return iterable
 
 
-class DictField(BaseField, Generic[K, V]):
+class DictField(BaseField, MutableMapping, Generic[K, V]):
     field_type = dict[K, V]
     _key_type = None
     _value_type = None
@@ -153,6 +153,57 @@ class DictField(BaseField, Generic[K, V]):
 
         return value
 
+    def _get_dict(self) -> dict:
+        """get current dict"""
+        val = self.get()
+        if val is None:
+            return {}
+        return val
+
+    def __getitem__(self, key: K) -> V:
+        """for field['key']"""
+        return self._get_dict()[key]
+
+    def __setitem__(self, key: K, value: V) -> None:
+        """for field['key'] = value
+        """
+        current = self._get_dict().copy()
+        current[key] = value
+        self.set(current)
+
+    def __delitem__(self, key: K) -> None:
+        """for del field['key']"""
+        current = self._get_dict().copy()
+        del current[key]
+        self.set(current)
+
+    def __iter__(self):
+        """for ** and dict.update)"""
+        return iter(self._get_dict())
+
+    def __len__(self) -> int:
+        return len(self._get_dict())
+
+    def __or__(self, other):
+        """field | other_dict"""
+        if isinstance(other, (dict, MutableMapping)):
+            return self._get_dict() | dict(other)
+        return NotImplemented
+
+    def __ror__(self, other):
+        """other_dict | field"""
+        if isinstance(other, dict):
+            return other | self._get_dict()
+        return NotImplemented
+
+    def __ior__(self, other):
+        """field |= other_dict"""
+        if isinstance(other, (dict, MutableMapping)):
+            current = self._get_dict().copy()
+            current |= dict(other)
+            self.set(current)
+            return self
+        return NotImplemented
 
 # class TableField(BaseField, Generic[D]):    # TODO
 #     field_type = list[list[D, ...]]
