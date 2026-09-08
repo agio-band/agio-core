@@ -158,7 +158,7 @@ class AProject(BaseObject):
         return company_root
 
     # settings
-    def get_settings(self):
+    def get_settings(self) -> settings_hub.WorkspaceSettingsHub:
         """Return remote pipeline settings for current project"""
         return self.get_revision().get_settings()
 

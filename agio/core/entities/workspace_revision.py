@@ -111,7 +111,7 @@ class AWorkspaceRevision(BaseObject):
             self._data["_settings_data"] = api.workspace.get_settings_by_revision_id(self.id, client=self.client)['data']
         return self._data["_settings_data"]
 
-    def get_settings(self):
+    def get_settings(self) -> settings_hub.WorkspaceSettingsHub:
         data = self.get_settings_data()
         return settings_hub.WorkspaceSettingsHub(data)
 
