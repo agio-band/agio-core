@@ -216,10 +216,10 @@ def update_product_type(
 
 
 @api_call
-def delete_product_type(publish_type_id: str, client=default_client):
+def delete_product_type(product_type_id: str, client=default_client):
     return client.make_query(
         'pipe/product_types/deleteProductType',
-        id=publish_type_id
+        id=product_type_id
     )['data']['deletePublishType']['ok']
 
 
