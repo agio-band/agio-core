@@ -1,3 +1,4 @@
+import copy
 import logging
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -65,11 +66,11 @@ class EventHub(metaclass=Singleton):
                     self._callbacks.pop(event_name)
         return bool(removed_count)
 
-    def emit(self, event_name: str, payload: dict) -> AEvent:
+    def emit(self, event_name: str, payload: dict, mutable: bool = True) -> AEvent:
         callbacks_to_remove = []
 
         sender = None
-        event_obj = AEvent(event_name, sender, payload=payload)
+        event_obj = AEvent(event_name, sender, payload=payload if mutable else copy.deepcopy(payload))
         for event_pattern, callbacks_dict in list(self._callbacks.items()):
             if not fnmatch(event_name, event_pattern):
                 continue

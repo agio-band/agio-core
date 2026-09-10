@@ -11,11 +11,11 @@ logger = logging.getLogger(__name__)
 event_hub = EventHub()
 
 
-def emit(event_name: str, payload: Any = None) -> AEvent:
+def emit(event_name: str, payload: Any = None, mutable: bool = True) -> AEvent:
     if payload is not None:
         if not isinstance(payload, dict):
             raise TypeError("payload must be a dict")
-    return event_hub.emit(event_name, payload)
+    return event_hub.emit(event_name, payload, mutable=mutable)
 
 
 def subscribe(event_name: Union[str, list[str]], callback_func: Callable = None, /, raise_error=False, **kwargs):
