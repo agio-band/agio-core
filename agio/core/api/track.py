@@ -274,6 +274,8 @@ def update_entity(
         fields: dict[str, Any] = NOTSET,
         client=default_client
     ):
+    if not name and not fields:
+        raise ValueError('Must provide either name or fields')
     return client.make_query(
         'track/entities/updateEntity',
         id=str(entity_id),
