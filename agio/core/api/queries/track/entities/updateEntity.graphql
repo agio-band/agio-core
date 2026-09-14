@@ -1,4 +1,4 @@
-mutation UpdateEntityById($id: ID!, $input: EntityUpdateInput){
+mutation UpdateEntityById($id: ID!, $input: EntityUpdateInput!){
     updateEntity(
         id: $id,
         input: $input
