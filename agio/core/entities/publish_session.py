@@ -20,21 +20,20 @@ class APublishSession(BaseObject):
                status: str = None,
                comment: str = None,
                data: dict = None
-               ) -> None:
-        to_update = {}
-        if state is not None:
-            to_update["state"] = state
-        if status is not None:
-            to_update["status"] = status
-        if comment is not None:
-            to_update["comment"] = comment
-        if data is not None:
-            to_update["data"] = data
-        pipe.update_publish_session(self.id, client=self.client, **to_update)
-        self.reload()
+               ) -> bool:
+        to_update = {k: v for k, v in {
+            'state': state,
+            'status': status,
+            'comment': comment,
+            'data': data
+        }.items() if v is not None}
+        resp = pipe.update_publish_session(self.id, client=self.client, **to_update)
+        if resp:
+            self.reload()
+        return resp
 
     def set_status(self, status: str):
-        self.update("status", status)
+        return self.update(status=status)
 
     @classmethod
     def iter(cls, project_id: str|UUID, items_per_page: int = 25, client=None) -> Iterator[APublishSession]:
