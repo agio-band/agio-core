@@ -1,10 +1,13 @@
-from functools import lru_cache
-from typing import Callable, Iterator
+import re
+from functools import lru_cache, wraps
+from typing import Callable, Iterator, Iterable, Any
 
 import requests
 
 from .action_item import ActionGroupItem, ActionItem
+from ..events import emit
 from ..plugins import plugin_hub
+from ...tools import text_helpers
 
 
 @lru_cache
@@ -34,7 +37,6 @@ def iter_actions(hidden: bool = True) -> Iterator[ActionItem]:
 
 
 def get_action_func(action_full_name: str) -> Callable:
-
     service_name, action_name = action_full_name.split('.')
     service = plugin_hub.APluginHub.instance().find_plugin_by_name('service', service_name)
     if not service:
@@ -58,3 +60,53 @@ def send_action(action_name, *args, **kwargs):
         'args': args,
     }
     return requests.post(url, json=data, timeout=1).json()
+
+
+def make_action(
+        menu_name: str|Iterable[str] = None,
+        app_name: str|Iterable[str] = None,
+        label: str = None,
+        icon: str = None,
+        order: int = 50,
+        group: str = None,
+        args: Iterable[Any] = None,
+        kwargs: dict[str: Any] = None,
+        is_visible_callback: Callable = None,
+        ):
+    if callable(label):
+        raise ValueError('The action decorator bust be called')
+    if group is not None:
+        if not re.fullmatch(r"([\w\s!.]+/?)+", group):
+            raise ValueError(f'Wrong action group path "{group}"')
+    if isinstance(menu_name, str):
+        menu_name = [menu_name]
+    if isinstance(app_name, str):
+        app_name = [app_name]
+    def decorator(func):
+
+        action_data = {
+            # filters
+            'menu_name': menu_name,
+            'app_name': app_name,
+            # action properties
+            'name': func.__name__,
+            'label': label or text_helpers.unslugify(func.__name__),
+            'icon': icon,
+            'order': order,
+            'group': group,
+            'kwargs': kwargs or {},
+            'args': args or (),
+            'action': None,  # will update later in metaclass
+            'is_visible_callback': is_visible_callback,
+            # 'user_groups': []  # access permissions on frontend
+        }
+
+        @wraps(func)
+        def wrapper(self, *_args, **_kwargs):
+            emit('core.services.call_action', action_data)
+            final_kwargs = {**action_data['kwargs'], **_kwargs}
+            return func(self, *_args, **final_kwargs)
+
+        wrapper._action_data = action_data
+        return wrapper
+    return decorator

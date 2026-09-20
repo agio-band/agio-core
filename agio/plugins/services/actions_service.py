@@ -2,8 +2,8 @@ import json
 
 from agio.core.entities.project import AProject
 from agio.core.exceptions import WorkspaceInstallationLocked
-from agio.core.plugins.base_service import ServicePlugin, make_action
-from agio.core.actions import get_actions
+from agio.core.plugins.base_service import ServicePlugin
+from agio.core.actions import get_actions, make_action
 # from agio.core.workspaces import AWorkspaceManager
 from agio.tools import launching
 
