@@ -8,7 +8,8 @@
 agio action [action.name] [args] 
 ```
 
-Чтобы вызвать в отдельном воркспейсе просто укажите его id через аргумент
+Чтобы вызвать в отдельном воркспейсе просто укажите его id через аргумент -w
+В таком случае будут видны все экшены этого воркспейса.
 
 ```shell
 agio -w [UUID] action [action.name] [args]
@@ -53,6 +54,43 @@ output = exec_agio_command(cmd, workspace=workspace_id, use_custom_pipe=True)
   }
 }
 ```
+
+Пример
+
+```py
+import requests
+
+payload = {
+    'action': 'broker.ping',
+    'kwargs': {}
+}
+requests.post('http://localhost:8877/action', json=payload).json()
+# {'status': 'ok', 'message': None, 'data': {'result': 'pong'}}
+
+payload = {
+    'action': 'actions.get_actions',
+    'kwargs': {
+        "menu_name": "tray.main_menu",
+        "app_name": "desk"
+    }
+}
+requests.post('http://localhost:8877/action', json=payload).json()
+# {
+#   'status': 'OK', 
+#   'message': None, 
+#   'data': {
+#       'name': 'tray.main_menu', 'label': None, 'items': [
+#           {'type': 'action', 'action': 'desk.open_settings', 'name': 'desk.open_settings', 'label': 'Local Settings', 'icon': None, 'order': 50, 'group': '', 'app_name': ['desk'], 'package_name': 'agio_desk', 'args': [], 'kwargs': {}}, 
+#           {'type': 'action', 'action': 'core.logout', 'name': 'core.logout', 'label': 'Log Out', 'icon': None, 'order': 98, 'group': '', 'app_name': ['desk'], 'package_name': 'agio_core', 'args': [], 'kwargs': {}}, 
+#           {'type': 'action', 'action': 'core.login', 'name': 'core.login', 'label': 'Log In', 'icon': None, 'order': 99, 'group': '', 'app_name': ['desk'], 'package_name': 'agio_core', 'args': [], 'kwargs': {}}, 
+#           {'type': 'action', 'action': 'core.exit', 'name': 'core.exit', 'label': 'Exit', 'icon': None, 'order': 100, 'group': '', 'app_name': ['desk'], 'package_name': 'agio_core', 'args': [], 'kwargs': {}}
+#       ], 
+#       'type': 'group', 
+#       'group': 'tray.main_menu'
+#   }
+# }
+```
+
 
 Для выполннения запроса в контексте проекта следует передать ID проекта.
 Например, чтобы запустить DCC в контексте конкретного проекта следует отправить такой запрос:
