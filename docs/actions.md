@@ -89,10 +89,20 @@ requests.post('http://localhost:8877/action', json=payload).json()
 #       'group': 'tray.main_menu'
 #   }
 # }
+
+payload = {
+    'action': 'desk.show_message',
+    'kwargs': {
+        "text": "hello world",
+        "title": "Info"
+    }
+}
+requests.post('http://localhost:8877/action', json=payload).json()
+
 ```
 
 
-Для выполннения запроса в контексте проекта следует передать ID проекта.
+Для выполнения запроса в контексте проекта следует передать ID проекта.
 Например, чтобы запустить DCC в контексте конкретного проекта следует отправить такой запрос:
 
 ```json
