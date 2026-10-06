@@ -51,7 +51,7 @@ class AppLauncherService(ServicePlugin):
             new_console=True,
         )
 
-    def collect_actions(self, hidden=False):
+    def collect_actions(self, hidden=False) -> list:
         # TODO: filter for project using settings
         apps: list[AApplicationLauncher]  = get_app_list()
         items = []

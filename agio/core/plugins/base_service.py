@@ -3,6 +3,7 @@ import logging
 import sys
 from functools import lru_cache
 from threading import Thread, Event
+from typing import Iterable, Any, Callable
 
 from agio.core.actions import action_item, make_action
 from agio.core.events import emit
@@ -27,7 +28,58 @@ def get_class_from_method(func):
     return cls
 
 
+def make_action(
+        menu_name: str|Iterable[str] = None,
+        app_name: str|Iterable[str] = None,
+        label: str = None,
+        icon: str = None,
+        order: int = 50,
+        group: str = None,
+        args: Iterable[Any] = None,
+        kwargs: dict[str: Any] = None,
+        is_visible_callback: Callable = None,
+        ):
+    if callable(label):
+        raise ValueError('The action decorator bust be called')
+    if group is not None:
+        if not re.fullmatch(r"([\w\s!.]+/?)+", group):
+            raise ValueError(f'Wrong action group path "{group}"')
+    if isinstance(menu_name, str):
+        menu_name = [menu_name]
+    if isinstance(app_name, str):
+        app_name = [app_name]
+    def decorator(func):
+
+        action_data = {
+            # filters
+            'menu_name': menu_name,
+            'app_name': app_name,
+            # action properties
+            'name': func.__name__,
+            'label': label or text_helpers.unslugify(func.__name__),
+            'icon': icon,
+            'order': order,
+            'group': group,
+            'kwargs': kwargs or {},
+            'args': args or (),
+            'action': None,  # will update later in metaclass
+            'is_visible_callback': is_visible_callback,
+            # 'user_groups': []  # access permissions on frontend
+        }
+
+        @wraps(func)
+        def wrapper(self, *_args, **_kwargs):
+            emit('core.services.call_action', action_data)
+            final_kwargs = {**action_data['kwargs'], **_kwargs}
+            return func(self, *_args, **final_kwargs)
+
+        wrapper._action_data = action_data
+        return wrapper
+    return decorator
+
+
 class ServicePlugin(APlugin):
+    """Base service plugin"""
     plugin_type = 'service'
     menu_name = None
     app_name = None
@@ -111,6 +163,7 @@ class ServicePlugin(APlugin):
 
 
 class ThreadServicePlugin(ServicePlugin):
+    """Threaded service plugin"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._thread = None
@@ -132,6 +185,7 @@ class ThreadServicePlugin(ServicePlugin):
 
 
 class ProcessServicePlugin(ServicePlugin):
+    """Subprocess service plugin"""
     process_name = None
     auto_restart = True
 

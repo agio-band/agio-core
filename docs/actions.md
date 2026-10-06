@@ -126,7 +126,7 @@ requests.post('http://localhost:8877/action', json=payload).json()
 {
   "action": "actions.get_actions",
   "kwargs": {
-    "app_name": "front",
+    "app_name": "web",
     "menu_name": "task.launcher",
     "project_id": "<UUID>"
   }

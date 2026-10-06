@@ -8,6 +8,7 @@ from agio.apps import get_registered_app_plugins, get_app_config
 
 class ListAppCommand(ASubCommand):
     command_name = "ls"
+    help = "List installed apps in current Workspace"
     arguments = [
         click.option('-a', '--as-args', is_flag=True, help='Show as arguments'),
     ]
@@ -52,6 +53,7 @@ class AddAppCommand(ASubCommand):
     Add application configuration to local config
     """
     command_name = "add"
+    help = "Add application configuration (TODO)"
     arguments = [
         click.option('-n', '--app-name',  required=True, help='Application name'),
         click.option('-v', '--app-version', required=True, help='Application version'),
@@ -69,6 +71,7 @@ class DelAppCommand(ASubCommand):
     Add application configuration to local config
     """
     command_name = "del"
+    help = "Delete application configuration (TODO)"
     arguments = [
         click.option('-n', '--app-name',  required=True, help='Application name'),
         click.option('-v', '--app-version', required=True, help='Application version'),

@@ -23,13 +23,14 @@ class AApplicationLauncher:
             self,
             app_plugin: bp.ApplicationPlugin,
             version: str|None = None,
+            **kwargs
         ) -> None:
         if not version and app_plugin.version_required:
             raise ValueError(f'Version is required for application {app_plugin.app_name}')
         self._app_plugin = app_plugin
         self._version = version
         self._settings = self.get_settings()
-        self.ctx = self.create_launch_context()
+        self.ctx = self.create_launch_context(**kwargs)
 
     @property
     def version_str(self):
@@ -65,7 +66,7 @@ class AApplicationLauncher:
             raise ApplicationError(f'Application settings not found: {self}')
         return ApplicationSettings(name=self.name)
 
-    def create_launch_context(self) -> launching.LaunchContext:
+    def create_launch_context(self, **kwargs) -> launching.LaunchContext:
         executable = self.get_executable()
         if not executable:
             raise ApplicationError(f'{self.name} must define a executable')
@@ -81,7 +82,7 @@ class AApplicationLauncher:
     def get_install_dir(self, **kwargs):
         path = Path(self._settings.install_dir)
         if not path.is_dir():
-            raise ApplicationError(f'{self.name} v{self.version} settings must provide an install dir')
+            raise ApplicationError(f'{self.name} v{self.version} install dir not exists: {path}')
         return path
 
     def executable_name_context(self, **kwargs):

@@ -6,7 +6,6 @@ from agio.core.api import client as default_client
 from agio.core.api.utils import NOTSET, api_call
 from agio.core.api.utils.query_tools import iter_query_list
 from agio.core.exceptions import ProjectNotExists, EntityNotExists
-from agio.tools.data_helpers import deep_tree
 
 
 # project
@@ -274,6 +273,8 @@ def update_entity(
         fields: dict[str, Any] = NOTSET,
         client=default_client
     ):
+    if not name and not fields:
+        raise ValueError('Must provide either name or fields')
     return client.make_query(
         'track/entities/updateEntity',
         id=str(entity_id),

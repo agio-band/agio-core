@@ -243,13 +243,15 @@ class InfoCommand(ACommandPlugin):
     execute_root_command_before_subcommand = False
 
     def execute(self, *args, **kwargs):
+        err = None
         try:
             user_ok = True
             user_profile = profile.get_current_user()
             user = f'{user_profile["firstName"]} {user_profile["lastName"]} ({user_profile["email"]})'
         except Exception as e:
-            user = f' {e}'
+            user = 'FAILED'
             user_ok = False
+            err = str(e)
         # platform url
         click.echo(f'  URL: {client.platform_url}')
         # user name
@@ -261,9 +263,11 @@ class InfoCommand(ACommandPlugin):
         # install path
         ws = AWorkspaceManager.current()
         if ws:
-            click.echo(f' Path: {ws.install_root}')
+            click.echo(f' Root: {ws.install_root}')
         else:
-            click.echo(f' Path: {local_dirs.install_dir()}')
+            click.echo(f' Root: {local_dirs.install_dir()}')
         click.echo(f' Exec: {sys.executable}')
+        if err:
+            click.secho(err, fg='red')
 
 
