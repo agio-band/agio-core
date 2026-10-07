@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from agio.core.settings import get_local_settings
 from agio.core.plugins import plugin_hub
@@ -37,7 +38,15 @@ def get_app_list(configured_only: bool = False):
         for app_plg in all_app_plugins:
             conf_list = [x for x in apps_config if x.name == app_plg.app_name]
             for c in conf_list:
-                yield AApplicationLauncher(app_plg, c.version)
+                try:
+                    yield AApplicationLauncher(app_plg, c.version)
+                except Exception as e:
+                    logger.exception(f'Failed to load {app_plg.app_name}: {e}')
+                    continue
     else:
         for app_plg in all_app_plugins:
-            yield AApplicationLauncher(app_plg, None)
+            try:
+                yield AApplicationLauncher(app_plg, None)
+            except Exception as e:
+                logger.exception(f'Failed to load {app_plg.app_name}: {e}')
+                continue

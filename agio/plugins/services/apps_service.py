@@ -13,18 +13,14 @@ logger = logging.getLogger(__name__)
 class AppLauncherService(ServicePlugin):
     name = 'app_launcher'
 
-    @make_action()
+    @make_action(label='Launch App')
     def launch(self, *args, app_name: str, app_version: str, app_mode: str = None, **kwargs):
         # TODO move task logic to event
         # task = ATask(task_id)
         workspace_id = kwargs.get('workspace_id')# or task.project.workspace_launching_id
 
         envs = {}
-        cmd_args = [
-            'launch',
-            '--app-name', app_name,
-            '--app-version', app_version,
-        ]
+        cmd_args = ['launch', '--app', f'{app_name}/{app_version}']
         if app_mode:
             cmd_args.extend(['--app-mode', app_mode])
         if args:
@@ -51,7 +47,7 @@ class AppLauncherService(ServicePlugin):
             new_console=True,
         )
 
-    def collect_actions(self, hidden=False) -> list:
+    def collect_actions(self, hidden=False, **kwargs) -> list:
         # TODO: filter for project using settings
         apps: list[AApplicationLauncher]  = get_app_list()
         items = []
@@ -63,8 +59,8 @@ class AppLauncherService(ServicePlugin):
             action_data = {
                 # filters
                 'action': action_name,
-                'menu_name': 'task.launcher',
-                'app_name': 'front',
+                'menu_name': 'core.apps.launcher',
+                'app_name': {'web', 'desk'},
                 # action properties
                 'name': 'launch',
                 'label': label,
@@ -72,11 +68,14 @@ class AppLauncherService(ServicePlugin):
                 'order': i,
                 'group': 'Applications',
                 'kwargs': {
-                    'app_name': app.name,
-                    'app_version': app.version,
-                    'app_mode': app.mode,
+                    'app': app.app_argument,
+                    # 'app_name': app.name,
+                    # 'app_version': app.version,
+                    # 'app_mode': app.mode,
                 },
                 'args': (),
             }
+            if not self._match_action_filters(action_data, hidden=hidden, **kwargs):
+                continue
             items.append(action_data)
         return items

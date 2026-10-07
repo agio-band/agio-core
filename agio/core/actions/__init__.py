@@ -1,24 +1,32 @@
-import re
-from functools import lru_cache, wraps
-from typing import Callable, Iterator, Iterable, Any
+from functools import lru_cache
+from typing import Callable, Iterator
 
 import requests
 
 from .action_item import ActionGroupItem, ActionItem
-from ..events import emit
+from .decorators import make_action
 from ..plugins import plugin_hub
-from ...tools import text_helpers
 
 
 @lru_cache
-def get_actions(menu_name: str, app_name: str) -> ActionGroupItem:
+def get_actions(
+        menu_name: str,
+        app_name: str,
+        app_group: str = None,
+        app_version: str = None,
+        action_group: str = None,
+) -> ActionGroupItem:
     from agio.apps import app
 
     app_name = app_name or app.name
     grp = ActionGroupItem(menu_name, None)
-    for action in iter_actions():
-        if not action.is_match(menu_name, app_name):
-            continue
+    for action in iter_actions(
+            menu_name=menu_name,
+            app_name=app_name,
+            app_group=app_group,
+            app_version=app_version,
+            action_group=action_group,
+    ):
         grp.add_items(action)
         # TODO add divider
     return grp
@@ -28,9 +36,23 @@ def get_all_actions(hidden: bool = True) -> list[ActionItem]:
     return list(iter_actions(hidden))
 
 
-def iter_actions(hidden: bool = True) -> Iterator[ActionItem]:
+def iter_actions(
+        hidden: bool = True,
+        menu_name: str = None,
+        app_name: str = None,
+        app_group: str = None,
+        app_version: str = None,
+        action_group: str = None,
+) -> Iterator[ActionItem]:
     for plugin in plugin_hub.APluginHub.instance().iter_plugins('service'):
-        for action_data in plugin.collect_actions(hidden=hidden):
+        for action_data in plugin.collect_actions(
+                hidden=hidden,
+                menu_name=menu_name,
+                app_name=app_name,
+                app_group=app_group,
+                app_version=app_version,
+                action_group=action_group,
+        ):
             action = ActionItem(package_name=plugin.package.package_name, **action_data)
             action.name = f"{plugin.name}.{action.name}"
             yield action
@@ -47,7 +69,7 @@ def get_action_func(action_full_name: str) -> Callable:
     return action_func
 
 
-def execute_action(action_name, *args, **kwargs):
+def execute_action(action_name, *args, **kwargs): # TODO add other workspace support
     action_func = get_action_func(action_name)
     return action_func(*args, **kwargs)
 
@@ -60,53 +82,3 @@ def send_action(action_name, *args, **kwargs):
         'args': args,
     }
     return requests.post(url, json=data, timeout=1).json()
-
-
-def make_action(
-        menu_name: str|Iterable[str] = None,
-        app_name: str|Iterable[str] = None,
-        label: str = None,
-        icon: str = None,
-        order: int = 50,
-        group: str = None,
-        args: Iterable[Any] = None,
-        kwargs: dict[str: Any] = None,
-        is_visible_callback: Callable = None,
-        ):
-    if callable(label):
-        raise ValueError('The action decorator bust be called')
-    if group is not None:
-        if not re.fullmatch(r"([\w\s!.]+/?)+", group):
-            raise ValueError(f'Wrong action group path "{group}"')
-    if isinstance(menu_name, str):
-        menu_name = [menu_name]
-    if isinstance(app_name, str):
-        app_name = [app_name]
-    def decorator(func):
-
-        action_data = {
-            # filters
-            'menu_name': menu_name,
-            'app_name': app_name,
-            # action properties
-            'name': func.__name__,
-            'label': label or text_helpers.unslugify(func.__name__),
-            'icon': icon,
-            'order': order,
-            'group': group,
-            'kwargs': kwargs or {},
-            'args': args or (),
-            'action': None,  # will update later in metaclass
-            'is_visible_callback': is_visible_callback,
-            # 'user_groups': []  # access permissions on frontend
-        }
-
-        @wraps(func)
-        def wrapper(self, *_args, **_kwargs):
-            emit('core.services.call_action', action_data)
-            final_kwargs = {**action_data['kwargs'], **_kwargs}
-            return func(self, *_args, **final_kwargs)
-
-        wrapper._action_data = action_data
-        return wrapper
-    return decorator

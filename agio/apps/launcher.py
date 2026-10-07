@@ -39,6 +39,13 @@ class AApplicationLauncher:
         else:
             return ''
 
+    @property
+    def app_argument(self):
+        value = f'{self.name}/{self.version_str}'
+        if self.mode and self.mode != 'default':
+            value = f'{value}/{self.mode}'
+        return value
+
     def __str__(self):
         return f'{self.label} {self.version_str} [{self._app_plugin.app_mode}]'
 
@@ -71,7 +78,7 @@ class AApplicationLauncher:
         if not executable:
             raise ApplicationError(f'{self.name} must define a executable')
         if not Path(executable).is_file():
-            raise ApplicationError(f'Executable {self.name}/{executable} is not a file or not exists')
+            raise ApplicationError(f'Executable "{executable}" fro app "{self.name}" is not a file or not exists')
         ctx = launching.LaunchContext(
             executable,
             args=self.get_default_launch_args(),
