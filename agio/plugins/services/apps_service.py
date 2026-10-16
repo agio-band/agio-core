@@ -1,11 +1,13 @@
 import logging
+import shlex
 
 from agio.apps import get_app_list
 from agio.apps.launcher import AApplicationLauncher
 from agio.core.actions import make_action
+from agio.core.entities.task import ATask
 from agio.core.events import emit
 from agio.core.plugins.base_service import ServicePlugin
-from agio.tools import launching
+from agio.tools import launching, env_names
 
 logger = logging.getLogger(__name__)
 
@@ -14,52 +16,54 @@ class AppLauncherService(ServicePlugin):
     name = 'app_launcher'
 
     @make_action(label='Launch App')
-    def launch(self, *args, app_name: str, app_version: str, app_mode: str = None, **kwargs):
-        # TODO move task logic to event
-        # task = ATask(task_id)
-        workspace_id = kwargs.get('workspace_id')# or task.project.workspace_launching_id
-
-        envs = {}
-        cmd_args = ['launch', '--app', f'{app_name}/{app_version}']
-        if app_mode:
-            cmd_args.extend(['--app-mode', app_mode])
+    def launch(self, *args, app: str, **kwargs):
+        workspace_id = kwargs.get('workspace_id')
+        task_id = kwargs.get('task_id')
+        if not workspace_id and task_id:
+            workspace_id = ATask(task_id).project.workspace_launching_id
+        envs = kwargs.get('envs', {})
+        cmd_args = ['launch', '--app', f'{app}']
         if args:
             cmd_args.append('--')
-            cmd_args.extend(args)
+            cmd_args.extend([shlex.quote(a) for a in args])
         context = {
             'cmd': cmd_args,
             'workspace_id': workspace_id,
             'envs': envs,
+            'task_id': task_id,
         }
         emit('core.apps.before_launch_service', {'context': context, 'kwargs': kwargs})
-        cmd_args = context['cmd_args']
+        cmd_args = context['cmd']
         workspace_id = context['workspace_id']
         envs = context['envs']
         if not workspace_id:
             raise ValueError(f'Workspace ID not provided')
-        # if task_id:
-        #     envs[env_names.TASK_ID] = task_id
+        if task_id:
+            envs[env_names.TASK_ID] = task_id
+        detached = kwargs.get('detached', True)
+        logger.info(f'Launching app {app} in workspace {workspace_id}')
         launching.exec_agio_command(
             args=cmd_args,
             workspace=workspace_id,
             envs=envs,
-            detached=True,
-            new_console=True,
+            detached=detached,
+            new_console=detached,
         )
+        return True
 
     def collect_actions(self, hidden=False, **kwargs) -> list:
         # TODO: filter for project using settings
-        apps: list[AApplicationLauncher]  = get_app_list()
+        apps: list[AApplicationLauncher] = get_app_list()
         items = []
         action_name = f'{self.name}.{self.launch.__name__}'
         for i, app in enumerate(sorted(apps, key=lambda a: (a.name, a.version))):
-            label = f'{app.label} {app.version}'
+            label = f'{app.label} {app.version or ""}'.strip()
             if app.mode:
                 label += f' ({app.mode})'
             action_data = {
                 # filters
                 'action': action_name,
-                'menu_name': 'core.apps.launcher',
+                'menu_name': 'launcher_menu',
                 'app_name': {'web', 'desk'},
                 # action properties
                 'name': 'launch',
