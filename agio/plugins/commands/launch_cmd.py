@@ -13,7 +13,8 @@ class LauncherCommand(ACommandPlugin):
         click.option("-a", "--app-name", help="App Name"),
         click.option("-v", "--app-version", help="App Version"),
         click.option("-m", "--app-mode", default='default', help="App Mode"),
-        click.option("-t", "--task-id"),
+        click.option("-a", "--app", help="App Launch Name"),
+        click.option("-t", "--task-id", envvar=env_names.TASK_ID),
         click.option("-d", "--detached", is_flag=True, default=False, help="Start Detached"),
         click.option("-c", "--new-console", is_flag=True, default=False, help="Open in new console"),
         click.option("-e", "--env", multiple=True, help="Extra environment variables"),
@@ -21,20 +22,20 @@ class LauncherCommand(ACommandPlugin):
     allow_extra_args = True
 
     def execute(self,
-                app_name: str,
-                app_version: str,
-                app_mode: str,
                 task_id: str,
+                app_name: str = None,
+                app_version: str = None,
+                app_mode: str = None,
+                app: str = None,
                 detached: bool = False,
                 new_console: bool = False,
                 env: list[str] = None,
                 __extra_args__: list = None,
                 **kwargs):
-        if not app_name:
-            raise click.BadOptionUsage('app-name', 'app-name not set')
+        app_name, app_version, app_mode = self.get_app_values(app_name, app_version, app_mode, app)
         new_app: AApplicationLauncher = app_hub.get_app(app_name, app_version, mode=app_mode)
         if not task_id and new_app.plugin.task_id_required:
-            raise click.BadOptionUsage('task-id', 'Task ID is required')
+            raise click.BadOptionUsage('task-id', 'task-id is required')
         click.secho(f'Start app "{app_name}" v{app_version} [{app_mode}]', fg='green')
         if __extra_args__:
             kwargs['cmd_args'] = __extra_args__
@@ -61,6 +62,15 @@ class LauncherCommand(ACommandPlugin):
             result[key] = value
         return result
 
+    def get_app_values(self, app_name, app_version, app_mode, app):
+        if app_name and app:
+            raise click.BadOptionUsage('app-name', 'app-name and app is mutually exclusive')
+        if app_name:
+            return app_name, app_version, app_mode
+        else:
+            values = app.split('/')
+            values += ([None]*(3-len(values)))
+            return values
 
 
 
