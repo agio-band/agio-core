@@ -6,6 +6,7 @@ from agio.core.plugins import plugin_hub
 from agio.apps.launcher import AApplicationLauncher
 from agio.apps.app_hub import ApplicationHub
 from .context_app import ContextApp
+from ..core.plugins.base_app_launcher_plugin import ApplicationPlugin
 
 __all__ = ['app', 'app_hub', 'get_app_config', 'get_registered_app_plugins', 'get_app_list']
 
@@ -22,11 +23,11 @@ def get_app_config():
     return apps_config
 
 
-def get_registered_app_plugins():
+def get_registered_app_plugins() -> list[ApplicationPlugin]:
     return list(plugin_hub.APluginHub.instance().get_plugins_by_type('application'))
 
 
-def get_app_list(configured_only: bool = False):
+def get_app_list():
     apps_config = get_app_config()
     if not apps_config:
         return
@@ -34,19 +35,18 @@ def get_app_list(configured_only: bool = False):
     if not all_app_plugins:
         logger.debug('No plugins found for any applications')
         return
-    if configured_only:
-        for app_plg in all_app_plugins:
-            conf_list = [x for x in apps_config if x.name == app_plg.app_name]
+    for app_plg in all_app_plugins:
+        conf_list = [x for x in apps_config if x.name == app_plg.app_name]
+        if conf_list:
             for c in conf_list:
                 try:
-                    yield AApplicationLauncher(app_plg, c.version)
+                    launch_app = AApplicationLauncher(app_plg, c.version)
+                    yield launch_app
                 except Exception as e:
                     logger.exception(f'Failed to load {app_plg.app_name}: {e}')
                     continue
-    else:
-        for app_plg in all_app_plugins:
-            try:
-                yield AApplicationLauncher(app_plg, None)
-            except Exception as e:
-                logger.exception(f'Failed to load {app_plg.app_name}: {e}')
-                continue
+        else:
+            if app_plg.version_required:
+                logger.warning(f'Failed to load {app_plg.app_name}: no configuration found')
+            yield AApplicationLauncher(app_plg, None)
+
