@@ -1,0 +1,6 @@
+query IsEditor{
+    currentUser {
+        id
+        hasOrganizationPermission(permission: edit)
+    }
+}

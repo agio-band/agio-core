@@ -2,6 +2,8 @@ from functools import cache
 from typing import Any, Iterator, Generator
 from uuid import UUID
 
+from agio.tools.data_helpers import deep_tree
+
 from agio.core.api import client as default_client
 from agio.core.api.utils import NOTSET, api_call
 from agio.core.api.utils.query_tools import iter_query_list
