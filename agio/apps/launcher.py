@@ -35,7 +35,7 @@ class AApplicationLauncher:
     @property
     def version_str(self):
         if self._version:
-            return f'v{self._version}'
+            return f'{self._version}'
         else:
             return ''
 
