@@ -38,6 +38,7 @@ def start_process(
         detached: bool = False,
         replace: bool = False,
         new_console: bool = False,
+        keep_console: bool = False,
         non_blocking: bool = False,
         output_file=None,
         workdir: str = None,
@@ -92,7 +93,6 @@ def start_process(
                 found_path = shutil.which(target_executable)
                 if found_path:
                     target_executable = found_path
-
             try:
                 sys.exit(subprocess.call(command, env=new_env))
                 #  TODO allow exit ???
@@ -130,12 +130,18 @@ def start_process(
         if detached:
             creationflags |= subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
         if new_console:
+            if keep_console:
+                if isinstance(command, str):
+                    command = shlex.split(command)
+                if command and command[0].lower() not in ('cmd', 'cmd.exe'):
+                    command = ["cmd", "/k"] + list(command)
             creationflags |= subprocess.CREATE_NEW_CONSOLE
         else:
-            executable = Path(command[0])
-            if executable.stem == 'python':
-                if executable.with_name('pythonw.exe').exists():
-                    command[0] = str(executable.with_name('pythonw.exe'))
+            if isinstance(command, (list, tuple)) and command:
+                executable = Path(command[0])
+                if executable.stem == 'python':
+                    if executable.with_name('pythonw.exe').exists():
+                        command[0] = str(executable.with_name('pythonw.exe'))
             creationflags |= subprocess.CREATE_NO_WINDOW # TODO make optional
         stdin = subprocess.DEVNULL if detached else None
     else:
@@ -145,12 +151,32 @@ def start_process(
         elif not get_output and not use_custom_pipe:
             stdin = open(os.devnull, "r")
         if new_console:
-            terminal = os.environ.get("TERMINAL", "x-terminal-emulator")
-            if terminal in ["gnome-terminal", "konsole", "xfce4-terminal"]:
-                command = [terminal, "--", *command]
+            if isinstance(command, str):
+                command_list = shlex.split(command)
             else:
-                command = f'{terminal} -e "{subprocess.list2cmdline(command)}"'
-                use_shell = True
+                command_list = list(command)
+            terminal = os.environ.get("TERMINAL", "x-terminal-emulator")
+            if keep_console:
+                cmdline = subprocess.list2cmdline(command_list)
+                if terminal == "konsole":
+                    command = [terminal, "--noclose", "--", *command_list]
+                elif terminal == "xfce4-terminal":
+                    command = [terminal, "--hold", "-e", "bash", "-c", f'{cmdline}; echo; read -p "Press Enter to close..."']
+                elif terminal == "gnome-terminal":
+                    command = [terminal, "--", "bash", "-c", f'{cmdline}; echo; read -p "Press Enter to close..."']
+                elif terminal in ["mate-terminal", "tilix"]:
+                    command = [terminal, "-e", "bash", "-c", f'{cmdline}; echo; read -p "Press Enter to close..."']
+                else:
+                    command = f'{terminal} -e "bash -c \\"{cmdline}; echo; read -p \\"Press Enter to close...\\" \\""'
+                    use_shell = True
+            else:
+                if terminal in ["gnome-terminal", "konsole", "xfce4-terminal"]:
+                    command = [terminal, "--", *command_list]
+                elif terminal in ["mate-terminal", "tilix"]:
+                    command = [terminal, "-e", shlex.join(command_list)]
+                else:
+                    command = f'{terminal} -e "{subprocess.list2cmdline(command_list)}"'
+                    use_shell = True
 
     after_start_callback: Callable|None = None
     _read_pipe = _write_pipe = None

@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import tempfile
+from functools import cache
 from pathlib import Path
 
 from agio.tools import env_names
@@ -120,6 +121,7 @@ def get_global_config_file_path() -> Path:
     return config_dir('user-config.json')
 
 
+@cache
 def get_global_config() -> dict:
     """
     install_path: str
