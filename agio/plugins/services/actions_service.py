@@ -1,12 +1,13 @@
 import json
+import logging
 
+from agio.core.actions import get_actions, make_action
 from agio.core.entities.project import AProject
 from agio.core.exceptions import WorkspaceInstallationLocked
 from agio.core.plugins.base_service import ServicePlugin
-from agio.core.actions import get_actions, make_action
-# from agio.core.workspaces import AWorkspaceManager
 from agio.tools import launching
 
+logger = logging.getLogger(__name__)
 
 class ActionsService(ServicePlugin):
     name = 'actions'
@@ -27,6 +28,7 @@ class ActionsService(ServicePlugin):
         project_id = kwargs.get('project_id')
         if not project_id:
             # from current workspace
+            logger.debug('No project id provided, get core items')
             group_item = get_actions(
                 menu_name,
                 app_name,
@@ -42,7 +44,7 @@ class ActionsService(ServicePlugin):
             workspace = project.get_workspace()
             if not workspace:
                 raise Exception(f'No workspace found for project {project.name}')
-
+            logger.debug(f'Get items for workspace {workspace}')
             if workspace.get_manager().install_lock.locked():
                 raise WorkspaceInstallationLocked
             cmd = [
@@ -56,9 +58,11 @@ class ActionsService(ServicePlugin):
                 cmd += ['--app-version', app_version]
             if action_group:
                 cmd += ['--action-group', action_group]
+            logger.debug('COMMAND: ' + ' '.join(cmd))
             output = launching.exec_agio_command(cmd, workspace=workspace.id, use_custom_pipe=True)
             if output.strip():
                 try:
+                    logger.debug(f'Actions output: {output}')
                     return json.loads(output)
                 except json.decoder.JSONDecodeError:
                     raise Exception(f'Failed to decode actions output from {output}')
