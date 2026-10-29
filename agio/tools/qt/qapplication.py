@@ -24,7 +24,7 @@ class QApp(QApplication):
         self.setQuitOnLastWindowClosed(exit_on_widget_close)
         self.setApplicationName(app_name)
         self.installEventFilter(self)
-        self.app_icon = QIcon(resources.get_res('core/agio-icon.png'))
+        self.app_icon = QIcon(resources.get_res('core/icons/agio-icon.png'))
 
         # break qt event loop every N time to catch python core events
         self._event_timer = QTimer()
