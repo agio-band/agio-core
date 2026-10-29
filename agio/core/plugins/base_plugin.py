@@ -27,6 +27,7 @@ class PluginMeta(ABCMeta):
 class APlugin(metaclass=PluginMeta):
     plugin_type = None
     name = None
+    label = None
     required_attrs = None
     __is_base_plugin__ = True
 
@@ -39,7 +40,7 @@ class APlugin(metaclass=PluginMeta):
                     raise PluginLoadingError(f'Required attribute "{self.__class__.__name__}.{attr}" must be set.')
 
     def get_label(self):
-        return self._plugin_info.get('label') or unslugify(self.name)
+        return self.label or self._plugin_info.get('label') or unslugify(self.name)
 
     @property
     def path(self):

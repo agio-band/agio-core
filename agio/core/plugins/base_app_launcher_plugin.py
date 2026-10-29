@@ -3,10 +3,10 @@ from __future__ import annotations
 from functools import cached_property
 from pathlib import Path
 
-from agio.core.plugins.base_plugin import APlugin
-from agio.apps import launcher as bapp
 from agio.apps.exceptions import ApplicationError
+from agio.core.plugins.base_plugin import APlugin
 from agio.tools.launching import LaunchContext
+from agio.tools.text_helpers import unslugify
 
 
 class ApplicationPlugin(APlugin):
@@ -26,6 +26,7 @@ class ApplicationPlugin(APlugin):
     local_settings_required = False
     python_env_required = False
     task_id_required = False
+    hidden = False
 
     def __str__(self):
         return f"{self.app_name}/{self.app_mode}"
@@ -39,7 +40,7 @@ class ApplicationPlugin(APlugin):
 
     @cached_property
     def label(self):
-        return self.app_label or self.app_name.title().replace('_', ' ')
+        return self.app_label or unslugify(self.app_name)
 
     @cached_property
     def groups(self):

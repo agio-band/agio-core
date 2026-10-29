@@ -2,6 +2,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from functools import cache
 from pathlib import Path
 
 from agio.core.entities import project as pd
@@ -44,6 +45,7 @@ def load_default_settings():
     return default_settings
 
 
+@cache
 def load(project: str | pd.AProject = None) -> settings_hub.LocalSettingsHub:
     if project:
         settings_data = load_default_settings()
