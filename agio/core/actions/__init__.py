@@ -15,6 +15,7 @@ def get_actions(
         app_group: str = None,
         app_version: str = None,
         action_group: str = None,
+        hidden: bool = False,
 ) -> ActionGroupItem:
     from agio.apps import app
 
@@ -26,6 +27,7 @@ def get_actions(
             app_group=app_group,
             app_version=app_version,
             action_group=action_group,
+            hidden=hidden,
     ):
         grp.add_items(action)
         # TODO add divider
@@ -37,12 +39,12 @@ def get_all_actions(hidden: bool = True) -> list[ActionItem]:
 
 
 def iter_actions(
-        hidden: bool = True,
         menu_name: str = None,
         app_name: str = None,
         app_group: str = None,
         app_version: str = None,
         action_group: str = None,
+        hidden: bool = True,
 ) -> Iterator[ActionItem]:
     for plugin in plugin_hub.APluginHub.instance().iter_plugins('service'):
         for action_data in plugin.collect_actions(

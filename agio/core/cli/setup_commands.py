@@ -2,41 +2,10 @@ import os
 
 import click
 
+from agio.core.cli.custom_classes import CustomGroup
 from agio.core.plugins import plugin_hub
 from agio.core.workspaces.workspace import AWorkspaceManager, DefaultWorkspaceError
 from agio.tools import launching, env_names
-
-
-class CustomGroup(click.Group):
-    def resolve_command(self, ctx, args):
-        try:
-            cmd, cmd_name, args = super().resolve_command(ctx, args)
-            if not hasattr(ctx, 'obj') or ctx.obj is None:
-                ctx.obj = {}
-            ctx.obj.update({
-                'is_unknown_command': False,
-                'cmd_name': cmd_name.name,
-                'cmd_args': args,
-                'resolved_command': cmd
-            })
-            return cmd, cmd_name, args
-
-        except click.exceptions.UsageError as e:
-            if args and "No such command" in str(e):
-                cmd_name = args[0]
-                if not hasattr(ctx, 'obj') or ctx.obj is None:
-                    ctx.obj = {}
-                ctx.obj.update({
-                    'is_unknown_command': True,
-                    'cmd_name': cmd_name,
-                    'cmd_args': args[1:],
-                    'resolved_command': None
-                })
-                @click.command(name=cmd_name)
-                def stub_cmd():
-                    pass
-                return stub_cmd, cmd_name, args[1:]
-            raise
 
 
 # base command
@@ -55,8 +24,8 @@ class CustomGroup(click.Group):
 )
 @click.option(
     "-a", "--app",
-    envvar='AGIO_APP',
-    help='Context application key "name/version". "python" mode is required.',
+    envvar='AGIO_APP_VARIANT',
+    help='Context application variant "name/version/mode"',
     required=False
 )
 @click.pass_context
@@ -76,15 +45,17 @@ def agio_group(ctx, workspace, debug, app, **kwargs):
                 full_command = ['-a', app, cmd_name, *cmd_args] if app else [cmd_name, *cmd_args]
                 # restart in new workspace
                 launching.exec_agio_command(full_command, ws, replace=True)
-        if app:
+                # We’ll stop here and move on to a new process
+        if app and env_names.APP_EXECUTABLE not in os.environ:
             ws = AWorkspaceManager.current()
             if not ws:
-                raise DefaultWorkspaceError
+                raise DefaultWorkspaceError # TODO ???
             # set application for current workspace
             ws.set_app(app)
             full_command = [cmd_name, *cmd_args]
             # restart in workspace with app executable
             launching.exec_agio_command(full_command, ws, replace=True)
+            # We’ll stop here and move on to a new process
         else:
             if is_unknown:
                 click.echo(ctx.get_help())
@@ -95,7 +66,6 @@ def agio_group(ctx, workspace, debug, app, **kwargs):
     elif ctx.invoked_subcommand is None:
         # no command
         click.echo(ctx.get_help())
-
     if debug:
         os.environ[env_names.DEBUG] = 'true'
 
