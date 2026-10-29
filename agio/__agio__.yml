@@ -109,7 +109,9 @@ settings:
     model: package_settings.local_settings.CoreSettings
 
 callbacks:
-  - plugins/callbacks/launcher_processing.py
+  - modules:
+    - plugins/callbacks/launcher_processing.py
 
 package_callbacks:
-  - plugins/callbacks/package_callbacks.py
+  - modules:
+    - plugins/callbacks/package_callbacks.py
