@@ -41,10 +41,11 @@ class AApplicationLauncher:
 
     @property
     def app_argument(self):
-        value = f'{self.name}/{self.version_str}'
+        parts = [self.name, self.version_str]
         if self.mode and self.mode != 'default':
-            value = f'{value}/{self.mode}'
-        return value
+            parts.append(self.mode)
+        parts = filter(None, parts)
+        return '/'.join(parts)
 
     def __str__(self):
         return f'{self.label} {self.version_str} [{self._app_plugin.app_mode}]'

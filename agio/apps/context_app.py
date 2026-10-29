@@ -16,13 +16,35 @@ class ContextApp:
     """
     default_name = 'standalone'
 
-    def __init__(self):
+    def __init__(self, variant: str = None):
         self.__is_initialized = False
         self.__namespaces = {}
+        self._variant = variant or os.getenv(env_names.APP_VARIANT)
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return f'<ContextApp name={self.name} version={self.version or "None"} mode={self.mode}>'
+
+    @cached_property
+    def parts(self) -> list[str]:
+        from agio.apps.app_hub import ApplicationHub
+        if self._variant:
+            return ApplicationHub.parse_key(self._variant)
+        else:
+            return self.default_name, None, None
+
+    @property
+    def variant(self):
+        if self._variant:
+            return self._variant
+        else:
+            return self.default_name
 
     @cached_property
     def name(self) -> str:
-        return os.getenv(env_names.APP_NAME, self.default_name)
+        return self.parts[0]
 
     @cached_property
     def groups(self) -> set[str]:
@@ -34,11 +56,11 @@ class ContextApp:
 
     @cached_property
     def version(self):
-        return os.getenv(env_names.APP_VERSION, '') # TODO: fix it
+        return self.parts[1]
 
     @cached_property
     def mode(self):
-        return os.getenv(env_names.APP_MODE)
+        return self.parts[2]
 
     def __collect_namespaces(self):
         plg_hub: plugin_hub.APluginHub = plugin_hub.APluginHub.instance()
