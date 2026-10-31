@@ -40,12 +40,20 @@ class AApplicationLauncher:
             return ''
 
     @property
-    def app_argument(self):
+    def app_variant(self):
         parts = [self.name, self.version_str]
         if self.mode and self.mode != 'default':
             parts.append(self.mode)
-        parts = filter(None, parts)
-        return '/'.join(parts)
+        variant = '/'.join(parts).strip('/')
+        return variant
+
+    @property
+    def console_required(self):
+        return self.plugin.console_required
+
+    @property
+    def hidden(self):
+        return self.plugin.hidden
 
     def __str__(self):
         return f'{self.label} {self.version_str} [{self._app_plugin.app_mode}]'
