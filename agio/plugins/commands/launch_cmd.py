@@ -15,8 +15,10 @@ class LauncherCommand(ACommandPlugin):
         click.option("-m", "--app-mode", default='default', help="App Mode"),
         click.option("-a", "--app", help="App Launch Name"),
         click.option("-t", "--task-id", envvar=env_names.TASK_ID),
-        click.option("-d", "--detached", is_flag=True, default=False, help="Start Detached"),
-        click.option("-c", "--new-console", is_flag=True, default=False, help="Open in new console"),
+        click.option("-d", "--detached", is_flag=True, default=False, help="Start detached without console"),
+        click.option("-c", "--new-console", is_flag=True, default=False, help="Open app in a new console"),
+        click.option("-k", "--keep-console", is_flag=True, default=False,
+                     help="Keep the new console open on error (used with --new-console)"),
         click.option("-e", "--env", multiple=True, help="Extra environment variables"),
     ]
     allow_extra_args = True
@@ -29,6 +31,7 @@ class LauncherCommand(ACommandPlugin):
                 app: str = None,
                 detached: bool = False,
                 new_console: bool = False,
+                keep_console: bool = False,
                 env: list[str] = None,
                 __extra_args__: list = None,
                 **kwargs):
@@ -43,13 +46,35 @@ class LauncherCommand(ACommandPlugin):
             kwargs['cmd_envs'] = {env_names.TASK_ID: task_id}
         if env is not None:
             kwargs['cmd_envs'].update(self.parse_envs(env))
-        kwargs.update(dict(
-            detached = detached,
-            replace = not new_console,
-            new_console = new_console,
-            non_blocking = new_console,
-            exit_on_done = False,
-        ))
+        # start mode - exactly one of three
+        if new_console:
+            # dedicated console: lives while the app runs and shows its output;
+            # with keep_console it stays open on error
+            kwargs.update(dict(
+                new_console=True,
+                keep_console=keep_console,
+                non_blocking=True,
+                detached=False,
+                replace=False,
+            ))
+        elif detached:
+            # background process without any console
+            kwargs.update(dict(
+                detached=True,
+                new_console=False,
+                non_blocking=False,
+                replace=False,
+            ))
+        else:
+            # replace the current process:
+            # everything runs in the current console with the same pid
+            kwargs.update(dict(
+                replace=True,
+                new_console=False,
+                detached=False,
+                non_blocking=False,
+            ))
+        kwargs['exit_on_done'] = False
         emit('agio_core.start_app.app_created', payload={'app': new_app, 'kwargs': kwargs})
         pid = new_app.start(**kwargs)
         return pid

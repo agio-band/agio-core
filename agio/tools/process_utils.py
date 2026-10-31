@@ -125,9 +125,16 @@ def start_process(
     elif detached:
         stdout = open(os.devnull, "w")
         stderr = subprocess.STDOUT
+    elif new_console and non_blocking:
+        # the console window owns the output now; do not keep the parent's
+        # stdout/stderr open, otherwise a caller reading pipes
+        # will wait until the console is closed
+        stdout = open(os.devnull, "w")
+        stderr = subprocess.STDOUT
 
     if IS_WIN32:
-        if detached:
+        # DETACHED_PROCESS cannot be combined with CREATE_NEW_CONSOLE
+        if detached and not new_console:
             creationflags |= subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
         if new_console:
             if keep_console:
@@ -156,27 +163,29 @@ def start_process(
             else:
                 command_list = list(command)
             terminal = os.environ.get("TERMINAL", "x-terminal-emulator")
+            # resolve wrappers like x-terminal-emulator to the real terminal
+            terminal = os.path.realpath(shutil.which(terminal) or terminal)
+            terminal_name = Path(terminal).stem
             if keep_console:
                 cmdline = subprocess.list2cmdline(command_list)
-                if terminal == "konsole":
-                    command = [terminal, "--noclose", "--", *command_list]
-                elif terminal == "xfce4-terminal":
-                    command = [terminal, "--hold", "-e", "bash", "-c", f'{cmdline}; echo; read -p "Press Enter to close..."']
-                elif terminal == "gnome-terminal":
-                    command = [terminal, "--", "bash", "-c", f'{cmdline}; echo; read -p "Press Enter to close..."']
-                elif terminal in ["mate-terminal", "tilix"]:
-                    command = [terminal, "-e", "bash", "-c", f'{cmdline}; echo; read -p "Press Enter to close..."']
-                else:
-                    command = f'{terminal} -e "bash -c \\"{cmdline}; echo; read -p \\"Press Enter to close...\\" \\""'
-                    use_shell = True
+                # keep the console open only if the command failed, so the error can be read;
+                # exit with the command's return code either way
+                bash_script = (
+                    f'{cmdline}; rc=$?; '
+                    'if [ $rc -ne 0 ]; then echo; read -p "Press Enter to close..."; fi; '
+                    'exit $rc'
+                )
+                # konsole ignores args after "--" and starts an interactive shell,
+                # so "-e" is the only reliable separator for it
+                sep = "--" if terminal_name in ("gnome-terminal", "xfce4-terminal") else "-e"
+                command = [terminal, sep, "bash", "-c", bash_script]
             else:
-                if terminal in ["gnome-terminal", "konsole", "xfce4-terminal"]:
+                if terminal_name in ["gnome-terminal", "xfce4-terminal"]:
                     command = [terminal, "--", *command_list]
-                elif terminal in ["mate-terminal", "tilix"]:
+                elif terminal_name in ["mate-terminal", "tilix"]:
                     command = [terminal, "-e", shlex.join(command_list)]
                 else:
-                    command = f'{terminal} -e "{subprocess.list2cmdline(command_list)}"'
-                    use_shell = True
+                    command = [terminal, "-e", *command_list]
 
     after_start_callback: Callable|None = None
     _read_pipe = _write_pipe = None

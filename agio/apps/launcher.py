@@ -243,6 +243,7 @@ class AApplicationLauncher:
         self._app_plugin.on_before_startup(self.ctx)
         kwargs.setdefault('new_console', False)
         kwargs.setdefault('detached', False)
-        kwargs['replace'] = not kwargs['detached'] and not kwargs['new_console']
+        # replace the caller process only when no other start mode is explicitly set
+        kwargs.setdefault('replace', not kwargs['detached'] and not kwargs['new_console'])
         start_process(self.ctx.command, env=self.ctx.envs, **kwargs)
 

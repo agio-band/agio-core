@@ -48,18 +48,28 @@ class AppLauncherService(ServicePlugin):
             raise ValueError(f'Workspace ID not provided')
         if task_id:
             envs[env_names.TASK_ID] = task_id
-        detached = kwargs.get('detached', True)
         logger.debug(f'Launching app {app} in workspace {workspace_id}')
         logger.debug(f'Cmd Args: {" ".join(cmd_args)}')
-        launching.exec_agio_command(
-            args=cmd_args,
-            workspace=workspace_id,
-            envs=envs,
-            detached=detached,
-            new_console=detached,
-            # TODO get from kwargs
-            # keep_console=True
-        )
+        keep_console = bool(kwargs.get('keep_console'))
+        if keep_console:
+            # the action already runs in a dedicated console:
+            # replace the process, so the app inherits this console and its exit code
+            # propagates to the console holder (closes with the app, holds on errors)
+            launching.exec_agio_command(
+                args=cmd_args,
+                workspace=workspace_id,
+                envs=envs,
+                replace=True,
+            )
+        else:
+            # no console requested: start the app as a hidden detached process
+            launching.exec_agio_command(
+                args=cmd_args,
+                workspace=workspace_id,
+                envs=envs,
+                detached=True,
+                new_console=False,
+            )
         return True
 
     def collect_actions(self, hidden=False, **kwargs) -> list:
