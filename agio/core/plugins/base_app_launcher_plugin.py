@@ -27,6 +27,7 @@ class ApplicationPlugin(APlugin):
     python_env_required = False
     task_id_required = False
     hidden = False
+    console_required = False
 
     def __str__(self):
         return f"{self.app_name}/{self.app_mode}"

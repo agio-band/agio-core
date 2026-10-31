@@ -23,6 +23,7 @@ class ActionItem:
     args: tuple|list|None
     kwargs: dict|None
     hidden: bool = False
+    console_required: bool = False,
     is_visible_callback: Callable|None = None
 
     def serialize(self) -> dict:
@@ -37,6 +38,7 @@ class ActionItem:
             'app_name': self.app_name,
             'package_name': self.package_name,
             'hidden': self.hidden,
+            'console_required': self.console_required,
             'args': self.args or [],
             'kwargs': self.kwargs or dict(),
         }

@@ -85,16 +85,17 @@ class AppLauncherService(ServicePlugin):
                 # filters
                 'action': action_name,
                 'menu_name': 'launcher_menu',
-                'app_name': {'web', 'desk'},
+                'app_name': {'web', 'desk', 'launcher'}, # all apps that can get launcher menu
                 # action properties
                 'name': 'launch',
                 'label': label,
                 'icon': app.icon,
-                'hidden': app.plugin.hidden,
+                'hidden': app.hidden,
                 'order': i,
                 'group': 'Applications',
+                'console_required': app.console_required,
                 'kwargs': {
-                    'app': app.app_argument,
+                    'app': app.app_variant,
                 },
                 'args': (),
             }
