@@ -10,7 +10,7 @@ class LauncherCommand(ACommandPlugin):
     name = 'launch_cmd'
     command_name = "launch"
     arguments = [
-        click.option("-a", "--app-name", help="App Name"),
+        click.option("-n", "--app-name", help="App Name"),
         click.option("-v", "--app-version", help="App Version"),
         click.option("-m", "--app-mode", default='default', help="App Mode"),
         click.option("-a", "--app", help="App Launch Name"),
@@ -90,6 +90,11 @@ class LauncherCommand(ACommandPlugin):
         if app_name and app:
             raise click.BadOptionUsage('app-name', 'app-name and app is mutually exclusive')
         if app_name:
+            # allow the combined "name/version/mode" form for --app-name as well
+            if '/' in app_name and not app_version and app_mode == 'default':
+                values = app_name.split('/')
+                values += ([None]*(3-len(values)))
+                app_name, app_version, app_mode = values
             return app_name, app_version, app_mode
         else:
             values = app.split('/')
