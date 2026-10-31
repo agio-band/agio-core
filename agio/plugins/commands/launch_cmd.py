@@ -36,7 +36,6 @@ class LauncherCommand(ACommandPlugin):
         new_app: AApplicationLauncher = app_hub.get_app(app_name, app_version, mode=app_mode)
         if not task_id and new_app.plugin.task_id_required:
             raise click.BadOptionUsage('task-id', 'task-id is required')
-        click.secho(f'Start app "{app_name}" v{app_version} [{app_mode}]', fg='green')
         if __extra_args__:
             kwargs['cmd_args'] = __extra_args__
         kwargs['cmd_envs'] = {}

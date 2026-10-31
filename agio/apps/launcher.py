@@ -199,8 +199,8 @@ class AApplicationLauncher:
             default_args = shlex.split(default_args)
         return self._app_plugin.get_launch_args(default_args)
 
-    def silent_echo(self):
-        return bool(os.getenv('AGIO_SILENT_APP_STARTUP'))
+    def verbose_launching(self):
+        return bool(os.getenv(env_names.VERBOSE_APP_STARTUP))
 
     def start(self, cmd_args: list[str] = None, cmd_envs: dict = None, echo_paths: bool = True, **kwargs):
         """
@@ -212,8 +212,8 @@ class AApplicationLauncher:
             self.ctx.append_envs(**cmd_envs)
 
         ### DEBUG INFO ###########################################################
-        if not self.silent_echo():
-            click.secho('=== Start App: ==========================', fg='yellow')
+        if self.verbose_launching():
+            click.secho(f'\n=== Start App: {self.name} {self.version_str} [{self.mode}] ===', fg='yellow')
             print('Name:', end=' ')
             click.secho(str(self), fg='green')
             print('CMD:', end=' ')
@@ -236,7 +236,7 @@ class AApplicationLauncher:
                     click.secho('=== PYTHONPATH: ===', fg='yellow')
                     for p in pypaths.split(os.pathsep):
                         print(p)
-            click.secho('=========================================', fg='yellow')
+            click.secho('=========================================\n', fg='yellow')
         ##########################################################################
 
         emit('agio_core.application.before_start', payload={'app': self})
