@@ -27,7 +27,9 @@ class AppLauncherService(ServicePlugin):
         cmd_args = ['launch', '--app', f'{app}']
         if args:
             cmd_args.append('--')
-            cmd_args.extend([shlex.quote(a) for a in args])
+            # the command is passed as an argv list (no shell),
+            # so quoting would make the quotes part of the argument
+            cmd_args.extend([str(a) for a in args])
         context = {
             'cmd': cmd_args,
             'workspace_id': workspace_id,

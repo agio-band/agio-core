@@ -30,6 +30,46 @@ def terminate_child(proc):
             pass # Process already dead
 
 
+def _wait_process_tree(process: "subprocess.Popen", poll_interval: float = 0.5) -> int:
+    """
+    Windows substitute for the posix subreaper wait:
+    blocks until the started process AND all its descendants terminate.
+
+    Gui launchers often exit right after the real application is started
+    (the calc stub, dcc apps spawning a detached ui process), so waiting
+    for the direct child is not enough. Descendants are adopted by parent
+    pid: on Windows a process keeps the pid of its (even already dead)
+    parent, so the tree stays discoverable after the launcher exits.
+    Returns the exit code of the direct child.
+    """
+    import psutil
+    import time
+
+    # dead pids stay in the set: a gui app activated by an already exited
+    # launcher keeps the launcher pid as its parent pid, so the parent must
+    # remain in the set for one more poll to adopt the app process
+    watched = {process.pid}
+    try:
+        while True:
+            adopted = set()
+            for proc in psutil.process_iter(['pid', 'ppid']):
+                try:
+                    pid, ppid = proc.info['pid'], proc.info['ppid']
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+                if ppid in watched and pid not in watched:
+                    adopted.add(pid)
+            watched |= adopted
+            if not any(psutil.pid_exists(pid) for pid in watched):
+                break
+            time.sleep(poll_interval)
+    except KeyboardInterrupt:
+        terminate_child(process)
+        return 1
+    process.poll()
+    return process.returncode if process.returncode is not None else 0
+
+
 
 def start_process(
         command: list[str] | tuple[str] | str,
@@ -94,8 +134,8 @@ def start_process(
                 if found_path:
                     target_executable = found_path
             try:
-                sys.exit(subprocess.call(command, env=new_env))
-                #  TODO allow exit ???
+                process = subprocess.Popen(command, env=new_env)
+                sys.exit(_wait_process_tree(process))
             except FileNotFoundError:
                 print(f"Error: {target_executable} not found.")
                 sys.exit(1)
@@ -122,13 +162,20 @@ def start_process(
     elif detached and output_file:
         stdout = open(output_file, "a")
         stderr = subprocess.STDOUT
+    elif new_console and (detached or non_blocking):
+        if IS_WIN32:
+            # the new console owns stdio: a child started with
+            # CREATE_NEW_CONSOLE writes to the console only when its
+            # std handles are not redirected
+            stdout = None
+            stderr = None
+        else:
+            # the terminal emulator process owns the output;
+            # do not keep the parent's stdout/stderr open, otherwise
+            # a caller reading pipes will wait until the console is closed
+            stdout = open(os.devnull, "w")
+            stderr = subprocess.STDOUT
     elif detached:
-        stdout = open(os.devnull, "w")
-        stderr = subprocess.STDOUT
-    elif new_console and non_blocking:
-        # the console window owns the output now; do not keep the parent's
-        # stdout/stderr open, otherwise a caller reading pipes
-        # will wait until the console is closed
         stdout = open(os.devnull, "w")
         stderr = subprocess.STDOUT
 
@@ -141,7 +188,11 @@ def start_process(
                 if isinstance(command, str):
                     command = shlex.split(command)
                 if command and command[0].lower() not in ('cmd', 'cmd.exe'):
-                    command = ["cmd", "/k"] + list(command)
+                    # the launched chain waits for the whole process tree of
+                    # the app, so the console closes with the app; on error
+                    # (non-zero exit code) "pause" keeps the console open
+                    command_line = subprocess.list2cmdline(list(command))
+                    command = f'cmd /c ({command_line}) || pause'
             creationflags |= subprocess.CREATE_NEW_CONSOLE
         else:
             if isinstance(command, (list, tuple)) and command:
@@ -150,7 +201,9 @@ def start_process(
                     if executable.with_name('pythonw.exe').exists():
                         command[0] = str(executable.with_name('pythonw.exe'))
             creationflags |= subprocess.CREATE_NO_WINDOW # TODO make optional
-        stdin = subprocess.DEVNULL if detached else None
+        # with a new console the child must read the console stdin,
+        # DEVNULL would close "cmd /c ..." right after the command exits
+        stdin = subprocess.DEVNULL if detached and not new_console else None
     else:
         if detached:
             start_new_session = True
