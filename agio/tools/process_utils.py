@@ -166,26 +166,21 @@ def start_process(
             # resolve wrappers like x-terminal-emulator to the real terminal
             terminal = os.path.realpath(shutil.which(terminal) or terminal)
             terminal_name = Path(terminal).stem
+            # wrap the command into the process tree supervisor:
+            # the console must live while ANY process of the application is running
+            # (dcc apps like houdini fork the ui process, detach it with setsid and exit)
+            # -P keeps the script dir off sys.path, otherwise agio/tools/enum.py
+            # shadows the stdlib enum module and the supervisor crashes on import
+            supervisor = [sys.executable or "python3", "-P",
+                          str(Path(__file__).with_name("process_supervisor.py"))]
             if keep_console:
-                cmdline = subprocess.list2cmdline(command_list)
-                # keep the console open only if the command failed, so the error can be read;
-                # exit with the command's return code either way
-                bash_script = (
-                    f'{cmdline}; rc=$?; '
-                    'if [ $rc -ne 0 ]; then echo; read -p "Press Enter to close..."; fi; '
-                    'exit $rc'
-                )
-                # konsole ignores args after "--" and starts an interactive shell,
-                # so "-e" is the only reliable separator for it
-                sep = "--" if terminal_name in ("gnome-terminal", "xfce4-terminal") else "-e"
-                command = [terminal, sep, "bash", "-c", bash_script]
+                command = [*supervisor, "--hold", "--", *command_list]
             else:
-                if terminal_name in ["gnome-terminal", "xfce4-terminal"]:
-                    command = [terminal, "--", *command_list]
-                elif terminal_name in ["mate-terminal", "tilix"]:
-                    command = [terminal, "-e", shlex.join(command_list)]
-                else:
-                    command = [terminal, "-e", *command_list]
+                command = [*supervisor, "--", *command_list]
+            # konsole ignores args after "--" and starts an interactive shell,
+            # so "-e" is the only reliable separator for it
+            sep = "--" if terminal_name in ("gnome-terminal", "xfce4-terminal") else "-e"
+            command = [terminal, sep, *command]
 
     after_start_callback: Callable|None = None
     _read_pipe = _write_pipe = None

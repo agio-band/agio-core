@@ -30,7 +30,7 @@ def get_registered_app_plugins() -> list[ApplicationPlugin]:
 def get_app_list():
     apps_config = get_app_config()
     if not apps_config:
-        return
+        logger.debug('No apps configs')
     all_app_plugins = get_registered_app_plugins()
     if not all_app_plugins:
         logger.debug('No plugins found for any applications')
