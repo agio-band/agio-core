@@ -29,11 +29,11 @@ class ApiClient:
         self._load_session(**kwargs)
         self._agio_login_available = auth_services.agio_login_binary_available()
 
-    def login(self, refresh=False, force=False):
+    def login(self, refresh=False, force=False, **kwargs):
         # long time blocking command !
         emit('core.auth.before_login')
         logger.debug('Start login process...')
-        auth_data = auth_services.get_token(refresh_only=refresh, force=force)
+        auth_data = auth_services.get_token(refresh_only=refresh, force=force, **kwargs)
         if auth_data:
             auth_services.write_cache_file(auth_data)
             self._set_token(auth_data)
