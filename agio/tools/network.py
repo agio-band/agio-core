@@ -273,7 +273,7 @@ def get_free_port():
 
 
 def download_dependency(relative_path: str, cache=True, **kwargs) -> str:
-    url = f'https://storage.yandexcloud.net/agio-public/dep_packages/{relative_path}'
+    url = f'https://s3.ru-7.storage.selcloud.ru/agio-public/dep_packages/{relative_path}'
     if cache:
         dest_dir = cache_dir('dependencies')
         with requests.get(url, stream=True, params=kwargs.get('params'), allow_redirects=True) as response:

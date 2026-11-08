@@ -12,7 +12,7 @@ from agio.tools import network as net, local_dirs
 logger = logging.getLogger(__name__)
 
 EXT = '.exe' if os.name == 'nt' else ''
-DOWNLOAD_URL = f'https://storage.yandexcloud.net/agio-public/login/latest/{platform.system().lower()}/amd64/bin/agio-login{EXT}'
+DOWNLOAD_URL = f'https://s3.ru-7.storage.selcloud.ru/agio-public/login/latest/{platform.system().lower()}/amd64/bin/agio-login{EXT}'
 
 
 def on_installed(package: APackageManager, ws_manager: AWorkspaceManager):
