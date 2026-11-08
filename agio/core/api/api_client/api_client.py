@@ -56,8 +56,6 @@ class ApiClient:
         return bool(self.session.headers.get('Authorization'))
 
     def refresh(self):
-        if os.getenv('AGIO_NO_REFRESH'):
-            raise AuthorizationError(detail='Refresh token not allowed')
         if not self.session.headers.get('Authorization'):
             raise AuthorizationError(
                 detail=f'Authorization error. Token: {(shorten_text(self.session.headers.get("Authorization", "none"), 20))}'
