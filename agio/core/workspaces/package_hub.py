@@ -55,7 +55,7 @@ class APackageHub(metaclass=Singleton):
                 if not os.path.isdir(sys_path):
                     continue
                 for entry in os.listdir(sys_path):
-                    if entry.startswith(('_', '.')):
+                    if entry.startswith(('_', '-', '.')):
                         continue
                     full_path = os.path.join(sys_path, entry)
                     if os.path.isdir(full_path) and entry not in seen:
