@@ -8,15 +8,19 @@ import requests
 
 from agio.core.workspaces import AWorkspaceManager, APackageManager
 from agio.tools import network as net, local_dirs
-
+from agio.tools import publish_resources
 logger = logging.getLogger(__name__)
 
 EXT = '.exe' if os.name == 'nt' else ''
-DOWNLOAD_URL = f'https://storage.yandexcloud.net/agio-public/login/latest/{platform.system().lower()}/amd64/bin/agio-login{EXT}'
+DOWNLOAD_URL = os.getenv('AGIO_LOGIN_BINARY_URL') or f'{publish_resources.PUBLIC_URL}/login/latest/{platform.system().lower()}/amd64/bin/agio-login{EXT}'
 
 
 def on_installed(package: APackageManager, ws_manager: AWorkspaceManager):
-    binary = download_to_global()
+    try:
+        binary = download_to_global()
+    except Exception as e:
+        logger.error(f'Failed to download agio-login: {DOWNLOAD_URL}')
+        return
     # make executable
     if os.name != 'nt':
         file = Path(binary)

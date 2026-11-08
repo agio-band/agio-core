@@ -273,7 +273,9 @@ def get_free_port():
 
 
 def download_dependency(relative_path: str, cache=True, **kwargs) -> str:
-    url = f'https://storage.yandexcloud.net/agio-public/dep_packages/{relative_path}'
+    from agio.tools import publish_resources
+    base_url = publish_resources.PUBLIC_URL
+    url = f'{base_url}/dep_packages/{relative_path}'
     if cache:
         dest_dir = cache_dir('dependencies')
         with requests.get(url, stream=True, params=kwargs.get('params'), allow_redirects=True) as response:
