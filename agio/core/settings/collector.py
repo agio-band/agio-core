@@ -4,7 +4,6 @@ from pathlib import Path
 from agio.core.settings.generic_types import SettingsType
 from agio.tools.modules import import_object_by_dotted_path
 from agio.core.settings.package_settings import APackageSettings
-from agio.core.workspaces import package_hub
 from agio.tools import text_helpers
 
 logger = logging.getLogger(__name__)
@@ -123,6 +122,7 @@ def _update_conf(package_name: str, layout: dict) -> tuple[dict, dict]:
 
 
 def collect_layout(layout_type: str) -> dict:
+    from agio.core.workspaces import package_hub
 
     # collect packages
     all_packages = package_hub.APackageHub.instance().get_packages()

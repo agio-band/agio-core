@@ -12,7 +12,6 @@ from agio.core.exceptions import PackageRepositoryError, PackageError, PackageLo
 from agio.core.plugins import plugin_hub
 from agio.core.plugins.base_remote_repository import RemoteRepositoryPlugin
 from agio.core.workspaces.package import APackageManager
-from agio.core.workspaces import workspace
 from agio.tools import git_utils, file_utils
 from agio.tools.pkg_manager import get_package_manager
 
@@ -168,6 +167,8 @@ class APackageRepository:
         return APackageManager.find_package(self.root)
 
     def build(self, **kwargs):
+        from agio.core.workspaces import workspace
+
         with tempfile.TemporaryDirectory() as tmpdir:
             file_utils.copy_tree_with_ignore_file(self.root.as_posix(), tmpdir)
             pkg = APackageRepository(tmpdir)

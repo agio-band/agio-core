@@ -1,6 +1,5 @@
 import logging
 
-from agio.apps import app
 from agio.core.plugins import plugin_hub
 from agio.core.workspaces import package_hub
 
@@ -8,6 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 def init_plugins(pkg_hub: package_hub.APackageHub = None):
+    from agio.apps import app
+
     # get workspaces hub
     pkg_hub = pkg_hub or package_hub.APackageHub.instance(False)
     if not pkg_hub:

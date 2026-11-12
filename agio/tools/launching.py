@@ -8,12 +8,15 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from agio.core import exceptions
-from agio.core import workspaces
 from agio.tools import local_dirs, env_names
 from agio.tools import pkg_manager
 from agio.tools import process_utils
+
+if TYPE_CHECKING:
+    from agio.core import workspaces
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +217,8 @@ def exec_agio_command(
 
     Commands plugin must be registered
     """
+    from agio.core import workspaces
+
     ws_manager = None
     if not os.getenv(env_names.FORCE_DEFAULT_WORKSPACE):  # start in default env always (for beta version)
         logger.debug(f'Starting agio command in workspace: {workspace}')
@@ -243,6 +248,8 @@ def create_workspace_launch_context(
         workdir: str = None,
         **kwargs
     ):
+    from agio.core import workspaces
+
     if os.getenv(env_names.FORCE_DEFAULT_WORKSPACE):   # start in default env always (for beta version)
         ws_manager = None
     if isinstance(ws_manager, str):

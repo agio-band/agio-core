@@ -3,7 +3,7 @@ import traceback
 
 from agio.core.settings import get_local_settings
 from agio.core.plugins import plugin_hub
-from agio.apps.launcher import AApplicationLauncher
+from agio.apps import launcher
 from agio.apps.app_hub import ApplicationHub
 from .context_app import ContextApp
 from ..core.plugins.base_app_launcher_plugin import ApplicationPlugin
@@ -40,7 +40,7 @@ def get_app_list():
         if conf_list:
             for c in conf_list:
                 try:
-                    launch_app = AApplicationLauncher(app_plg, c.version)
+                    launch_app = launcher.AApplicationLauncher(app_plg, c.version)
                     yield launch_app
                 except Exception as e:
                     logger.exception(f'Failed to load {app_plg.app_name}: {e}')
@@ -48,5 +48,5 @@ def get_app_list():
         else:
             if app_plg.version_required:
                 logger.warning(f'Failed to load {app_plg.app_name}: no configuration found')
-            yield AApplicationLauncher(app_plg, None)
+            yield launcher.AApplicationLauncher(app_plg, None)
 

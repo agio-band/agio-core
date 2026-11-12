@@ -25,8 +25,6 @@ from agio.core.exceptions import (
 from agio.core.settings import collector
 from agio.core.config import config
 from agio.tools import pkg_manager, local_dirs, env_names
-from agio.tools import launching
-from agio.tools.launching import exec_agio_command
 from agio.tools.packaging_tools import collect_packages_to_install
 from agio.tools.venv_helpers import check_current_python_version
 if TYPE_CHECKING:
@@ -315,6 +313,8 @@ class AWorkspaceManager:
         return pkg_manager.get_package_manager(self.install_root, self.custom_py_executable)
 
     def install(self, clean: bool = False, no_cache: bool = False):
+        from agio.tools.launching import exec_agio_command
+
         if self.install_lock.locked():
             raise WorkspaceInstallationLocked
         logger.debug(f'Installing workspace {self.install_root}')
@@ -517,6 +517,8 @@ class AWorkspaceManager:
             return self.get_pyexecutable()
 
     def get_launch_context(self):
+        from agio.tools import launching
+
         ctx = launching.LaunchContext(
             self.get_launch_executable(),
             env=self.get_launch_envs()

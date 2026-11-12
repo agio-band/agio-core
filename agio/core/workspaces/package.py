@@ -4,7 +4,7 @@ import logging
 import os
 from functools import cache, cached_property
 from pathlib import Path
-from typing import Any, Generator, Type
+from typing import Any, Generator, Type, TYPE_CHECKING
 
 import yaml
 
@@ -16,12 +16,12 @@ except ModuleNotFoundError:
     import tomli as toml
 
 from agio.core.entities import package
-from agio.apps import app
 from agio.core.events import emit
 from agio.core.exceptions import PackageMetadataError, PackageError
 from agio.core.plugins import base_plugin
 from agio.tools.modules import import_object_by_dotted_path, import_module_by_path
-from agio.core.workspaces import workspace
+if TYPE_CHECKING:
+    from agio.core.workspaces import workspace
 
 logger = logging.getLogger(__name__)
 
@@ -224,6 +224,7 @@ class APackageManager:
 
     def collect_chips(self):
         from agio.core import chips
+        from agio.apps import app
 
         chips_info = self._metadata.get('chips') or []
         for chip_info in chips_info:
@@ -311,6 +312,8 @@ class APackageManager:
                 parm['abs_file'] = file.as_posix()
 
     def get_callbacks(self):
+        from agio.apps import app
+
         callbacks = self.get_meta_data_field('callbacks') or []
         for clb in callbacks:
             if not isinstance(clb, dict):
@@ -322,6 +325,8 @@ class APackageManager:
                 yield self.root.joinpath(path).with_suffix('.py').as_posix()
 
     def __collect_package_callbacks(self):
+        from agio.apps import app
+
         package_callbacks = self.get_meta_data_field('package_callbacks') or 'callbacks/package_callbacks.py'
         for pclb in package_callbacks:
             if isinstance(pclb, str):

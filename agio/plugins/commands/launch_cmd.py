@@ -1,6 +1,7 @@
 import click
 
-from agio.apps import app_hub, AApplicationLauncher
+from agio.apps import app_hub
+from agio.apps.launcher import AApplicationLauncher
 from agio.core.events import emit
 from agio.core.plugins.base_command import ACommandPlugin
 from agio.tools import env_names

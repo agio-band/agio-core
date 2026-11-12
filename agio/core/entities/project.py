@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from functools import cached_property
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, TYPE_CHECKING
 from uuid import UUID
 
 from agio.core import api
-from agio.core import settings
 from agio.core.entities import company as company_entity
 from agio.core.entities import workspace as ws, BaseObject
 from agio.core.entities import workspace_revision
-from agio.core.settings import settings_hub
-from agio.core.settings.settings_hub import LocalSettingsHub
+
+if TYPE_CHECKING:
+    from agio.core import settings
+    from agio.core.settings import settings_hub
+    from agio.core.settings.settings_hub import LocalSettingsHub
 
 
 class AProject(BaseObject):
@@ -164,10 +166,15 @@ class AProject(BaseObject):
 
     def get_local_settings(self) -> LocalSettingsHub:
         """Return local settings for current project"""
+        from agio.core import settings
+
         return settings.get_local_settings(self)
 
     def set_local_settings(self, settings_data: settings_hub.LocalSettingsHub | dict):
         """Save local settings for current project"""
+        from agio.core import settings
+        from agio.core.settings import settings_hub
+
         if isinstance(settings_data, dict):
             settings_data = settings_hub.LocalSettingsHub(settings_data)
         return settings.save_local_settings(settings_data, self)
