@@ -3,7 +3,6 @@ from agio.core.plugins.base_command import ACommandPlugin, ASubCommand
 import click
 
 from agio.apps.exceptions import ApplicationError
-from agio.apps import get_registered_app_plugins, get_app_config
 
 
 class ListAppCommand(ASubCommand):
@@ -14,6 +13,8 @@ class ListAppCommand(ASubCommand):
     ]
 
     def execute(self, as_args: bool):
+        from agio.apps import get_app_config, get_registered_app_plugins
+
         registered = get_registered_app_plugins()
         configs = get_app_config()
         app_list = []

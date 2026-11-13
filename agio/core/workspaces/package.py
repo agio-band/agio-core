@@ -224,12 +224,12 @@ class APackageManager:
 
     def collect_chips(self):
         from agio.core import chips
-        from agio.apps import app
+        from agio.apps.ctx import filter_by_name_and_group
 
         chips_info = self._metadata.get('chips') or []
         for chip_info in chips_info:
             for imp in chip_info.get('implementations', ()):
-                if not app.filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
+                if not filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
                     continue
                 module = imp.get('module', ())
                 if isinstance(module, str):
@@ -312,27 +312,27 @@ class APackageManager:
                 parm['abs_file'] = file.as_posix()
 
     def get_callbacks(self):
-        from agio.apps import app
+        from agio.apps.ctx import filter_by_name_and_group
 
         callbacks = self.get_meta_data_field('callbacks') or []
         for clb in callbacks:
             if not isinstance(clb, dict):
                 raise ValueError(f'Callback info must be a dict: {self.package_name} type({type(clb)})')
-            if not app.filter_by_name_and_group(clb.get('apps'), clb.get('app_groups')):
+            if not filter_by_name_and_group(clb.get('apps'), clb.get('app_groups')):
                 continue
             files = clb.get('modules')
             for path in files:
                 yield self.root.joinpath(path).with_suffix('.py').as_posix()
 
     def __collect_package_callbacks(self):
-        from agio.apps import app
+        from agio.apps.ctx import filter_by_name_and_group
 
         package_callbacks = self.get_meta_data_field('package_callbacks') or 'callbacks/package_callbacks.py'
         for pclb in package_callbacks:
             if isinstance(pclb, str):
                 yield pclb
             elif isinstance(pclb, dict):
-                if not app.filter_by_name_and_group(pclb.get('apps'), pclb.get('app_groups')):
+                if not filter_by_name_and_group(pclb.get('apps'), pclb.get('app_groups')):
                     continue
                 for path in pclb.get('modules'):
                     yield path

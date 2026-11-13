@@ -2,7 +2,6 @@ import logging
 import os
 import shlex
 
-from agio.apps import get_app_list
 from agio.apps.context_app import ContextApp
 from agio.apps.launcher import AApplicationLauncher
 from agio.core.actions import make_action
@@ -76,6 +75,8 @@ class AppLauncherService(ServicePlugin):
 
     def collect_actions(self, hidden=False, **kwargs) -> list:
         # TODO: filter for project using settings
+        from agio.apps import get_app_list
+
         apps: list[AApplicationLauncher] = get_app_list()
         items = []
         action_name = f'{self.name}.{self.launch.__name__}'

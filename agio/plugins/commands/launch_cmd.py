@@ -1,6 +1,5 @@
 import click
 
-from agio.apps import app_hub
 from agio.apps.launcher import AApplicationLauncher
 from agio.core.events import emit
 from agio.core.plugins.base_command import ACommandPlugin
@@ -36,6 +35,8 @@ class LauncherCommand(ACommandPlugin):
                 env: list[str] = None,
                 __extra_args__: list = None,
                 **kwargs):
+        from agio.apps import app_hub
+
         app_name, app_version, app_mode = self.get_app_values(app_name, app_version, app_mode, app)
         new_app: AApplicationLauncher = app_hub.get_app(app_name, app_version, mode=app_mode)
         if not task_id and new_app.plugin.task_id_required:

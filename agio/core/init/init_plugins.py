@@ -1,5 +1,6 @@
 import logging
 
+from agio.apps.ctx import get_current_app_name
 from agio.core.plugins import plugin_hub
 from agio.core.workspaces import package_hub
 
@@ -7,14 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 def init_plugins(pkg_hub: package_hub.APackageHub = None):
-    from agio.apps import app
-
     # get workspaces hub
     pkg_hub = pkg_hub or package_hub.APackageHub.instance(False)
     if not pkg_hub:
         raise RuntimeError('Package hub not initialized yet')
     # init plugins hub
-    logger.debug(f'Initializing plugin hub for app {app.name}...')
+    logger.debug(f'Initializing plugin hub for app {get_current_app_name()}...')
     plg_hub = plugin_hub.APluginHub(pkg_hub)
     # collect plugins
     plg_hub.collect_plugins()
