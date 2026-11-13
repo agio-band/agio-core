@@ -84,6 +84,10 @@ class UVPackageManager(PackageManagerBase):
             py_version = self._get_latest_version(available_versions)   # TODO use actual from vfx platform
         return py_version
 
+    def _get_closest_version(self, py_version):
+        closest = self._get_available_py_version(py_version)
+        return closest
+
     def create_venv(self, python_version: str | None = None, **kwargs):
         if not python_version:
             if self._custom_python_executable:
@@ -97,6 +101,8 @@ class UVPackageManager(PackageManagerBase):
                         self.run(cmd, workdir=Path.home().as_posix())
                 else:
                     raise RuntimeError('No python version available')
+        else:
+            python_version = self._get_closest_version(python_version)
         logger.info('Create venv with python: %s', python_version)
         self.path.mkdir(parents=True, exist_ok=True)
         if not self.path.joinpath('pyproject.toml').exists():
