@@ -8,11 +8,11 @@ import requests
 
 from agio.core.workspaces import AWorkspaceManager, APackageManager
 from agio.tools import network as net, local_dirs
-from agio.tools import publish_resources
+from agio.tools import public_resources
 logger = logging.getLogger(__name__)
 
 EXT = '.exe' if os.name == 'nt' else ''
-DOWNLOAD_URL = os.getenv('AGIO_LOGIN_BINARY_URL') or f'{publish_resources.PUBLIC_URL}/login/latest/{platform.system().lower()}/amd64/bin/agio-login{EXT}'
+DOWNLOAD_URL = os.getenv('AGIO_LOGIN_BINARY_URL') or f'{public_resources.PUBLIC_URL}/login/latest/{platform.system().lower()}/amd64/bin/agio-login{EXT}'
 
 
 def on_installed(package: APackageManager, ws_manager: AWorkspaceManager):

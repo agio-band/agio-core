@@ -273,8 +273,8 @@ def get_free_port():
 
 
 def download_dependency(relative_path: str, cache=True, **kwargs) -> str:
-    from agio.tools import publish_resources
-    base_url = publish_resources.PUBLIC_URL
+    from agio.tools import public_resources
+    base_url = public_resources.PUBLIC_URL
     url = f'{base_url}/dep_packages/{relative_path}'
     if cache:
         dest_dir = cache_dir('dependencies')
