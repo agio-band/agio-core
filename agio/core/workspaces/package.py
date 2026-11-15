@@ -317,7 +317,6 @@ class APackageManager:
 
     def execute_package_callback(self, callback_name: str, workspace_manager: workspace.AWorkspaceManager):
         file_names = self.get_meta_data_field('package_callbacks') or 'callbacks/package_callbacks.py'
-        logger.info('Callbacks file names:', file_names)
         if isinstance(file_names, str):
             file_names = [file_names]
         for file_name in file_names:
