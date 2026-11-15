@@ -108,10 +108,11 @@ settings:
     layout: package_settings/local_layout.yml
     model: package_settings.local_settings.CoreSettings
 
+# should be a dict
 callbacks:
   - modules:
     - plugins/callbacks/launcher_processing.py
 
+# should be a list. It is a default value
 package_callbacks:
-  - modules:
     - plugins/callbacks/package_callbacks.py
