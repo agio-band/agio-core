@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from typing import Iterator
+from typing import Iterator, TYPE_CHECKING
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
 from agio.core.entities import workspace
-from agio.core.settings import settings_hub
 from . import APackageRelease
 from .base_object import BaseObject
 from .workspace_settings import AWorkspaceSettings
+
+if TYPE_CHECKING:
+    from agio.core.settings import settings_hub
 
 
 class AWorkspaceRevision(BaseObject):
@@ -112,6 +114,8 @@ class AWorkspaceRevision(BaseObject):
         return self._data["_settings_data"]
 
     def get_settings(self) -> settings_hub.WorkspaceSettingsHub:
+        from agio.core.settings import settings_hub
+
         data = self.get_settings_data()
         return settings_hub.WorkspaceSettingsHub(data)
 

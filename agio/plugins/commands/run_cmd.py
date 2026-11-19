@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-from agio.core.cli import Env
+from agio.core.cli.custom_classes import Env
 import click
 from agio.core.plugins.base_command import ACommandPlugin
 from agio.tools.process_utils import start_process

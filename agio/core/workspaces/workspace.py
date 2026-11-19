@@ -25,8 +25,6 @@ from agio.core.exceptions import (
 from agio.core.settings import collector
 from agio.core.config import config
 from agio.tools import pkg_manager, local_dirs, env_names
-from agio.tools import launching
-from agio.tools.launching import exec_agio_command
 from agio.tools.packaging_tools import collect_packages_to_install
 from agio.tools.venv_helpers import check_current_python_version
 if TYPE_CHECKING:
@@ -109,8 +107,8 @@ class AWorkspaceManager:
             app_name, app_version, app_mode  = app_hub.parse_key(app, version, mode='python')
             app = app_hub.get_app(app_name, app_version, app_mode)
         if app:
-            if app.mode != 'python':
-                raise WorkspaceManagerError(detail='Only "python" mode of application is supported')
+            # if app.mode != 'python':
+            #     raise WorkspaceManagerError(detail='Only "python" mode of application is supported')
             required_version = app.get_python_version()
             self._kwargs['python_version'] = required_version
             suffix = f"{app.name}-{app.version}-py{required_version}"
@@ -315,6 +313,8 @@ class AWorkspaceManager:
         return pkg_manager.get_package_manager(self.install_root, self.custom_py_executable)
 
     def install(self, clean: bool = False, no_cache: bool = False):
+        from agio.tools.launching import exec_agio_command
+
         if self.install_lock.locked():
             raise WorkspaceInstallationLocked
         logger.debug(f'Installing workspace {self.install_root}')
@@ -341,7 +341,7 @@ class AWorkspaceManager:
                 data = copy.deepcopy(self.revision.to_dict())
                 data['workspace_suffix'] = self.root_suffix
                 json.dump(data, f, indent=4)
-            logger.debug(f'meta file saved: {self.local_meta_file}')
+            logger.debug(f'Meta file saved: {self.local_meta_file}')
             emit('core.workspace.installed',
                     {'revision': self.revision.id,
                      'packages': package_list,
@@ -360,6 +360,10 @@ class AWorkspaceManager:
         logger.info(f'Workspace installation complete: {self.install_root}')
         if self._revision:
             exec_agio_command(['revision', 'synclocal'], workspace=self.revision_id)
+            emit(
+                'core.workspace.synced',
+                {'revision': self.revision.id if self.revision else None, 'workspace_manager': self}
+            )
 
     def install_packages(self, *package_list: APackageRelease|str, **kwargs):
         package_list = collect_packages_to_install(package_list)
@@ -513,6 +517,8 @@ class AWorkspaceManager:
             return self.get_pyexecutable()
 
     def get_launch_context(self):
+        from agio.tools import launching
+
         ctx = launching.LaunchContext(
             self.get_launch_executable(),
             env=self.get_launch_envs()

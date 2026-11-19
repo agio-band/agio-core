@@ -9,9 +9,8 @@ from agio.core.events import emit
 from agio.core.plugins.base_plugin import APlugin
 from agio.core.workspaces import APackageManager
 from agio.tools import args_helper
-from agio.tools import env_names
-from agio.apps import app
-from agio.tools.process_utils import restart_with_env, pipe_is_allowed, write_to_pipe
+from agio.tools.json_serializer import JsonSerializer
+from agio.tools.process_utils import pipe_is_allowed, write_to_pipe
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +58,7 @@ class AbstractCommandPlugin:
         })
         if self.allow_write_output_to_custom_pipe and pipe_is_allowed():
             try:
-                write_to_pipe(json.dumps(result).encode('utf-8'))
+                write_to_pipe(json.dumps(result, cls=JsonSerializer).encode('utf-8'))
             except json.decoder.JSONDecodeError:
                 write_to_pipe(str(result).encode('utf-8'))
             except OSError as e:

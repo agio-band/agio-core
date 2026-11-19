@@ -34,7 +34,7 @@ class AEntity(EntityRelationMixin, BaseObject):
     def get_data(cls, object_id: str, client=None) -> dict:
         return api.track.get_entity(object_id, client=client)
 
-    def update(self, name: str, fields: dict) -> None:
+    def update(self, name: str = None, fields: dict = None) -> None:
         if api.track.update_entity(self.id, name, fields, client=self.client):
             self.reload()
 

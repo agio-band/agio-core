@@ -30,6 +30,46 @@ def terminate_child(proc):
             pass # Process already dead
 
 
+def _wait_process_tree(process: "subprocess.Popen", poll_interval: float = 0.5) -> int:
+    """
+    Windows substitute for the posix subreaper wait:
+    blocks until the started process AND all its descendants terminate.
+
+    Gui launchers often exit right after the real application is started
+    (the calc stub, dcc apps spawning a detached ui process), so waiting
+    for the direct child is not enough. Descendants are adopted by parent
+    pid: on Windows a process keeps the pid of its (even already dead)
+    parent, so the tree stays discoverable after the launcher exits.
+    Returns the exit code of the direct child.
+    """
+    import psutil
+    import time
+
+    # dead pids stay in the set: a gui app activated by an already exited
+    # launcher keeps the launcher pid as its parent pid, so the parent must
+    # remain in the set for one more poll to adopt the app process
+    watched = {process.pid}
+    try:
+        while True:
+            adopted = set()
+            for proc in psutil.process_iter(['pid', 'ppid']):
+                try:
+                    pid, ppid = proc.info['pid'], proc.info['ppid']
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+                if ppid in watched and pid not in watched:
+                    adopted.add(pid)
+            watched |= adopted
+            if not any(psutil.pid_exists(pid) for pid in watched):
+                break
+            time.sleep(poll_interval)
+    except KeyboardInterrupt:
+        terminate_child(process)
+        return 1
+    process.poll()
+    return process.returncode if process.returncode is not None else 0
+
+
 
 def start_process(
         command: list[str] | tuple[str] | str,
@@ -38,6 +78,7 @@ def start_process(
         detached: bool = False,
         replace: bool = False,
         new_console: bool = False,
+        keep_console: bool = False,
         non_blocking: bool = False,
         output_file=None,
         workdir: str = None,
@@ -92,10 +133,9 @@ def start_process(
                 found_path = shutil.which(target_executable)
                 if found_path:
                     target_executable = found_path
-
             try:
-                sys.exit(subprocess.call(command, env=new_env))
-                #  TODO allow exit ???
+                process = subprocess.Popen(command, env=new_env)
+                sys.exit(_wait_process_tree(process))
             except FileNotFoundError:
                 print(f"Error: {target_executable} not found.")
                 sys.exit(1)
@@ -122,22 +162,48 @@ def start_process(
     elif detached and output_file:
         stdout = open(output_file, "a")
         stderr = subprocess.STDOUT
+    elif new_console and (detached or non_blocking):
+        if IS_WIN32:
+            # the new console owns stdio: a child started with
+            # CREATE_NEW_CONSOLE writes to the console only when its
+            # std handles are not redirected
+            stdout = None
+            stderr = None
+        else:
+            # the terminal emulator process owns the output;
+            # do not keep the parent's stdout/stderr open, otherwise
+            # a caller reading pipes will wait until the console is closed
+            stdout = open(os.devnull, "w")
+            stderr = subprocess.STDOUT
     elif detached:
         stdout = open(os.devnull, "w")
         stderr = subprocess.STDOUT
 
     if IS_WIN32:
-        if detached:
+        # DETACHED_PROCESS cannot be combined with CREATE_NEW_CONSOLE
+        if detached and not new_console:
             creationflags |= subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
         if new_console:
+            if keep_console:
+                if isinstance(command, str):
+                    command = shlex.split(command)
+                if command and command[0].lower() not in ('cmd', 'cmd.exe'):
+                    # the launched chain waits for the whole process tree of
+                    # the app, so the console closes with the app; on error
+                    # (non-zero exit code) "pause" keeps the console open
+                    command_line = subprocess.list2cmdline(list(command))
+                    command = f'cmd /c ({command_line}) || pause'
             creationflags |= subprocess.CREATE_NEW_CONSOLE
         else:
-            executable = Path(command[0])
-            if executable.stem == 'python':
-                if executable.with_name('pythonw.exe').exists():
-                    command[0] = str(executable.with_name('pythonw.exe'))
+            if isinstance(command, (list, tuple)) and command:
+                executable = Path(command[0])
+                if executable.stem == 'python':
+                    if executable.with_name('pythonw.exe').exists():
+                        command[0] = str(executable.with_name('pythonw.exe'))
             creationflags |= subprocess.CREATE_NO_WINDOW # TODO make optional
-        stdin = subprocess.DEVNULL if detached else None
+        # with a new console the child must read the console stdin,
+        # DEVNULL would close "cmd /c ..." right after the command exits
+        stdin = subprocess.DEVNULL if detached and not new_console else None
     else:
         if detached:
             start_new_session = True
@@ -145,12 +211,29 @@ def start_process(
         elif not get_output and not use_custom_pipe:
             stdin = open(os.devnull, "r")
         if new_console:
-            terminal = os.environ.get("TERMINAL", "x-terminal-emulator")
-            if terminal in ["gnome-terminal", "konsole", "xfce4-terminal"]:
-                command = [terminal, "--", *command]
+            if isinstance(command, str):
+                command_list = shlex.split(command)
             else:
-                command = f'{terminal} -e "{subprocess.list2cmdline(command)}"'
-                use_shell = True
+                command_list = list(command)
+            terminal = os.environ.get("TERMINAL", "x-terminal-emulator")
+            # resolve wrappers like x-terminal-emulator to the real terminal
+            terminal = os.path.realpath(shutil.which(terminal) or terminal)
+            terminal_name = Path(terminal).stem
+            # wrap the command into the process tree supervisor:
+            # the console must live while ANY process of the application is running
+            # (dcc apps like houdini fork the ui process, detach it with setsid and exit)
+            # -P keeps the script dir off sys.path, otherwise agio/tools/enum.py
+            # shadows the stdlib enum module and the supervisor crashes on import
+            supervisor = [sys.executable or "python3", "-P",
+                          str(Path(__file__).with_name("process_supervisor.py"))]
+            if keep_console:
+                command = [*supervisor, "--hold", "--", *command_list]
+            else:
+                command = [*supervisor, "--", *command_list]
+            # konsole ignores args after "--" and starts an interactive shell,
+            # so "-e" is the only reliable separator for it
+            sep = "--" if terminal_name in ("gnome-terminal", "xfce4-terminal") else "-e"
+            command = [terminal, sep, *command]
 
     after_start_callback: Callable|None = None
     _read_pipe = _write_pipe = None

@@ -2,8 +2,8 @@ import re
 from typing import Callable
 
 from packaging.requirements import Requirement
-from packaging.specifiers import SpecifierSet
-from packaging.version import Version
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.version import InvalidVersion, Version
 
 from agio.core.entities import package as p, package_release as r
 from agio.core.exceptions import PackageNotFound
@@ -11,6 +11,22 @@ from agio.core.exceptions import PackageNotFound
 
 class DependencyConflictError(Exception):
     pass
+
+
+def version_matches(version: str|None, requirement: str|None) -> bool:
+    """
+    Check that the version satisfies ALL conditions of the requirement.
+    For example ">=10,<15" matches 12, but not 9 and not 16.
+    Empty requirement matches any version.
+    """
+    if not requirement:
+        return True
+    if not version:
+        return False
+    try:
+        return Version(version) in SpecifierSet(requirement)
+    except (InvalidVersion, InvalidSpecifier) as e:
+        raise ValueError(f'Wrong version "{version}" or requirement "{requirement}": {e}') from e
 
 
 def _specifiers_conflict(spec1: SpecifierSet, spec2: SpecifierSet) -> bool:
@@ -169,8 +185,7 @@ def collect_packages_to_install(packages: list[p.APackage|r.APackageRelease|str]
 def find_best_available_version(
         current_version_str: str|None,
         requirements_str: str,
-        available_versions_str: list[str] | Callable[[], list[str]]) \
-        -> str |None:
+        available_versions_str: list[str] | Callable[[], list[str]]) -> str|None:
     try:
         specifier_set = SpecifierSet(requirements_str)
         if current_version_str:
@@ -208,7 +223,7 @@ def find_best_available_version(
 
 
 
-def _split_name_constrain(name: str, strip_constraints: bool = False) -> (str, str):
+def _split_name_constrain(name: str, strip_constraints: bool = False) -> tuple[str, str]:
     match = re.match(r"([a-zA-Z0-9_-]+)([<>=!~].*)", name)
     if match:
         package_name = match.group(1)

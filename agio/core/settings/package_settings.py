@@ -140,7 +140,9 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
         raise SettingsInitError(f"Union types with multiple non-None arguments are not directly supported yet: {annotation}")
 
     # Handle Generic types (list[T], dict[K,V], set[T], tuple[T, ...], etc.)
-    if hasattr(origin, '__origin__') or origin in (list, set, dict, tuple):
+    # get_origin() is the only reliable generic-alias check here: on py3.10
+    # inspect.isclass(list[T]) returns True (GenericAlias spoofs __class__ of its origin)
+    if get_origin(annotation) is not None or origin in (list, set, dict, tuple):
         field_class = original_field_instance.__class__ if original_field_instance else _get_field_class_for_type(origin)
         if not field_class:
             raise SettingsInitError(f"Unsupported container type: {origin}")
@@ -161,6 +163,10 @@ def _create_field_from_annotation(name: str, annotation: Any, default_value: Any
     # Handle Pydantic BaseModel types
     if inspect.isclass(annotation) and issubclass(annotation, BaseModel):
         for hint in _iterate_pydantic_type_hints(annotation):
+            if get_origin(hint) is not None:
+                # generic containers (list[T], dict[K, V], ...) are allowed in nested models,
+                # and issubclass() must never receive an alias (TypeError on py3.10)
+                continue
             if inspect.isclass(hint) and issubclass(hint, BaseField):
                 raise TypeError(f"Field {name} in nested pydantic class cannot be instantiated from {annotation.__name__}. Use generic types instead.")
         field = ModelField(default_value, model=annotation)

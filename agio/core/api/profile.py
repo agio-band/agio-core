@@ -26,3 +26,10 @@ def is_logged_in(client=default_client):
     except exceptions.RequestError:
         # message must be UNAUTHORIZED
         return False
+
+
+@api_call
+def user_is_editor(client=default_client):
+    return client.make_query(
+        'desk/account/userIsEditor',
+    )['data']['currentUser']['hasOrganizationPermission']

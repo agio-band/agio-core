@@ -11,7 +11,7 @@ class CoreService(ServicePlugin):
     name = 'core'
 
     @make_action(label='Log Out',
-                 menu_name='tray.main_menu',
+                 menu_name='tray_menu',
                  app_name='desk',
                  order=98,
                  is_visible_callback=client.is_logged_in)
@@ -19,14 +19,14 @@ class CoreService(ServicePlugin):
         client.logout()
 
     @make_action(label='Log In',
-                 menu_name='tray.main_menu',
+                 menu_name='tray_menu',
                  app_name='desk',
                  order=99,
                  is_visible_callback=lambda: not client.is_logged_in())
     def login(self, *args, **kwargs):
         client.login()
 
-    @make_action(menu_name='tray.main_menu',
+    @make_action(menu_name='tray_menu',
                  app_name='desk',
                  order=100)
     def exit(self, *args, **kwargs):

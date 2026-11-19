@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import Iterator
 
 from agio.core.api import client as default_client
@@ -9,7 +8,8 @@ def iter_query_list(query: str,
                     variables: dict = None,
                     limit: int = None,
                     items_per_page: int = 50,
-                    client=default_client
+                    client=default_client,
+                    is_raw_query: bool = False,
                     ) -> Iterator[dict]:
     """
     required in response:
@@ -25,7 +25,8 @@ def iter_query_list(query: str,
     variables = variables or {}
     count = 0
     while True:
-        response = client.make_query(
+        func = client.make_query_raw if is_raw_query else client.make_query
+        response = func(
             query,
             **variables,
             first=items_per_page,

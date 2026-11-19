@@ -27,6 +27,7 @@ class PluginMeta(ABCMeta):
 class APlugin(metaclass=PluginMeta):
     plugin_type = None
     name = None
+    label = None
     required_attrs = None
     __is_base_plugin__ = True
 
@@ -39,7 +40,7 @@ class APlugin(metaclass=PluginMeta):
                     raise PluginLoadingError(f'Required attribute "{self.__class__.__name__}.{attr}" must be set.')
 
     def get_label(self):
-        return self._plugin_info.get('label') or unslugify(self.name)
+        return self.label or self._plugin_info.get('label') or unslugify(self.name)
 
     @property
     def path(self):
@@ -54,10 +55,10 @@ class APlugin(metaclass=PluginMeta):
 
     @classmethod
     def load_from_info(cls, plugin_info: dict, info_file_path: str) -> Generator[type[APlugin], None, None]:
-        from agio.apps import app
+        from agio.apps.ctx import filter_by_name_and_group
 
         for imp in plugin_info.get('implementations', []):
-            if not app.filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
+            if not filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
                 continue
             module = imp.get('module')
             if not module:

@@ -23,20 +23,37 @@ class AApplicationLauncher:
             self,
             app_plugin: bp.ApplicationPlugin,
             version: str|None = None,
+            **kwargs
         ) -> None:
         if not version and app_plugin.version_required:
             raise ValueError(f'Version is required for application {app_plugin.app_name}')
         self._app_plugin = app_plugin
         self._version = version
         self._settings = self.get_settings()
-        self.ctx = self.create_launch_context()
+        self.ctx = self.create_launch_context(**kwargs)
 
     @property
     def version_str(self):
         if self._version:
-            return f'v{self._version}'
+            return f'{self._version}'
         else:
             return ''
+
+    @property
+    def app_variant(self):
+        parts = [self.name, self.version_str]
+        if self.mode and self.mode != 'default':
+            parts.append(self.mode)
+        variant = '/'.join(parts).strip('/')
+        return variant
+
+    @property
+    def console_required(self):
+        return self.plugin.console_required
+
+    @property
+    def hidden(self):
+        return self.plugin.hidden
 
     def __str__(self):
         return f'{self.label} {self.version_str} [{self._app_plugin.app_mode}]'
@@ -65,12 +82,12 @@ class AApplicationLauncher:
             raise ApplicationError(f'Application settings not found: {self}')
         return ApplicationSettings(name=self.name)
 
-    def create_launch_context(self) -> launching.LaunchContext:
+    def create_launch_context(self, **kwargs) -> launching.LaunchContext:
         executable = self.get_executable()
         if not executable:
             raise ApplicationError(f'{self.name} must define a executable')
         if not Path(executable).is_file():
-            raise ApplicationError(f'Executable {self.name}/{executable} is not a file or not exists')
+            raise ApplicationError(f'Executable "{executable}" fro app "{self.name}" is not a file or not exists')
         ctx = launching.LaunchContext(
             executable,
             args=self.get_default_launch_args(),
@@ -81,7 +98,7 @@ class AApplicationLauncher:
     def get_install_dir(self, **kwargs):
         path = Path(self._settings.install_dir)
         if not path.is_dir():
-            raise ApplicationError(f'{self.name} v{self.version} settings must provide an install dir')
+            raise ApplicationError(f'{self.name} v{self.version} install dir not exists: {path}')
         return path
 
     def executable_name_context(self, **kwargs):
@@ -190,8 +207,8 @@ class AApplicationLauncher:
             default_args = shlex.split(default_args)
         return self._app_plugin.get_launch_args(default_args)
 
-    def silent_echo(self):
-        return bool(os.getenv('AGIO_SILENT_APP_STARTUP'))
+    def verbose_launching(self):
+        return bool(os.getenv(env_names.VERBOSE_APP_STARTUP))
 
     def start(self, cmd_args: list[str] = None, cmd_envs: dict = None, echo_paths: bool = True, **kwargs):
         """
@@ -203,8 +220,8 @@ class AApplicationLauncher:
             self.ctx.append_envs(**cmd_envs)
 
         ### DEBUG INFO ###########################################################
-        if not self.silent_echo():
-            click.secho('=== Start App: ==========================', fg='yellow')
+        if self.verbose_launching():
+            click.secho(f'\n=== Start App: {self.name} {self.version_str} [{self.mode}] ===', fg='yellow')
             print('Name:', end=' ')
             click.secho(str(self), fg='green')
             print('CMD:', end=' ')
@@ -227,13 +244,14 @@ class AApplicationLauncher:
                     click.secho('=== PYTHONPATH: ===', fg='yellow')
                     for p in pypaths.split(os.pathsep):
                         print(p)
-            click.secho('=========================================', fg='yellow')
+            click.secho('=========================================\n', fg='yellow')
         ##########################################################################
 
         emit('agio_core.application.before_start', payload={'app': self})
         self._app_plugin.on_before_startup(self.ctx)
         kwargs.setdefault('new_console', False)
         kwargs.setdefault('detached', False)
-        kwargs['replace'] = not kwargs['detached'] and not kwargs['new_console']
+        # replace the caller process only when no other start mode is explicitly set
+        kwargs.setdefault('replace', not kwargs['detached'] and not kwargs['new_console'])
         start_process(self.ctx.command, env=self.ctx.envs, **kwargs)
 

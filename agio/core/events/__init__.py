@@ -22,7 +22,7 @@ def subscribe(event_name: Union[str, list[str]], callback_func: Callable = None,
 
     def register(func: Callable):
         added = event_hub.add_callback(event_name, func, raise_error=raise_error, **kwargs)
-        logger.debug(f"Subscribe event '{event_name}' to {func.__name__}: {len(added)}")
+        logger.debug(f"Subscribe event '{event_name}' to {func.__name__} [+{len(added)} event(s)]")
         return func
 
     if callback_func is None:
@@ -71,6 +71,7 @@ def subscribe_manager(event_name, func, raise_error=False, **kwargs):
 
 def register_callbacks(path_list: list[str]):
     for path, pkg in path_list:
+        logger.debug('Load callbacks from [%s] %s', pkg, path)
         rel_path = Path(path).relative_to(pkg.root.parent)
         name = '.'.join([*rel_path.parts[:-1], Path(path).stem])
         import_module_by_path(path, name)

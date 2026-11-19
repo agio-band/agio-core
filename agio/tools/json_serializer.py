@@ -22,6 +22,8 @@ class JsonSerializer(json.JSONEncoder):
             return str(o)
         elif isinstance(o, defaultdict):
             return dict(o)
+        elif isinstance(o, set):
+            return list(o)
         if self.__class__.custom_hook:
             try:
                 return self.__class__.custom_hook(o)

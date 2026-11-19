@@ -4,7 +4,7 @@ import logging
 import os
 from functools import cache, cached_property
 from pathlib import Path
-from typing import Any, Generator, Type
+from typing import Any, Generator, Type, TYPE_CHECKING
 
 import yaml
 
@@ -20,7 +20,8 @@ from agio.core.events import emit
 from agio.core.exceptions import PackageMetadataError, PackageError
 from agio.core.plugins import base_plugin
 from agio.tools.modules import import_object_by_dotted_path, import_module_by_path
-from agio.core.workspaces import workspace
+if TYPE_CHECKING:
+    from agio.core.workspaces import workspace
 
 logger = logging.getLogger(__name__)
 
@@ -222,13 +223,13 @@ class APackageManager:
         yield from plugins
 
     def collect_chips(self):
-        from agio.apps import app
         from agio.core import chips
+        from agio.apps.ctx import filter_by_name_and_group
 
         chips_info = self._metadata.get('chips') or []
         for chip_info in chips_info:
             for imp in chip_info.get('implementations', ()):
-                if not app.filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
+                if not filter_by_name_and_group(imp.get('apps'), imp.get('app_groups')):
                     continue
                 module = imp.get('module', ())
                 if isinstance(module, str):
@@ -311,18 +312,40 @@ class APackageManager:
                 parm['abs_file'] = file.as_posix()
 
     def get_callbacks(self):
+        from agio.apps.ctx import filter_by_name_and_group
+
         callbacks = self.get_meta_data_field('callbacks') or []
-        for path in callbacks:
-            yield self.root.joinpath(path).with_suffix('.py').as_posix()
+        for clb in callbacks:
+            if not isinstance(clb, dict):
+                raise ValueError(f'Callback info must be a dict: {self.package_name} type({type(clb)})')
+            if not filter_by_name_and_group(clb.get('apps'), clb.get('app_groups')):
+                continue
+            files = clb.get('modules')
+            for path in files:
+                yield self.root.joinpath(path).with_suffix('.py').as_posix()
+
+    def __collect_package_callbacks(self):
+        from agio.apps.ctx import filter_by_name_and_group
+
+        package_callbacks = self.get_meta_data_field('package_callbacks') or 'callbacks/package_callbacks.py'
+        for pclb in package_callbacks:
+            if isinstance(pclb, str):
+                yield pclb
+            elif isinstance(pclb, dict):
+                if not filter_by_name_and_group(pclb.get('apps'), pclb.get('app_groups')):
+                    continue
+                for path in pclb.get('modules'):
+                    yield path
 
     def execute_package_callback(self, callback_name: str, workspace_manager: workspace.AWorkspaceManager):
-        file_names = self.get_meta_data_field('package_callbacks') or 'callbacks/package_callbacks.py'
-        if isinstance(file_names, str):
-            file_names = [file_names]
-        for file_name in file_names:
+        for file_name in self.__collect_package_callbacks():
             full_path = self.root.joinpath(file_name)
             if full_path.exists():
-                mod = import_module_by_path(full_path.as_posix())
+                try:
+                    mod = import_module_by_path(full_path.as_posix())
+                except AttributeError as e:
+                    logger.error('Loading callback module failed: %s', e)
+                    continue
                 callback = getattr(mod, callback_name, None)
                 if callable(callback):
                     try:

@@ -1,19 +1,21 @@
 from __future__ import annotations
 
 import os
-from typing import Iterator
+from typing import Iterator, TYPE_CHECKING
 
 from agio.core import api
 from agio.core.api.utils import NOTSET
 from agio.core.events import emit
 from agio.core.exceptions import RequestError, WorkspaceNotDefined
-from agio.core.settings import settings_hub
 from agio.tools import env_names
 from .base_object import BaseObject
 from .package import APackage
 from .package_release import APackageRelease
 from .workspace_revision import AWorkspaceRevision
 from .workspace_settings import AWorkspaceSettings
+
+if TYPE_CHECKING:
+    from agio.core.settings import settings_hub
 
 
 class AWorkspace(BaseObject):
@@ -183,6 +185,8 @@ class AWorkspace(BaseObject):
         return AWorkspaceRevision(result)
 
     def get_settings(self, revision_id: str = None) -> settings_hub.WorkspaceSettingsHub:
+        from agio.core.settings import settings_hub
+
         # try:
         if revision_id:
             revision = self._find_revision(revision_id)

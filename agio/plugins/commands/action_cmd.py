@@ -34,10 +34,19 @@ class GetActionsCommand(ACommandPlugin):
     arguments = (
         click.option('-m', '--menu-name', default=None, help='Manu Name'),
         click.option('-a', '--app-name', default=None, help='App Name'),
+        click.option('--app-group', default=None, help='App Group'),
+        click.option('--app-version', default=None, help='App version requirement, for example ">=10,<15"'),
+        click.option('--action-group', default=None, help='Action Group'),
     )
 
-    def execute(self, menu_name, app_name, **kwargs):
-        action_group = get_actions(menu_name, app_name)
-        all_actions = action_group.serialize()
+    def execute(self, menu_name, app_name, app_group, app_version, action_group, **kwargs):
+        group_item = get_actions(
+            menu_name,
+            app_name,
+            app_group=app_group,
+            app_version=app_version,
+            action_group=action_group,
+        )
+        all_actions = group_item.serialize()
         return all_actions
 

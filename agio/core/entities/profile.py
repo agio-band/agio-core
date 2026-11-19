@@ -55,5 +55,9 @@ class AProfile(BaseObject):
         return f"{self.first_name} {self.last_name}"
 
     @property
+    def name(self):
+        return self.full_name
+
+    @property
     def language(self):
         return self.data.get('language', {}).get('code')

@@ -4,6 +4,7 @@ import os
 from functools import cached_property
 from typing import Iterable
 
+from agio.apps.ctx import DEFAULT_APP_NAME, get_current_app_groups, match_names_and_groups
 from agio.core.exceptions import ApiNamespaceConflictError, ApiNamespaceNotExists
 from agio.core.plugins import base_app_api
 from agio.core.plugins import plugin_hub
@@ -14,31 +15,49 @@ class ContextApp:
     """
     This class provide API of current application
     """
-    default_name = 'standalone'
+    default_name = DEFAULT_APP_NAME
 
-    def __init__(self):
+    def __init__(self, variant: str = None):
         self.__is_initialized = False
         self.__namespaces = {}
+        self._variant = variant or os.getenv(env_names.APP_VARIANT)
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return f'<ContextApp name={self.name} version={self.version or "None"} mode={self.mode}>'
+
+    @cached_property
+    def parts(self) -> list[str]:
+        from agio.apps.app_hub import ApplicationHub
+        if self._variant:
+            return ApplicationHub.parse_key(self._variant)
+        else:
+            return self.default_name, None, None
+
+    @property
+    def variant(self):
+        if self._variant:
+            return self._variant
+        else:
+            return self.default_name
 
     @cached_property
     def name(self) -> str:
-        return os.getenv(env_names.APP_NAME, self.default_name)
+        return self.parts[0]
 
     @cached_property
     def groups(self) -> set[str]:
-        from_env = os.getenv(env_names.APP_GROUPS)
-        if from_env:
-            return set(from_env.split(','))
-        else:
-            return {'standalone'}
+        return get_current_app_groups()
 
     @cached_property
     def version(self):
-        return os.getenv(env_names.APP_VERSION, '') # TODO: fix it
+        return self.parts[1]
 
     @cached_property
     def mode(self):
-        return os.getenv(env_names.APP_MODE)
+        return self.parts[2]
 
     def __collect_namespaces(self):
         plg_hub: plugin_hub.APluginHub = plugin_hub.APluginHub.instance()
@@ -96,28 +115,12 @@ class ContextApp:
             app_groups: str|Iterable[str] = None,
             ) -> bool:
         """Check allowed module by app name and app groups"""
-
-        def match_lists(to_check: set, match_with: set) -> bool:
-            neg_match = {item for item in to_check if item.startswith('!')}
-            pos_match = to_check.difference(neg_match)
-            neg_match = {item.strip('!') for item in neg_match}
-            return bool(pos_match.intersection(match_with) and not neg_match.intersection(match_with))
-
-        def fix_type(value):
-            if isinstance(value, (list, tuple)):
-                value = set(value)
-            elif isinstance(value, str):
-                value = {value}
-            if not isinstance(value, set):
-                raise TypeError(f"value must be a set or a str, not {type(value)}")
-            return value
-
-        name_match = grp_match = not any((app_names, app_groups))
-        if app_names:
-            name_match = match_lists(fix_type(app_names), {self.name})
-        if app_groups:
-            grp_match = match_lists(fix_type(app_groups), self.groups)
-        return any([name_match, grp_match])
+        return match_names_and_groups(
+            app_names,
+            app_groups,
+            current_app_name=self.name,
+            current_app_groups=self.groups,
+        )
 
     def get_current_app(self):
         from agio.apps import app_hub

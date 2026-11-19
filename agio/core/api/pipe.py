@@ -305,7 +305,7 @@ def update_version(
         'pipe/versions/updateVersion',
         id=version_id,
         input=update_data
-    )
+    )['updatePublishVersion']['ok']
 
 
 @api_call

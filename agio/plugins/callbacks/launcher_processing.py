@@ -37,7 +37,7 @@ def create_app_workspace(event: AEvent):
         # use interpreter with same version
         venv_manager_python = required_version
     # create custom venv for specific app
-    logger.info('Use interpreter for custom venv: %s', venv_manager_python)
+    logger.debug('Use interpreter for custom venv: %s', venv_manager_python)
     ws_man = AWorkspaceManager.from_workspace(ws, python_version=venv_manager_python)
     suffix = f"{app.name}-{app.version}-py{required_version}"
     ws_man.set_suffix(suffix)

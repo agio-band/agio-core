@@ -1,12 +1,12 @@
 import logging
 
 from agio.core.events import register_callbacks, emit
-from agio.core.workspaces import package_hub
 
 logger = logging.getLogger(__name__)
 
 
 def init_packages():
+    from agio.core.workspaces import package_hub
     logger.debug('Initializing package hub...')
     ph = package_hub.APackageHub()
     # load package callbacks

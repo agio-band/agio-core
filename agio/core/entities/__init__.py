@@ -6,3 +6,5 @@ from .workspace import AWorkspace
 from .workspace_revision import AWorkspaceRevision
 from .entity import AEntity
 from .company import ACompany
+from .task import ATask
+from .product import AProduct

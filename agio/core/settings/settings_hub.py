@@ -6,7 +6,6 @@ from agio.core.events import emit
 from agio.core.plugins import plugin_hub
 from agio.core.settings import package_settings as package_settings_class
 from agio.core.settings import collector
-from agio.core.workspaces import package_hub
 from agio.core.settings.fields.base_field import BaseField
 
 if TYPE_CHECKING:
@@ -18,6 +17,8 @@ class ASettingsHub:
     __dep_plugins_cache = {}
 
     def __init__(self, settings_data: dict[str, Any], **kwargs):
+        from agio.core.workspaces import package_hub
+
         if self.settings_type is None:
             raise RuntimeError('Settings type not set')
         package_names = set()

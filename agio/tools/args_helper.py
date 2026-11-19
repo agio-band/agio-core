@@ -79,7 +79,13 @@ def dict_to_args(src_dict: dict, fix_py_names: bool = True) -> list:
     for key, value in src_dict.items():
         if fix_py_names:
             key = key.replace('_', '-')
-        args.extend((f'--{key}', str(value)))
+        if value is True:
+            # render booleans as flags, so they can be parsed back as real bools
+            args.append(f'--{key}')
+        elif value is False or value is None:
+            continue
+        else:
+            args.extend((f'--{key}', str(value)))
     return args
 
 
