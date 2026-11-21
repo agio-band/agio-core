@@ -299,11 +299,14 @@ class AWorkspaceManager:
     def get_py_version(self):
         custom = self._kwargs.get('python_version')
         if custom:
+            logger.info('Py version from custom argument: %s', custom)
             return custom
         if self.revision:
             rev_version = self.revision.metadata.get('python_version', {}).get(sys.platform.lower())
             if rev_version:
+                logger.info('Py version from revision metadata: %s', rev_version)
                 return rev_version
+        logger.info('Py version from default: %s', self.default_python_version)
         return self.default_python_version
 
     # install and manage
@@ -331,6 +334,7 @@ class AWorkspaceManager:
             if self.is_installed():
                 self.remove()
             py_version_required = self.get_py_version()
+            logger.info(f'Create venv with Python {py_version_required}')
             self.venv_manager.create_venv(py_version_required)
         # install packages
         if package_list:

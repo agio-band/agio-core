@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import platform
-import re
 import shutil
 import stat
 import tarfile
@@ -12,6 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import requests
+from packaging.version import InvalidVersion, Version
 
 from agio.tools.packaging_tools import find_best_available_version
 from agio.tools.process_utils import start_process
@@ -65,10 +65,17 @@ class UVPackageManager(PackageManagerBase):
                 return prk['version']
 
     def _get_latest_version(self, versions: list[str], pre_releases=False) -> str | None:
-        sorted_versions = sorted(versions, key=lambda vers: re.search(r"\d+\.\d+\.\d+", vers).groups())
-        if not pre_releases:
-            sorted_versions = [x for x in sorted_versions if not re.search(r"[a-z]", x)]
-        return sorted_versions[0] if sorted_versions else None
+        candidates = []
+        for vers in versions:
+            try:
+                version = Version(vers)
+            except InvalidVersion:
+                logger.warning('Skip invalid python version: %r', vers)
+                continue
+            if not pre_releases and version.is_prerelease:
+                continue
+            candidates.append(version)
+        return str(max(candidates)) if candidates else None
 
     def _get_available_py_version(self, py_version: str = None) -> str | None:
         available_versions = [x['version'] for x in self.get_available_python_versions()]
