@@ -20,6 +20,11 @@ from .pkg_manager_base import PackageManagerBase
 logger = logging.getLogger(__name__)
 
 
+def _is_interpreter_path(value) -> bool:
+    """Version strings and requirements never contain path separators, executables do."""
+    return isinstance(value, str) and ('/' in value or '\\' in value)
+
+
 class UVPackageManager(PackageManagerBase):
     """
     uv python install 3.12
@@ -96,18 +101,20 @@ class UVPackageManager(PackageManagerBase):
         return closest
 
     def create_venv(self, python_version: str | None = None, **kwargs):
-        if not python_version:
-            if self._custom_python_executable:
-                python_version = self._custom_python_executable
+        if self._custom_python_executable:
+            # explicitly defined interpreter wins over version requirements
+            python_version = self._custom_python_executable
+        elif not python_version:
+            python_version = self._get_available_py_version(python_version)
+            if python_version:
+                if python_version not in self.get_installed_python_versions():
+                    logger.info('Installing python version: %s', python_version)
+                    cmd = ['python', 'install', '==' + python_version]  # or ~= ???
+                    self.run(cmd, workdir=Path.home().as_posix())
             else:
-                python_version = self._get_available_py_version(python_version)
-                if python_version:
-                    if python_version not in self.get_installed_python_versions():
-                        logger.info('Installing python version: %s', python_version)
-                        cmd = ['python', 'install', '==' + python_version]  # or ~= ???
-                        self.run(cmd, workdir=Path.home().as_posix())
-                else:
-                    raise RuntimeError('No python version available')
+                raise RuntimeError('No python version available')
+        elif _is_interpreter_path(python_version):
+            logger.info('Use python interpreter path passed as version: %s', python_version)
         else:
             python_version = self._get_closest_version(python_version)
         logger.info('Create venv with python: %s', python_version)

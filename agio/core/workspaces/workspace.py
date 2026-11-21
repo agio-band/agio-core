@@ -361,13 +361,13 @@ class AWorkspaceManager:
                   'workspace_manager': self
                   }
                  )
-        logger.info(f'Workspace installation complete: {self.install_root}')
         if self._revision:
             exec_agio_command(['revision', 'synclocal'], workspace=self.revision_id)
             emit(
                 'core.workspace.synced',
                 {'revision': self.revision.id if self.revision else None, 'workspace_manager': self}
             )
+        logger.info(f'Workspace installation complete: {self.install_root}')
 
     def install_packages(self, *package_list: APackageRelease|str, **kwargs):
         package_list = collect_packages_to_install(package_list)

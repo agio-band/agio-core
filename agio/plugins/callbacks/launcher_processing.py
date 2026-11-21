@@ -27,6 +27,9 @@ def create_app_workspace(event: AEvent):
         # try to get app interpreter
         py_app = __get_pyinstall_app(app)
         venv_manager_python = py_app.get_executable()
+        # interpreter path must be passed as py_executable,
+        # otherwise it will be treated as a version requirement
+        manager_kwargs = {'py_executable': venv_manager_python}
     except ApplicationNotFoundError:
         if not app.plugin.python_env_required:
             # not need to create custom venv, use default workspace venv instead
@@ -36,9 +39,10 @@ def create_app_workspace(event: AEvent):
             return
         # use interpreter with same version
         venv_manager_python = required_version
+        manager_kwargs = {'python_version': venv_manager_python}
     # create custom venv for specific app
     logger.debug('Use interpreter for custom venv: %s', venv_manager_python)
-    ws_man = AWorkspaceManager.from_workspace(ws, python_version=venv_manager_python)
+    ws_man = AWorkspaceManager.from_workspace(ws, **manager_kwargs)
     suffix = f"{app.name}-{app.version}-py{required_version}"
     ws_man.set_suffix(suffix)
     ws_man.install_or_update_if_needed()
