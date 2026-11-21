@@ -134,6 +134,7 @@ def collect_packages_to_install(packages: list[p.APackage|r.APackageRelease|str]
     return list of package names and versions [package_name==0.0.0, ...]
     """
     from agio.core.exceptions import PackageNotFound
+    from agio.core.entities import package as p
 
     releases_to_install = []
     for pkg in packages:
