@@ -1,12 +1,14 @@
+from __future__ import annotations
 import re
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 from packaging.requirements import Requirement
-from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
-from agio.core.entities import package as p, package_release as r
-from agio.core.exceptions import PackageNotFound
+if TYPE_CHECKING:
+    from agio.core.entities import package as p, package_release as r
+
 
 
 class DependencyConflictError(Exception):
@@ -131,6 +133,8 @@ def collect_packages_to_install(packages: list[p.APackage|r.APackageRelease|str]
     Collect and resolve dependencies
     return list of package names and versions [package_name==0.0.0, ...]
     """
+    from agio.core.exceptions import PackageNotFound
+
     releases_to_install = []
     for pkg in packages:
         if isinstance(pkg, p.APackageRelease):
@@ -169,23 +173,61 @@ def collect_packages_to_install(packages: list[p.APackage|r.APackageRelease|str]
             if not release:
                 raise Exception(f'Dependency release "{name} v{version}" not found')
         releases_to_install.append(release)
-    # filter duplicates with max version
+    return _select_latest_releases(releases_to_install)
+
+
+def _select_latest_releases(releases: list[r.APackageRelease]) -> list[r.APackageRelease]:
+    """Deduplicates releases of the same package keeping only the highest version."""
     filtered = dict()
-    for r in releases_to_install:
-        pkg_name = r.get_package_name()
+    for release in releases:
+        pkg_name = release.get_package_name()
         if pkg_name not in filtered:
-            filtered[pkg_name] = r
+            filtered[pkg_name] = release
         else:
-            if r.get_version() > filtered[pkg_name].get_version():
-                filtered[pkg_name] = r
+            if Version(release.get_version()) > Version(filtered[pkg_name].get_version()):
+                filtered[pkg_name] = release
     return list(filtered.values())
 
+
+
+def _requirement_allows_prereleases(specifier_set: SpecifierSet) -> bool:
+    """Prereleases are selected only when the requirement mentions one explicitly,
+    like ">=3.11rc1" or "==3.12.0b1"."""
+    for specifier in specifier_set:
+        try:
+            if Version(specifier.version).is_prerelease:
+                return True
+        except InvalidVersion:  # wildcard "==3.11.*" or arbitrary "==="
+            continue
+    return False
+
+
+def _version_matches_requirements(version: Version, specifier_set: SpecifierSet) -> bool:
+    """Version must satisfy ALL specifiers in the set (empty set matches anything)."""
+    for specifier in specifier_set:
+        if version in specifier:
+            continue
+        # plain pin "==3.11" also accepts any 3.11.* release,
+        # which strict PEP 440 equality doesn't cover
+        if specifier.operator == "==" and "*" not in specifier.version:
+            try:
+                if version in Specifier(f"=={specifier.version}.*"):
+                    continue
+            except InvalidSpecifier:
+                pass
+        return False
+    return True
 
 
 def find_best_available_version(
         current_version_str: str|None,
         requirements_str: str,
         available_versions_str: list[str] | Callable[[], list[str]]) -> str|None:
+    """
+    Finds the highest version from available_versions_str that satisfies ALL
+    conditions of requirements_str. Prereleases are ignored unless the requirement
+    mentions one explicitly. Returns None if current_version_str already fits.
+    """
     try:
         specifier_set = SpecifierSet(requirements_str)
         if current_version_str:
@@ -196,20 +238,14 @@ def find_best_available_version(
         if callable(available_versions_str):
             available_versions_str = available_versions_str()
 
-        available_versions = [Version(v) for v in available_versions_str]
+        allow_prereleases = _requirement_allows_prereleases(specifier_set)
         matching_versions = []
-
-        for available_version in available_versions:
-            for specifier in specifier_set:
-                if specifier.operator == "==":
-                    required_base = str(specifier.version)
-                    available_base = str(available_version)
-                    if available_base.startswith(required_base):
-                        matching_versions.append(available_version)
-                        break
-                elif available_version in specifier:
-                    matching_versions.append(available_version)
-                    break
+        for version_str in available_versions_str:
+            version = Version(version_str)
+            if version.is_prerelease and not allow_prereleases:
+                continue
+            if _version_matches_requirements(version, specifier_set):
+                matching_versions.append(version)
 
         if not matching_versions:
             raise ValueError(f"No matching versions found for {requirements_str}. available: {', '.join(available_versions_str)}")
